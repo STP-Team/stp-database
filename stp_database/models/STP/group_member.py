@@ -6,8 +6,10 @@ from sqlalchemy import DateTime, ForeignKey, func
 from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.orm import Mapped, mapped_column
 
+from stp_database.models.base import Base
 
-class GroupMember:
+
+class GroupMember(Base):
     """Класс, представляющий сущность участника группы в БД.
 
     Args:

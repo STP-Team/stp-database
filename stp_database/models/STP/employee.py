@@ -3,8 +3,10 @@
 from sqlalchemy import BIGINT, BOOLEAN, Boolean, Unicode
 from sqlalchemy.orm import Mapped, mapped_column
 
+from stp_database.models.base import Base
 
-class Employee:
+
+class Employee(Base):
     """Модель, представляющий сущность сотрудника в БД.
 
     Args:

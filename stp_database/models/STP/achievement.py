@@ -4,8 +4,10 @@ from sqlalchemy import Integer
 from sqlalchemy.dialects.mysql import VARCHAR
 from sqlalchemy.orm import Mapped, mapped_column
 
+from stp_database.models.base import Base
 
-class Achievement:
+
+class Achievement(Base):
     """Класс, представляющий сущность достижения в БД.
 
     Args:

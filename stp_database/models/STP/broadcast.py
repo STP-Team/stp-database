@@ -5,8 +5,10 @@ from typing import List, Optional
 from sqlalchemy import BIGINT, JSON, TIMESTAMP, Enum, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
+from stp_database.models.base import Base
 
-class Broadcast:
+
+class Broadcast(Base):
     """Модель, представляющая сущность рассылки в БД.
 
     Args:

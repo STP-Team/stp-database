@@ -5,8 +5,10 @@ from datetime import datetime
 from sqlalchemy import DateTime, Float, Integer, Unicode
 from sqlalchemy.orm import Mapped, mapped_column
 
+from stp_database.models.base import Base
 
-class SpecKPI:
+
+class SpecKPI(Base):
     """Универсальная модель, представляющая сущность показателей специалиста день, неделю или месяц.
 
     Может работать с разными таблицами: KpiDay, KpiWeek, KpiMonth.

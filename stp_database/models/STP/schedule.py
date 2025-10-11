@@ -6,8 +6,10 @@ from typing import Optional
 from sqlalchemy import BIGINT, TIMESTAMP, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
+from stp_database.models.base import Base
 
-class Schedule:
+
+class Schedule(Base):
     """Модель, представляющая сущность графиков в БД.
 
     Args:

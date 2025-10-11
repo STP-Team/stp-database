@@ -5,8 +5,10 @@ from datetime import datetime
 from sqlalchemy import DateTime, Float, Integer, Unicode
 from sqlalchemy.orm import Mapped, mapped_column
 
+from stp_database.models.base import Base
 
-class SpecPremium:
+
+class SpecPremium(Base):
     """Модель, представляющая сущность премии специалиста за месяц в БД.
 
     Args:

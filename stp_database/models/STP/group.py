@@ -4,8 +4,10 @@ from sqlalchemy import JSON, Boolean
 from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.orm import Mapped, mapped_column
 
+from stp_database.models.base import Base
 
-class Group:
+
+class Group(Base):
     """Класс, представляющий сущность группы в БД.
 
     Args:

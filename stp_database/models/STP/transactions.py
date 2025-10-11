@@ -8,8 +8,10 @@ from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
+from stp_database.models.base import Base
 
-class Transaction:
+
+class Transaction(Base):
     """Класс, представляющий сущность транзакции пользователя в БД.
 
     Args:

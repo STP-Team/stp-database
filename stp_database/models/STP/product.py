@@ -4,8 +4,10 @@ from sqlalchemy import JSON, Integer
 from sqlalchemy.dialects.mysql import VARCHAR
 from sqlalchemy.orm import Mapped, mapped_column
 
+from stp_database.models.base import Base
 
-class Product:
+
+class Product(Base):
     """Класс, представляющий сущность предмета в БД.
 
     Args:

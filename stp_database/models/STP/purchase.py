@@ -6,8 +6,10 @@ from sqlalchemy import DateTime, Integer
 from sqlalchemy.dialects.mysql import BIGINT, VARCHAR
 from sqlalchemy.orm import Mapped, mapped_column
 
+from stp_database.models.base import Base
 
-class Purchase:
+
+class Purchase(Base):
     """Класс, представляющий сущность покупки пользователя в БД.
 
     Args:

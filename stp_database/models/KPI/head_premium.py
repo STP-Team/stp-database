@@ -6,8 +6,10 @@ from typing import Optional
 from sqlalchemy import DateTime, Float, Integer, Unicode
 from sqlalchemy.orm import Mapped, mapped_column
 
+from stp_database.models.base import Base
 
-class HeadPremium:
+
+class HeadPremium(Base):
     """Модель, представляющая сущность премии руководителя за месяц в БД.
 
     Args:
