@@ -18,6 +18,8 @@ class Purchase(Base):
         product_id: Идентификатор предмета
         usage_count: Кол-во использований предмета
         bought_at: Время приобретения предмета
+        user_comment: Комментарий специалиста к активации предмета
+        manager_comment: Комментарий менеджера к активации предмета
         updated_at: Время подтверждения активации предмета
         updated_by_user_id: Идентификатор пользователя Telegram, изменившего статус активации предмета
 
@@ -32,6 +34,8 @@ class Purchase(Base):
     product_id: Mapped[int] = mapped_column(VARCHAR(255), nullable=False)
     usage_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     bought_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    user_comment: Mapped[str] = mapped_column(VARCHAR(255), nullable=True)
+    manager_comment: Mapped[str] = mapped_column(VARCHAR(255), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=True, default=datetime.now
     )
