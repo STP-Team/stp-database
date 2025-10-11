@@ -19,6 +19,7 @@ class ScheduleLogRepo(BaseRepo):
     async def get_files_history(
         self,
         file_id: Optional[str] = None,
+        file_name: Optional[str] = None,
         uploaded_by_user_id: Optional[int] = None,
         uploaded_from: Optional[datetime] = None,
         uploaded_to: Optional[datetime] = None,
@@ -27,6 +28,7 @@ class ScheduleLogRepo(BaseRepo):
 
         Args:
             file_id: Идентификатор Telegram файла
+            file_name: Название файла
             uploaded_by_user_id: ID пользователя, загрузившего файл
             uploaded_from: Начало периода времени загрузки
             uploaded_to: Конец периода времени загрузки
@@ -38,6 +40,8 @@ class ScheduleLogRepo(BaseRepo):
 
         if file_id:
             filters.append(Schedule.file_id == file_id)
+        if file_name:
+            filters.append(Schedule.file_name == file_name)
         if uploaded_by_user_id:
             filters.append(Schedule.uploaded_by_user_id == uploaded_by_user_id)
         if uploaded_from:
