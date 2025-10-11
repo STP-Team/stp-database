@@ -51,3 +51,15 @@ class Broadcast(Base):
     def __repr__(self):
         """Возвращает строковое представление объекта Broadcast."""
         return f"<Broadcast {self.id} {self.user_id} {self.type} {self.target} {self.created_at}>"
+
+    def to_dict(self):
+        """Преобразует объект Broadcast в словарь."""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "type": self.type,
+            "target": self.target,
+            "text": self.text,
+            "recipients": self.recipients,
+            "created_at": self.created_at,
+        }
