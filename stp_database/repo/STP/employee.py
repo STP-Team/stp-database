@@ -17,8 +17,8 @@ class EmployeeRepo(BaseRepo):
 
     async def get_users(
         self,
-        main_id: Optional[int] = None,
-        user_id: Optional[int] = None,
+        main_id: Optional[int | list[int]] = None,
+        user_id: Optional[int | list[int]] = None,
         username: Optional[str] = None,
         fullname: Optional[str] = None,
         email: Optional[str] = None,
@@ -28,8 +28,8 @@ class EmployeeRepo(BaseRepo):
         """Поиск пользователя или списка пользователей.
 
         Args:
-            main_id: Primary Key (если указан, возвращает одного пользователя)
-            user_id: Уникальный идентификатор пользователя Telegram (если указан, возвращает одного пользователя)
+            main_id: Primary Key (int - возвращает одного пользователя, list[int] - возвращает список)
+            user_id: Уникальный идентификатор пользователя Telegram (int - возвращает одного пользователя, list[int] - возвращает список)
             username: Никнейм пользователя Telegram (если указан, возвращает одного пользователя)
             fullname: ФИО пользователя в БД (если указан, возвращает одного пользователя)
             email: Почта пользователя в БД (если указан, возвращает одного пользователя)
@@ -37,20 +37,25 @@ class EmployeeRepo(BaseRepo):
             roles: Роль (int) или список ролей (list[int]) для фильтрации списка пользователей
 
         Returns:
-            Объект Employee или None (если указан main_id, user_id, username, fullname или email)
-            Последовательность Employee (если указаны только roles или параметры не указаны)
+            Объект Employee или None (если указан одиночный main_id, user_id, username, fullname или email)
+            Последовательность Employee (если указаны списки или другие параметры)
         """
         # Определяем, одиночный запрос или множественный
-        single_user_params = [main_id, user_id, username, fullname, email]
-        is_single = any(param is not None for param in single_user_params)
+        is_single = (
+            (isinstance(main_id, int))
+            or (isinstance(user_id, int))
+            or (username is not None)
+            or (fullname is not None)
+            or (email is not None)
+        )
 
         if is_single:
             # Запрос одного пользователя
             filters = []
 
-            if main_id:
+            if isinstance(main_id, int):
                 filters.append(Employee.id == main_id)
-            if user_id:
+            if isinstance(user_id, int):
                 filters.append(Employee.user_id == user_id)
             if username:
                 filters.append(Employee.username == username)
@@ -70,6 +75,14 @@ class EmployeeRepo(BaseRepo):
         else:
             # Запрос списка пользователей
             filters = []
+
+            # Фильтр по main_id (список)
+            if isinstance(main_id, list) and main_id:
+                filters.append(Employee.id.in_(main_id))
+
+            # Фильтр по user_id (список)
+            if isinstance(user_id, list) and user_id:
+                filters.append(Employee.user_id.in_(user_id))
 
             # Фильтр по руководителю
             if head is not None:
