@@ -4,7 +4,7 @@ STP Database Package
 A shared database layer for STP bots providing models, repositories, and database setup utilities.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 # Core database setup
 from stp_database.config import DbConfig
