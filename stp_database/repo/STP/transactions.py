@@ -19,7 +19,7 @@ class TransactionParams(TypedDict, total=False):
     source_id: Optional[int]
     source_type: str
     amount: int
-    comment: Optional[str]
+    user_comment: Optional[str]
     created_by: Optional[int]
     kpi_extracted_at: Optional[datetime]
 
@@ -58,7 +58,7 @@ class TransactionRepo(BaseRepo):
                 source_type=source_type,
                 amount=amount,
                 source_id=source_id,
-                comment=comment,
+                user_comment=comment,
                 created_by=created_by,
                 kpi_extracted_at=kpi_extracted_at,
             )

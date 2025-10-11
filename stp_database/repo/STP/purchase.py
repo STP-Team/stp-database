@@ -17,7 +17,7 @@ class PurchaseParams(TypedDict, total=False):
     """Доступные параметры для обновления покупки пользователя в таблице purchases."""
 
     product_id: int | None
-    comment: str | None
+    user_comment: str | None
     usage_count: str | None
     bought_at: datetime | None
     updated_at: datetime | None
@@ -59,7 +59,6 @@ class PurchaseRepo(BaseRepo):
         user_purchase = Purchase(
             user_id=user_id,
             product_id=product_id,
-            comment=comment,
             usage_count=0,
             bought_at=datetime.now(),
             status=status,
