@@ -1,3 +1,5 @@
+"""Конфигурация для подключения к БД."""
+
 from dataclasses import dataclass
 from typing import Optional
 
@@ -6,19 +8,13 @@ from sqlalchemy import URL
 
 @dataclass
 class DbConfig:
-    """Database configuration class.
-    This class holds the settings for the database, such as host, password, port, etc.
+    """Конфигурация подключения к базе данных.
 
     Attributes:
-    ----------
-    host : str
-        Хост, на котором находится база данных
-    password : str
-        Пароль для авторизации в базе данных.
-    user : str
-        Логин для авторизации в базе данных.
-    port : int
-        Порт для подключения к базе данных (по умолчанию 3306)
+        host: Хост, на котором находится база данных
+        user: Логин для авторизации в базе данных
+        password: Пароль для авторизации в базе данных
+        port: Порт для подключения к базе данных (по умолчанию 3306)
     """
 
     host: str
@@ -31,19 +27,14 @@ class DbConfig:
         db_name: Optional[str] = None,
         driver: str = "aiomysql",
     ) -> URL:
-        """Constructs and returns SQLAlchemy URL for MariaDB database connection
+        """Создание SQLAlchemy URL для подключения к базе данных MariaDB.
 
-        Parameters
-        ----------
-        db_name : str, optional
-            Name of the database to connect to
-        driver : str, default="aiomysql"
-            The MySQL driver to use (aiomysql, pymysql, etc.)
+        Args:
+            db_name: Название базы данных для подключения (опционально)
+            driver: MySQL драйвер для использования (по умолчанию "aiomysql")
 
         Returns:
-        -------
-        URL
-            SQLAlchemy URL object for database connection
+            Объект SQLAlchemy URL для подключения к базе данных
         """
         connection_url = URL.create(
             f"mysql+{driver}",

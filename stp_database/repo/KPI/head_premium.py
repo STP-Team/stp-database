@@ -1,3 +1,5 @@
+"""Репозиторий функций для работы с премией руководителей."""
+
 import logging
 from typing import Optional, Sequence
 
@@ -11,51 +13,39 @@ logger = logging.getLogger(__name__)
 
 
 class HeadPremiumRepo(BaseRepo):
+    """Репозиторий с функциями для работы с премией руководителей."""
+
     async def get_premium(
         self,
-        fullname: str,
-    ) -> Optional[HeadPremium]:
-        """Поиск показателей премиума руководителя в БД по ФИО
+        fullnames: str | list[str],
+    ) -> Optional[HeadPremium] | Sequence[HeadPremium]:
+        """Поиск показателей премии руководителей в БД по ФИО.
 
         Args:
-            fullname: ФИО руководителя в БД
+            fullnames: ФИО руководителя или список ФИО руководителей в БД
 
         Returns:
-            Объект HeadPremium или ничего
+            HeadPremium или ничего (если передана строка)
+            Список объектов HeadPremium (если передан список)
         """
-        query = select(HeadPremium).where(HeadPremium.fullname == fullname)
+        # Определяем, одиночный запрос или множественный
+        is_single = isinstance(fullnames, str)
+
+        if is_single:
+            query = select(HeadPremium).where(HeadPremium.fullname == fullnames)
+        else:
+            if not fullnames:
+                return []
+            query = select(HeadPremium).where(HeadPremium.fullname.in_(fullnames))
 
         try:
             result = await self.session.execute(query)
-            return result.scalar_one_or_none()
+            if is_single:
+                return result.scalar_one_or_none()
+            else:
+                return result.scalars().all()
         except SQLAlchemyError as e:
             logger.error(
-                f"[БД] Ошибка получения показателей премиума руководителя: {e}"
+                f"[БД] Ошибка получения показателей премиума руководителя(-ей): {e}"
             )
-            return None
-
-    async def get_kpi_by_names(
-        self,
-        fullnames: list[str],
-    ) -> Sequence[HeadPremium]:
-        """Поиск показателей премиума руководителей в БД по списку ФИО
-
-        Args:
-            fullnames: Список ФИО руководителей в БД
-
-        Returns:
-            Список объектов HeadPremium
-        """
-        if not fullnames:
-            return []
-
-        query = select(HeadPremium).where(HeadPremium.fullname.in_(fullnames))
-
-        try:
-            result = await self.session.execute(query)
-            return result.scalars().all()
-        except SQLAlchemyError as e:
-            logger.error(
-                f"[БД] Ошибка получения показателей премиума руководителей: {e}"
-            )
-            return []
+            return None if is_single else []

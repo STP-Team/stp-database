@@ -1,3 +1,5 @@
+"""Базовый класс для репозиториев."""
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

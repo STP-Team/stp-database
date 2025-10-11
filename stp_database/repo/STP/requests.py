@@ -1,3 +1,5 @@
+"""Репозиторий для работы с моделями БД STP."""
+
 from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,54 +17,54 @@ from stp_database.repo.STP.transactions import TransactionRepo
 
 @dataclass
 class MainRequestsRepo:
-    """Repository for handling database operations. This class holds all the repositories for the database models.
+    """Репозиторий для обработки операций с БД. Этот класс содержит все репозитории для моделей базы данных STP.
 
-    You can add more repositories as properties to this class, so they will be easily accessible.
+    Ты можешь добавить дополнительные репозитории в качестве свойств к этому классу, чтобы они были легко доступны.
     """
 
     session: AsyncSession
 
     @property
     def employee(self) -> EmployeeRepo:
-        """The Employee repository sessions are required to manage user operations."""
+        """Инициализация репозитория Employee с сессией для работы с записями сотрудников."""
         return EmployeeRepo(self.session)
 
     @property
-    def upload(self) -> ScheduleLogRepo:
-        """The ScheduleLogRepo repository sessions are required to manage user operations."""
-        return ScheduleLogRepo(self.session)
+    def achievement(self) -> AchievementsRepo:
+        """Инициализация репозитория AchievementsRepo с сессией для работы с достижениями."""
+        return AchievementsRepo(self.session)
 
     @property
     def product(self) -> ProductsRepo:
-        """The ProductsRepo repository sessions are required to manage user operations."""
+        """Инициализация репозитория ProductsRepo с сессией для работы с предметами."""
         return ProductsRepo(self.session)
 
     @property
     def purchase(self) -> PurchaseRepo:
-        """The PurchaseRepo repository sessions are required to manage user operations."""
+        """Инициализация репозитория PurchaseRepo с сессией для работы с покупками."""
         return PurchaseRepo(self.session)
 
     @property
-    def achievement(self) -> AchievementsRepo:
-        """The AchievementsRepo repository sessions are required to manage user operations."""
-        return AchievementsRepo(self.session)
-
-    @property
     def transaction(self) -> TransactionRepo:
-        """The TransactionRepo repository sessions are required to manage transactions."""
+        """Инициализация репозитория TransactionRepo с сессией для работы с транзакциями."""
         return TransactionRepo(self.session)
 
     @property
     def broadcast(self) -> BroadcastRepo:
-        """The BroadcastRepo repository sessions are required to manage broadcasts."""
+        """Инициализация репозитория BroadcastRepo с сессией для работы с рассылками."""
         return BroadcastRepo(self.session)
 
     @property
+    def upload(self) -> ScheduleLogRepo:
+        """Инициализация репозитория ScheduleLogRepo с сессией для работы с загрузкой файлов."""
+        return ScheduleLogRepo(self.session)
+
+    @property
     def group(self) -> GroupRepo:
-        """The GroupRepo repository sessions are required to manage groups."""
+        """Инициализация репозитория GroupRepo с сессией для работы с управляемыми группами."""
         return GroupRepo(self.session)
 
     @property
     def group_member(self) -> GroupMemberRepo:
-        """The GroupMemberRepo repository sessions are required to manage group members."""
+        """Инициализация репозитория GroupMemberRepo с сессией для работы с участниками отслеживаемых групп."""
         return GroupMemberRepo(self.session)

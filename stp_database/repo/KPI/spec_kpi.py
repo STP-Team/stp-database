@@ -1,3 +1,5 @@
+"""Репозиторий для работы с KPI специалистов."""
+
 import logging
 from typing import Generic, Optional, Sequence, Type, TypeVar
 
@@ -31,45 +33,34 @@ class SpecKPIRepo(BaseRepo, Generic[T]):
         super().__init__(session)
         self.model = model
 
-    async def get_kpi(self, fullname: str) -> Optional[T]:
-        """Поиск показателей специалиста в БД по ФИО.
+    async def get_kpi(self, fullnames: str | list[str]) -> Optional[T] | Sequence[T]:
+        """Поиск показателей специалистов в БД по ФИО.
 
         Args:
-            fullname: ФИО специалиста в БД
+            fullnames: ФИО специалиста или список ФИО специалистов в БД
 
         Returns:
-            Показатели KPI специалиста или None
+            Показатели KPI специалиста или None (если передана строка)
+            Последовательность объектов SpecKPI (если передан список)
         """
-        query = select(self.model).where(self.model.fullname == fullname)
+        # Определяем, одиночный запрос или множественный
+        is_single = isinstance(fullnames, str)
+
+        if is_single:
+            query = select(self.model).where(self.model.fullname == fullnames)
+        else:
+            if not fullnames:
+                return []
+            query = select(self.model).where(self.model.fullname.in_(fullnames))
 
         try:
             result = await self.session.execute(query)
-            return result.scalar_one_or_none()
+            if is_single:
+                return result.scalar_one_or_none()
+            else:
+                return result.scalars().all()
         except SQLAlchemyError as e:
             logger.error(
-                f"[БД] Ошибка получения показателей специалиста из {self.model.__tablename__}: {e}"
+                f"[БД] Ошибка получения показателей специалиста(-ов) из {self.model.__tablename__}: {e}"
             )
-            return None
-
-    async def get_kpi_by_names(self, fullnames: list[str]) -> Sequence[T]:
-        """Поиск показателей специалистов в БД по списку ФИО.
-
-        Args:
-            fullnames: Список ФИО специалистов в БД
-
-        Returns:
-            Последовательность объектов SpecKPI
-        """
-        if not fullnames:
-            return []
-
-        query = select(self.model).where(self.model.fullname.in_(fullnames))
-
-        try:
-            result = await self.session.execute(query)
-            return result.scalars().all()
-        except SQLAlchemyError as e:
-            logger.error(
-                f"[БД] Ошибка получения показателей специалистов из {self.model.__tablename__}: {e}"
-            )
-            return []
+            return None if is_single else []

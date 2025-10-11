@@ -1,7 +1,9 @@
+"""Репозиторий функций для взаимодействия с покупками."""
+
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, TypedDict, Unpack
+from typing import Any, Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -13,37 +15,31 @@ from stp_database.repo.base import BaseRepo
 logger = logging.getLogger(__name__)
 
 
-class PurchaseParams(TypedDict, total=False):
-    """Доступные параметры для обновления покупки пользователя в таблице purchases."""
-
-    product_id: int | None
-    comment: str | None
-    usage_count: str | None
-    bought_at: datetime | None
-    updated_at: datetime | None
-    updated_by_user_id: int | None
-    status: str
-
-
 @dataclass
 class PurchaseDetailedParams:
+    """Класс с детальными данными о покупке."""
+
     user_purchase: Purchase
     product_info: Product
 
     @property
     def max_usages(self) -> int:
+        """Возвращает кол-во максимальных использований предмета."""
         return self.product_info.count
 
     @property
     def current_usages(self) -> int:
+        """Возвращает кол-во текущих использований предмета."""
         return self.user_purchase.usage_count
 
 
 class PurchaseRepo(BaseRepo):
+    """Репозиторий для работы с покупками."""
+
     async def add_purchase(
         self, user_id: int, product_id: int, status: str = "stored"
     ) -> Purchase:
-        """Создаем новую покупку для пользователя
+        """Создание новой покупки для пользователя.
 
         Args:
             user_id: ID пользователя Telegram
@@ -51,7 +47,7 @@ class PurchaseRepo(BaseRepo):
             status: Статус покупки (по умолчанию "stored")
 
         Returns:
-            Purchase: Созданная покупка пользователя
+            Созданная покупка пользователя
         """
         from datetime import datetime
 
@@ -70,7 +66,14 @@ class PurchaseRepo(BaseRepo):
         return user_purchase
 
     async def get_user_purchases(self, user_id: int) -> list[Purchase]:
-        """Получаем полный список покупок пользователя"""
+        """Получение полного списка покупок пользователя.
+
+        Args:
+            user_id: ID пользователя Telegram
+
+        Returns:
+            Список покупок пользователя
+        """
         select_stmt = select(Purchase).where(Purchase.user_id == user_id)
         result = await self.session.execute(select_stmt)
         purchases = result.scalars().all()
@@ -79,7 +82,14 @@ class PurchaseRepo(BaseRepo):
     async def get_user_purchases_with_details(
         self, user_id: int
     ) -> list[PurchaseDetailedParams]:
-        """Получаем полный список покупок пользователя с информацией о каждой покупке"""
+        """Получение полного списка покупок пользователя с детальной информацией.
+
+        Args:
+            user_id: ID пользователя Telegram
+
+        Returns:
+            Список покупок с информацией о предметах
+        """
         from stp_database.models import Product
 
         select_stmt = (
@@ -100,7 +110,14 @@ class PurchaseRepo(BaseRepo):
     async def get_purchase_details(
         self, user_purchase_id: int
     ) -> PurchaseDetailedParams | None:
-        """Получаем детальную информацию о конкретной покупке пользователя"""
+        """Получение детальной информации о конкретной покупке пользователя.
+
+        Args:
+            user_purchase_id: ID покупки в таблице purchases
+
+        Returns:
+            Детальная информация о покупке или None если не найдена
+        """
         select_stmt = (
             select(Purchase, Product)
             .join(Product, Purchase.product_id == Product.id)
@@ -117,7 +134,14 @@ class PurchaseRepo(BaseRepo):
         return PurchaseDetailedParams(user_purchase=purchase, product_info=product)
 
     async def get_user_purchases_sum(self, user_id: int) -> int:
-        """Получаем сумму покупок пользователя через JOIN с таблицей предметов products"""
+        """Получение суммы стоимости покупок пользователя.
+
+        Args:
+            user_id: ID пользователя Telegram
+
+        Returns:
+            Общая сумма стоимости всех покупок
+        """
         select_stmt = (
             select(func.sum(Product.cost))
             .select_from(Purchase)
@@ -133,9 +157,17 @@ class PurchaseRepo(BaseRepo):
     async def get_review_purchases_for_activation(
         self, manager_role: int, division: str = None
     ) -> list[PurchaseDetailedParams]:
-        """Получаем список покупок, ожидающих активации
-        Фильтруем по статусу "review" и manager_role
-        Опционально фильтруем по division пользователей
+        """Получение списка покупок, ожидающих активации.
+
+        Фильтрует по статусу "review" и роли менеджера.
+        Опционально фильтрует по подразделению пользователей.
+
+        Args:
+            manager_role: Роль менеджера для фильтрации
+            division: Подразделение для фильтрации (опционально)
+
+        Returns:
+            Список покупок с детальной информацией
         """
         from stp_database.models import Employee, Product
 
@@ -165,8 +197,17 @@ class PurchaseRepo(BaseRepo):
     async def update_purchase(
         self,
         purchase_id: int = None,
-        **kwargs: Unpack[PurchaseParams],
+        **kwargs: Any,
     ) -> Optional[Product]:
+        """Обновление информации о покупке.
+
+        Args:
+            purchase_id: ID покупки в таблице purchases
+            **kwargs: Параметры для обновления
+
+        Returns:
+            Обновленный объект Purchase или None
+        """
         select_stmt = select(Purchase).where(Purchase.id == purchase_id)
 
         result = await self.session.execute(select_stmt)
@@ -181,10 +222,15 @@ class PurchaseRepo(BaseRepo):
         return product
 
     async def use_purchase(self, purchase_id: int) -> bool:
-        """User clicks 'Использовать' button - changes status from 'stored' to 'review'
+        """Использование покупки пользователем.
+
+        Изменяет статус покупки с 'stored' на 'review'.
+
+        Args:
+            purchase_id: ID покупки в таблице purchases
 
         Returns:
-            bool: True if successful, False if not available for use
+            True если успешно, False если недоступно для использования
         """
         select_stmt = select(Purchase).where(Purchase.id == purchase_id)
         result = await self.session.execute(select_stmt)
@@ -207,7 +253,17 @@ class PurchaseRepo(BaseRepo):
     async def approve_purchase_usage(
         self, purchase_id: int, updated_by_user_id: int
     ) -> bool:
-        """Manager approves product usage - increments usage_count and sets status back to 'stored' or 'used_up'"""
+        """Одобрение использования покупки менеджером.
+
+        Увеличивает счетчик использований и устанавливает статус 'stored' или 'used_up'.
+
+        Args:
+            purchase_id: ID покупки в таблице purchases
+            updated_by_user_id: ID пользователя, который одобрил
+
+        Returns:
+            True если успешно, False если покупка не найдена
+        """
         # Get the user purchase first
         purchase = await self.session.get(Purchase, purchase_id)
         if not purchase:
@@ -235,7 +291,17 @@ class PurchaseRepo(BaseRepo):
     async def reject_purchase_usage(
         self, purchase_id: int, updated_by_user_id: int
     ) -> bool:
-        """Отмена использования предмета - возвращает статус покупки на 'stored' или 'used_up'"""
+        """Отклонение использования покупки.
+
+        Возвращает статус покупки на 'stored' или 'used_up'.
+
+        Args:
+            purchase_id: ID покупки в таблице purchases
+            updated_by_user_id: ID пользователя, который отклонил
+
+        Returns:
+            True если успешно, False если покупка не найдена
+        """
         # Get the user purchase first
         purchase = await self.session.get(Purchase, purchase_id)
         if not purchase:
@@ -259,13 +325,15 @@ class PurchaseRepo(BaseRepo):
         return True
 
     async def delete_user_purchase(self, purchase_id: int) -> bool:
-        """Удаляет запись о покупке пользователя из БД (для возврата)
+        """Удаление записи о покупке пользователя из БД.
+
+        Используется для возврата покупки.
 
         Args:
             purchase_id: ID записи в таблице purchases
 
         Returns:
-            bool: True если успешно, False если покупка не найдена
+            True если успешно, False если покупка не найдена
         """
         select_stmt = select(Purchase).where(Purchase.id == purchase_id)
         result = await self.session.execute(select_stmt)
@@ -284,10 +352,13 @@ class PurchaseRepo(BaseRepo):
         return True
 
     async def get_most_bought_product(self, user_id: int) -> tuple[str, int] | None:
-        """Получаем самый покупаемый предмет пользователя
+        """Получение самого используемого предмета пользователя.
+
+        Args:
+            user_id: ID пользователя Telegram
 
         Returns:
-            tuple[str, int]: (название предмета, количество использований) или None если нет предметов
+            Кортеж (название предмета, количество использований) или None если нет покупок
         """
         select_stmt = (
             select(Product.name, Purchase.usage_count)
@@ -307,7 +378,7 @@ class PurchaseRepo(BaseRepo):
         return most_used.name, most_used.usage_count
 
     async def get_group_purchases_stats(self, head_name: str) -> dict:
-        """Получить статистику покупок для группы руководителя
+        """Получение статистики покупок для группы руководителя.
 
         Args:
             head_name: Имя руководителя

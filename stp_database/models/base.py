@@ -12,6 +12,8 @@ int_pk = Annotated[int, mapped_column(primary_key=True)]
 
 
 class Base(DeclarativeBase):
+    """Базовый класс для наследования в моделях."""
+
     pass
 
 

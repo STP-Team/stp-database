@@ -1,6 +1,8 @@
+"""Репозиторий для работы с логами расписания."""
+
 import logging
 from datetime import datetime
-from typing import Optional, Sequence, TypedDict, Unpack
+from typing import Any, Optional, Sequence
 
 from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -11,16 +13,9 @@ from stp_database.repo.base import BaseRepo
 logger = logging.getLogger(__name__)
 
 
-class ScheduleLogParams(TypedDict, total=False):
-    """Доступные параметры для создания/обновления записи ScheduleLog."""
-
-    file_id: str
-    file_name: str
-    file_size: int
-    uploaded_by_user_id: int
-
-
 class ScheduleLogRepo(BaseRepo):
+    """Репозиторий для работы с логами расписания."""
+
     async def get_files_history(
         self,
         file_id: Optional[str] = None,
@@ -28,7 +23,7 @@ class ScheduleLogRepo(BaseRepo):
         uploaded_from: Optional[datetime] = None,
         uploaded_to: Optional[datetime] = None,
     ) -> Sequence[Schedule]:
-        """Получить записи лога расписания по фильтрам.
+        """Получение записей лога расписания по фильтрам.
 
         Args:
             file_id: Идентификатор Telegram файла
@@ -61,10 +56,8 @@ class ScheduleLogRepo(BaseRepo):
             logger.error(f"[БД] Ошибка получения записей ScheduleLog: {e}")
             return []
 
-    async def add_file_history(
-        self, **kwargs: Unpack[ScheduleLogParams]
-    ) -> Optional[Schedule]:
-        """Добавить новую запись в логи расписания.
+    async def add_file_history(self, **kwargs: Any) -> Optional[Schedule]:
+        """Добавление новой записи в логи расписания.
 
         Args:
             kwargs: Параметры для создания записи ScheduleLog

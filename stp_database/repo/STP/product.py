@@ -1,3 +1,5 @@
+"""Репозиторий функций для взаимодействия с предметами."""
+
 from typing import List, Optional
 
 from sqlalchemy import and_, select
@@ -7,8 +9,17 @@ from stp_database.repo.base import BaseRepo
 
 
 class ProductsRepo(BaseRepo):
+    """Репозиторий для работы с предметами."""
+
     async def get_products(self, division: str = None):
-        """Получаем полный список предметов"""
+        """Получение полного списка предметов.
+
+        Args:
+            division: Фильтр по подразделению (опционально)
+
+        Returns:
+            Список предметов
+        """
         if division:
             select_stmt = select(Product).where(Product.division == division)
         else:
@@ -20,10 +31,13 @@ class ProductsRepo(BaseRepo):
         return list(products)
 
     async def get_product(self, product_id: int) -> Optional[Product]:
-        """Получение информации о предмете по ег идентификатору
+        """Получение информации о предмете по его идентификатору.
 
         Args:
             product_id: Уникальный идентификатор предмета в таблице products
+
+        Returns:
+            Объект Product
         """
         select_stmt = select(Product).where(Product.id == product_id)
         result = await self.session.execute(select_stmt)
@@ -33,8 +47,16 @@ class ProductsRepo(BaseRepo):
     async def get_available_products(
         self, user_balance: int, division: str
     ) -> List[Product]:
-        """Получаем список предметов, у которых:
-        - стоимость предмета меньше или равна кол-ву баллов пользователя
+        """Получение списка доступных предметов для пользователя.
+
+        Возвращает предметы, стоимость которых меньше или равна балансу пользователя.
+
+        Args:
+            user_balance: Количество баллов пользователя
+            division: Подразделение для фильтрации
+
+        Returns:
+            Список доступных предметов
         """
         # Получаем список предметов, подходящих под критерии
         select_stmt = select(Product).where(

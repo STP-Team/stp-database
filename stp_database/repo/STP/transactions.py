@@ -1,3 +1,5 @@
+"""Репозиторий для работы с транзакциями."""
+
 import datetime
 import logging
 from typing import Optional, Sequence, TypedDict, Unpack
@@ -25,6 +27,8 @@ class TransactionParams(TypedDict, total=False):
 
 
 class TransactionRepo(BaseRepo):
+    """Репозиторий для работы с транзакциями."""
+
     async def add_transaction(
         self,
         user_id: int,
@@ -36,7 +40,7 @@ class TransactionRepo(BaseRepo):
         created_by: Optional[int] = None,
         kpi_extracted_at: Optional[datetime] = None,
     ) -> tuple[Transaction, int] | None:
-        """Добавить новую транзакцию в БД
+        """Добавление новой транзакции в БД.
 
         Args:
             user_id: Идентификатор пользователя
@@ -49,7 +53,7 @@ class TransactionRepo(BaseRepo):
             kpi_extracted_at: Дата выгрузки KPI
 
         Returns:
-            Объект Transaction или None в случае ошибки
+            Кортеж (объект Transaction, новый баланс) или None в случае ошибки
         """
         try:
             transaction = Transaction(
@@ -80,7 +84,7 @@ class TransactionRepo(BaseRepo):
             return None
 
     async def get_transaction(self, transaction_id: int) -> Optional[Transaction]:
-        """Получить транзакцию по ID
+        """Получение транзакции по ID.
 
         Args:
             transaction_id: Уникальный идентификатор транзакции
@@ -100,7 +104,7 @@ class TransactionRepo(BaseRepo):
     async def get_user_transactions(
         self, user_id: int, only_achievements: bool = False
     ) -> Sequence[Transaction]:
-        """Получить все транзакции пользователя
+        """Получение всех транзакций пользователя.
 
         Args:
             user_id: Идентификатор пользователя
@@ -125,7 +129,7 @@ class TransactionRepo(BaseRepo):
             return []
 
     async def get_transactions(self) -> Sequence[Transaction]:
-        """Получить все транзакции
+        """Получение всех транзакций.
 
         Returns:
             Список всех транзакций
@@ -144,7 +148,7 @@ class TransactionRepo(BaseRepo):
         transaction_id: int,
         **kwargs: Unpack[TransactionParams],
     ) -> Optional[Transaction]:
-        """Обновить транзакцию
+        """Обновление транзакции.
 
         Args:
             transaction_id: ID транзакции для обновления
@@ -171,7 +175,7 @@ class TransactionRepo(BaseRepo):
             return None
 
     async def delete_transaction(self, transaction_id: int) -> bool:
-        """Удалить транзакцию из БД
+        """Удаление транзакции из БД.
 
         Args:
             transaction_id: ID транзакции для удаления
@@ -200,7 +204,9 @@ class TransactionRepo(BaseRepo):
             return False
 
     async def get_user_balance(self, user_id: int) -> int:
-        """Вычислить баланс пользователя (сумма всех транзакций)
+        """Вычисление баланса пользователя.
+
+        Баланс рассчитывается как сумма всех транзакций.
 
         Args:
             user_id: Идентификатор пользователя
@@ -224,7 +230,9 @@ class TransactionRepo(BaseRepo):
             return 0
 
     async def get_user_achievements_sum(self, user_id: int) -> int:
-        """Вычислить сумму баллов за достижения пользователя (включая ручные транзакции)
+        """Вычисление суммы баллов за достижения пользователя.
+
+        Включает достижения и ручные транзакции.
 
         Args:
             user_id: Идентификатор пользователя
@@ -250,7 +258,7 @@ class TransactionRepo(BaseRepo):
             return 0
 
     async def get_group_transactions(self, head_name: str) -> Sequence[Transaction]:
-        """Получить все транзакции группы по имени руководителя
+        """Получение всех транзакций группы по имени руководителя.
 
         Args:
             head_name: ФИО руководителя
@@ -289,7 +297,9 @@ class TransactionRepo(BaseRepo):
             return []
 
     async def get_heads_ranking_by_division(self, division: str) -> list[dict]:
-        """Получить рейтинг руководителей по дивизиону на основе очков за текущий месяц с 1-го числа
+        """Получение рейтинга руководителей по дивизиону.
+
+        Рейтинг основан на очках группы за текущий месяц с 1-го числа.
 
         Args:
             division: Название дивизиона
@@ -368,7 +378,7 @@ class TransactionRepo(BaseRepo):
             return []
 
     async def get_group_all_time_top_3(self, head_name: str) -> list[dict]:
-        """Получить ТОП-3 участников группы по всем баллам за все время
+        """Получение ТОП-3 участников группы по всем баллам за все время.
 
         Args:
             head_name: ФИО руководителя
@@ -438,7 +448,7 @@ class TransactionRepo(BaseRepo):
             return []
 
     async def get_group_stats_by_head(self, head_name: str) -> dict:
-        """Получить статистику группы по имени руководителя
+        """Получение статистики группы по имени руководителя.
 
         Args:
             head_name: ФИО руководителя

@@ -1,37 +1,93 @@
-"""STP Database Package
+"""Управление БД СТП."""
 
-A shared database layer for STP bots providing models, repositories, and database setup utilities.
-"""
+__version__ = "1.3"
 
-__version__ = "1.2"
-
-# Core database setup
+# Конфигурация и настройка
 from stp_database.config import DbConfig
 
-# Common models (exported from models/__init__.py)
-from stp_database.models import Employee, Product
+# Модели
+from stp_database.models import (
+    Achievement,
+    Broadcast,
+    Employee,
+    Group,
+    GroupMember,
+    HeadPremium,
+    Product,
+    Purchase,
+    Schedule,
+    SpecKPI,
+    SpecPremium,
+    Transaction,
+)
 
-# Base classes
+# Базовые классы
+from stp_database.models.base import Base, TableNameMixin, TimestampMixin, int_pk
 from stp_database.repo.base import BaseRepo
-from stp_database.repo.KPI.requests import KPIRequestsRepo
 
-# Repository aggregators
+# Репозитории KPI
+from stp_database.repo.KPI.head_premium import HeadPremiumRepo
+
+# Основные репозитории запросов
+from stp_database.repo.KPI.requests import KPIRequestsRepo
+from stp_database.repo.KPI.spec_kpi import SpecKPIRepo
+from stp_database.repo.KPI.spec_premium import SpecPremiumRepo
+
+# Репозитории STP
+from stp_database.repo.STP.achievement import AchievementsRepo
+from stp_database.repo.STP.broadcast import BroadcastRepo
+from stp_database.repo.STP.employee import EmployeeRepo
+from stp_database.repo.STP.group import GroupRepo
+from stp_database.repo.STP.group_member import GroupMemberRepo
+from stp_database.repo.STP.product import ProductsRepo
+from stp_database.repo.STP.purchase import PurchaseRepo
 from stp_database.repo.STP.requests import MainRequestsRepo
+from stp_database.repo.STP.schedule_log import ScheduleLogRepo
+from stp_database.repo.STP.transactions import TransactionRepo
 from stp_database.setup import create_engine, create_session_pool
 
 __all__ = [
-    # Version
+    # Версия
     "__version__",
-    # Config & Setup
+    # Конфигурация и настройка
     "DbConfig",
     "create_engine",
     "create_session_pool",
-    # Base classes
+    # Базовые классы и утилиты
+    "Base",
     "BaseRepo",
-    # Models
+    "TableNameMixin",
+    "TimestampMixin",
+    "int_pk",
+    # Модели STP
+    "Achievement",
+    "Broadcast",
     "Employee",
+    "Group",
+    "GroupMember",
     "Product",
-    # Repositories
-    "MainRequestsRepo",
+    "Purchase",
+    "Schedule",
+    "Transaction",
+    # Модели KPI
+    "HeadPremium",
+    "SpecKPI",
+    "SpecPremium",
+    # Основные репозитории запросов
     "KPIRequestsRepo",
+    "MainRequestsRepo",
+    # Репозитории STP
+    "AchievementsRepo",
+    "BroadcastRepo",
+    "EmployeeRepo",
+    "GroupRepo",
+    "GroupMemberRepo",
+    "ProductsRepo",
+    "PurchaseRepo",
+    "ScheduleLogRepo",
+    "TransactionRepo",
+    # Репозитории KPI
+    "HeadPremiumRepo",
+    "SpecKPIRepo",
+    "SpecPremiumRepo",
 ]

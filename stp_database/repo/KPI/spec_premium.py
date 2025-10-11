@@ -1,3 +1,5 @@
+"""Репозиторий функций для работы с премией специалистов."""
+
 import logging
 from typing import Optional, Sequence
 
@@ -11,49 +13,39 @@ logger = logging.getLogger(__name__)
 
 
 class SpecPremiumRepo(BaseRepo):
+    """Репозиторий с функциями для работы с премией специалистов."""
+
     async def get_premium(
         self,
-        fullname: str,
-    ) -> Optional[SpecPremium]:
-        """Поиск показателей премиума специалиста в БД по ФИО
+        fullnames: str | list[str],
+    ) -> Optional[SpecPremium] | Sequence[SpecPremium]:
+        """Поиск показателей премии специалистов в БД по ФИО.
 
         Args:
-            fullname: ФИО специалиста в БД
+            fullnames: ФИО специалиста или список ФИО специалистов в БД
 
         Returns:
-            Объект SpecPremium или ничего
+            SpecPremium или ничего (если передана строка)
+            Список объектов SpecPremium (если передан список)
         """
-        query = select(SpecPremium).where(SpecPremium.fullname == fullname)
+        # Определяем, одиночный запрос или множественный
+        is_single = isinstance(fullnames, str)
+
+        if is_single:
+            query = select(SpecPremium).where(SpecPremium.fullname == fullnames)
+        else:
+            if not fullnames:
+                return []
+            query = select(SpecPremium).where(SpecPremium.fullname.in_(fullnames))
 
         try:
             result = await self.session.execute(query)
-            return result.scalar_one_or_none()
-        except SQLAlchemyError as e:
-            logger.error(f"[БД] Ошибка получения показателей премиума специалиста: {e}")
-            return None
-
-    async def get_kpi_by_names(
-        self,
-        fullnames: list[str],
-    ) -> Sequence[SpecPremium]:
-        """Поиск показателей премиума специалистов в БД по списку ФИО
-
-        Args:
-            fullnames: Список ФИО специалистов в БД
-
-        Returns:
-            Список объектов SpecPremium
-        """
-        if not fullnames:
-            return []
-
-        query = select(SpecPremium).where(SpecPremium.fullname.in_(fullnames))
-
-        try:
-            result = await self.session.execute(query)
-            return result.scalars().all()
+            if is_single:
+                return result.scalar_one_or_none()
+            else:
+                return result.scalars().all()
         except SQLAlchemyError as e:
             logger.error(
-                f"[БД] Ошибка получения показателей премиума специалистов: {e}"
+                f"[БД] Ошибка получения показателей премиума специалиста(-ов): {e}"
             )
-            return []
+            return None if is_single else []

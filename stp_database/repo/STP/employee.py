@@ -1,5 +1,7 @@
+"""Репозиторий функций для взаимодействия с сотрудниками."""
+
 import logging
-from typing import Optional, Sequence, TypedDict, Unpack
+from typing import Any, Optional, Sequence
 
 from sqlalchemy import and_, or_, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -10,114 +12,98 @@ from stp_database.repo.base import BaseRepo
 logger = logging.getLogger(__name__)
 
 
-class EmployeeParams(TypedDict, total=False):
-    """Доступные параметры для обновления пользователя в таблице RegisteredUsers."""
-
-    user_id: int
-    username: str | None
-    division: str | None
-    position: str | None
-    fullname: str
-    head: str | None
-    email: str | None
-    role: int
-    is_trainee: bool
-    is_casino_allowed: bool
-
-
 class EmployeeRepo(BaseRepo):
-    async def get_user(
+    """Репозиторий для работы с сотрудниками."""
+
+    async def get_users(
         self,
         main_id: Optional[int] = None,
         user_id: Optional[int] = None,
         username: Optional[str] = None,
         fullname: Optional[str] = None,
         email: Optional[str] = None,
-    ) -> Optional[Employee]:
-        """Поиск пользователя в БД по фильтрам
+        head: Optional[str] = None,
+        roles: Optional[int | list[int]] = None,
+    ) -> Optional[Employee] | Sequence[Employee]:
+        """Поиск пользователя или списка пользователей.
 
         Args:
-            main_id: Primary Key
-            user_id: Уникальный идентификатор пользователя Telegram
-            username: Никнейм пользователя Telegram
-            fullname: ФИО пользователя в БД
-            email: Почта пользователя в БД
+            main_id: Primary Key (если указан, возвращает одного пользователя)
+            user_id: Уникальный идентификатор пользователя Telegram (если указан, возвращает одного пользователя)
+            username: Никнейм пользователя Telegram (если указан, возвращает одного пользователя)
+            fullname: ФИО пользователя в БД (если указан, возвращает одного пользователя)
+            email: Почта пользователя в БД (если указан, возвращает одного пользователя)
+            head: ФИО руководителя (если указан, возвращает участников группы руководителя)
+            roles: Роль (int) или список ролей (list[int]) для фильтрации списка пользователей
 
         Returns:
-            Объект User или ничего
+            Объект Employee или None (если указан main_id, user_id, username, fullname или email)
+            Последовательность Employee (если указаны только roles или параметры не указаны)
         """
-        filters = []
+        # Определяем, одиночный запрос или множественный
+        single_user_params = [main_id, user_id, username, fullname, email]
+        is_single = any(param is not None for param in single_user_params)
 
-        if main_id:
-            filters.append(Employee.id == main_id)
-        if user_id:
-            filters.append(Employee.user_id == user_id)
-        if username:
-            filters.append(Employee.username == username)
-        if fullname:
-            filters.append(Employee.fullname == fullname)
-        if email:
-            filters.append(Employee.email == email)
+        if is_single:
+            # Запрос одного пользователя
+            filters = []
 
-        if not filters:
-            raise ValueError("At least one parameter must be provided to get_user()")
+            if main_id:
+                filters.append(Employee.id == main_id)
+            if user_id:
+                filters.append(Employee.user_id == user_id)
+            if username:
+                filters.append(Employee.username == username)
+            if fullname:
+                filters.append(Employee.fullname == fullname)
+            if email:
+                filters.append(Employee.email == email)
 
-        # Combine all filters using OR
-        query = select(Employee).where(*filters)
+            query = select(Employee).where(*filters).order_by(Employee.fullname.desc())
 
-        try:
-            result = await self.session.execute(query)
-            return result.scalar_one_or_none()
-        except SQLAlchemyError as e:
-            logger.error(f"[БД] Ошибка получения пользователя: {e}")
-            return None
-
-    async def get_users(
-        self, roles: Optional[int | list[int]] = None
-    ) -> Sequence[Employee] | None:
-        """Получить пользователей по роли/ролям
-
-        Args:
-            roles: Роль (int) или список ролей (list[int]) для фильтрации.
-                  Если None - возвращает всех пользователей
-
-        Returns:
-            Список пользователей или None при ошибке
-        """
-        if roles is not None:
-            if isinstance(roles, int):
-                # Одна роль
-                query = select(Employee).where(Employee.role == roles)
-            elif isinstance(roles, list) and roles:
-                # Список ролей
-                query = select(Employee).where(Employee.role.in_(roles))
-            else:
-                # Пустой список или некорректный тип
-                query = select(Employee)
+            try:
+                result = await self.session.execute(query)
+                return result.scalar_one_or_none()
+            except SQLAlchemyError as e:
+                logger.error(f"[БД] Ошибка получения пользователя: {e}")
+                return None
         else:
-            # Все пользователи
-            query = select(Employee)
+            # Запрос списка пользователей
+            filters = []
 
-        try:
-            result = await self.session.execute(query)
-            return result.scalars().all()
-        except SQLAlchemyError as e:
-            logger.error(f"[БД] Ошибка получения списка пользователей: {e}")
-            return None
+            # Фильтр по руководителю
+            if head is not None:
+                filters.append(Employee.head == head)
 
-    async def get_heads(self) -> Sequence[Employee] | None:
-        query = select(Employee).where(Employee.role == 2)
+            # Фильтр по ролям
+            if roles is not None:
+                if isinstance(roles, int):
+                    # Одна роль
+                    filters.append(Employee.role == roles)
+                elif isinstance(roles, list) and roles:
+                    # Список ролей
+                    filters.append(Employee.role.in_(roles))
 
-        try:
-            result = await self.session.execute(query)
-            return result.scalars().all()
-        except SQLAlchemyError as e:
-            logger.error(f"[БД] Ошибка получения списка руководителей: {e}")
-            return None
+            # Формируем запрос
+            if filters:
+                query = (
+                    select(Employee).where(*filters).order_by(Employee.fullname.desc())
+                )
+            else:
+                # Все пользователи
+                query = select(Employee).order_by(Employee.fullname.desc())
+
+            try:
+                result = await self.session.execute(query)
+                return result.scalars().all()
+            except SQLAlchemyError as e:
+                logger.error(f"[БД] Ошибка получения списка пользователей: {e}")
+                return []
 
     async def get_unauthorized_users(self, head_name: str = None) -> Sequence[Employee]:
-        """Получить список неавторизованных пользователей
-        Неавторизованные пользователи - те, у которых отсутствует user_id (не связан с Telegram)
+        """Получает список неавторизованных пользователей.
+
+        Неавторизованные пользователи - те, у которых отсутствует user_id (не связан с Telegram).
 
         Args:
             head_name: Фильтр по имени руководителя (опционально)
@@ -146,8 +132,17 @@ class EmployeeRepo(BaseRepo):
     async def update_user(
         self,
         user_id: int = None,
-        **kwargs: Unpack[EmployeeParams],
+        **kwargs: Any,
     ) -> Optional[Employee]:
+        """Обновление сотрудника.
+
+        Args:
+            user_id: Идентификатор Telegram сотрудника
+            **kwargs: Параметры для обновления
+
+        Returns:
+            Обновленный объект Employee или None
+        """
         select_stmt = select(Employee).where(Employee.user_id == user_id)
 
         result = await self.session.execute(select_stmt)
@@ -163,16 +158,17 @@ class EmployeeRepo(BaseRepo):
 
     async def get_users_by_fio_parts(
         self, fullname: str, limit: int = 10
-    ) -> Sequence[Employee]:
-        """Поиск пользователей по частичному совпадению ФИО
-        Возвращает список пользователей для случаев, когда найдено несколько совпадений
+    ) -> Sequence[Employee] | None:
+        """Поиск пользователей по частичному совпадению ФИО.
+
+        Возвращает список пользователей для случаев, когда найдено несколько совпадений.
 
         Args:
             fullname: Частичное или полное ФИО для поиска
             limit: Максимальное количество результатов
 
         Returns:
-            Список объектов User
+            Список объектов User или None
         """
         name_parts = fullname.strip().split()
         if not name_parts:
@@ -195,8 +191,10 @@ class EmployeeRepo(BaseRepo):
 
     async def search_users(
         self, search_query: str, limit: int = 50
-    ) -> Sequence[Employee]:
-        """Универсальный поиск пользователей по различным критериям:
+    ) -> Sequence[Employee] | None:
+        """Универсальный поиск пользователей.
+
+         Поиск по различным критериям:
         - User ID (число)
         - Username Telegram (начинается с @)
         - Частичное/полное ФИО
@@ -206,7 +204,7 @@ class EmployeeRepo(BaseRepo):
             limit: Максимальное количество результатов
 
         Returns:
-            Список объектов Employee
+            Список объектов Employee или None
         """
         search_query = search_query.strip()
         if not search_query:
@@ -256,99 +254,19 @@ class EmployeeRepo(BaseRepo):
             logger.error(f"[БД] Ошибка универсального поиска пользователей: {e}")
             return []
 
-    async def get_users_by_head(self, head_name: str) -> Sequence[Employee]:
-        """Получить всех пользователей с указанным руководителем
-
-        Args:
-            head_name: Имя руководителя
-
-        Returns:
-            Список пользователей с указанным руководителем
-        """
-        try:
-            # Get the head's division first to check if it's НТП
-            head_user = await self.get_user(fullname=head_name)
-
-            if head_user and head_user.division and "НТП" in head_user.division:
-                # For НТП heads, get members from both НТП1 and НТП2
-                result = await self.session.execute(
-                    select(Employee)
-                    .where(
-                        Employee.head == head_name,
-                        Employee.division.in_(["НТП1", "НТП2"]),
-                    )
-                    .order_by(Employee.fullname)
-                )
-            else:
-                # For other divisions, use the standard logic
-                result = await self.session.execute(
-                    select(Employee)
-                    .where(Employee.head == head_name)
-                    .order_by(Employee.fullname)
-                )
-
-            return list(result.scalars().all())
-        except Exception as e:
-            logger.error(
-                f"Ошибка получения пользователей по руководителю {head_name}: {e}"
-            )
-            return []
-
-    async def get_admins(self) -> Sequence[Employee]:
-        query = select(Employee).where(Employee.role == 10)
-
-        try:
-            result = await self.session.execute(query)
-            return result.scalars().all()
-        except SQLAlchemyError as e:
-            logger.error(f"[БД] Ошибка получения администраторов: {e}")
-            return []
-
-    async def get_users_by_role(
-        self, role: int, division: str = None
-    ) -> Sequence[Employee]:
-        """Получить пользователей с определенной ролью
-
-        Args:
-            role: Роль пользователя
-            division: Направление пользователя. Если указано "НТП", будет искать всех пользователей
-                     с division содержащим "НТП" (включая "НТП1", "НТП2" и т.д.)
-
-        Returns:
-            Список пользователей с указанной ролью
-        """
-        if division:
-            if division == "НТП":
-                query = select(Employee).where(
-                    Employee.role == role, Employee.division.ilike(f"%{division}%")
-                )
-            else:
-                query = select(Employee).where(
-                    Employee.role == role, Employee.division == division
-                )
-        else:
-            query = select(Employee).where(Employee.role == role)
-
-        try:
-            result = await self.session.execute(query)
-            return result.scalars().all()
-        except SQLAlchemyError as e:
-            logger.error(f"[БД] Ошибка получения пользователей с ролью {role}: {e}")
-            return []
-
     async def delete_user(self, fullname: str = None, user_id: int = None) -> int:
-        """Удаление пользователей из БД по полному имени или user_id
+        """Удаление сотрудников.
 
         Args:
-            fullname: Полное ФИО пользователя для удаления (опционально)
-            user_id: ID пользователя для удаления (опционально)
+            fullname: ФИО сотрудника
+            user_id: Идентификатор Telegram сотрудника
 
         Returns:
-            Количество удаленных пользователей
+            Кол-во удаленных пользователей
         """
         if not fullname and not user_id:
             raise ValueError(
-                "At least one parameter (fullname or user_id) must be provided"
+                "Как минимум один параметр (fullname или user_id) должен быть предоставлен"
             )
 
         try:

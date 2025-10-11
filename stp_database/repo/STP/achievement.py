@@ -11,35 +11,36 @@ from stp_database.repo.base import BaseRepo
 class AchievementsRepo(BaseRepo):
     """Класс репозитория достижений."""
 
-    async def get_achievements(self, division: str = None) -> Sequence[Achievement]:
-        """Получает полный список достижений.
+    async def get_achievements(
+        self,
+        achievement_id: int | None = None,
+        division: str | None = None,
+    ) -> Optional[Achievement] | Sequence[Achievement]:
+        """Получает достижение(я) по идентификатору или список достижений.
 
         Args:
-            division: Фильтр по направлению (НЦК, НТП и т.д.)
+            achievement_id: Уникальный идентификатор достижения (если указан, возвращает одно достижение)
+            division: Фильтр по направлению (НЦК, НТП и т.д.) - используется только если achievement_id не указан
 
         Returns:
-            Последовательность Achievement. С фильтрацией по направлению, если указан division
+            Achievement или None (если указан achievement_id)
+            Последовательность Achievement (если achievement_id не указан)
         """
-        if division:
-            select_stmt = select(Achievement).where(Achievement.division == division)
+        if achievement_id is not None:
+            # Запрос одного достижения по ID
+            select_stmt = select(Achievement).where(Achievement.id == achievement_id)
+            result = await self.session.execute(select_stmt)
+            return result.scalar_one_or_none()
         else:
-            select_stmt = select(Achievement)
+            # Запрос списка достижений с опциональной фильтрацией по division
+            if division:
+                select_stmt = select(Achievement).where(
+                    Achievement.division == division
+                )
+            else:
+                select_stmt = select(Achievement)
 
-        result = await self.session.execute(select_stmt)
-        achievements = result.scalars().all()
+            result = await self.session.execute(select_stmt)
+            achievements = result.scalars().all()
 
-        return list(achievements)
-
-    async def get_achievement(self, achievement_id: int) -> Optional[Achievement]:
-        """Получает информацию о достижении по идентификатору.
-
-        Args:
-            achievement_id: Уникальный идентификатор достижения в таблице achievements
-
-        Returns:
-            Achievement, если достижение найдено, иначе None
-        """
-        select_stmt = select(Achievement).where(Achievement.id == achievement_id)
-        result = await self.session.execute(select_stmt)
-
-        return result.scalar_one()
+            return list(achievements)
