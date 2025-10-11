@@ -21,8 +21,7 @@ class Transaction(Base):
         source_id: Идентификатор достижения или предмета. Для manual или casino — None
         source_type: Источник транзакции: achievement, product, casino, manual
         amount: Количество баллов
-        user_comment: Комментарий сотрудника, подавшего предмет на активацию
-        manager_comment: Комментарий менеджера, ответственного за активацию предмета
+        comment: Комментарий к транзакции
         kpi_extracted_at: Дата выгрузки показателей. Указывается в случае награды за достижения
         created_by: ID администратора, создавшего транзакцию. None если создана автоматически
         created_at: Дата создания транзакции
@@ -53,11 +52,8 @@ class Transaction(Base):
     amount: Mapped[int] = mapped_column(
         Integer, nullable=False, comment="Количество баллов"
     )
-    user_comment: Mapped[Optional[str]] = mapped_column(
-        String(255), nullable=True, comment="Комментарий"
-    )
-    manager_comment: Mapped[Optional[str]] = mapped_column(
-        String(255), nullable=True, comment="Комментарий"
+    comment: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True, comment="Комментарий к транзакции"
     )
     kpi_extracted_at: Mapped[Optional[datetime]] = mapped_column(
         TIMESTAMP,

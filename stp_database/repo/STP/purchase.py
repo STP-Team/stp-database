@@ -17,7 +17,7 @@ class PurchaseParams(TypedDict, total=False):
     """Доступные параметры для обновления покупки пользователя в таблице purchases."""
 
     product_id: int | None
-    user_comment: str | None
+    comment: str | None
     usage_count: str | None
     bought_at: datetime | None
     updated_at: datetime | None
@@ -41,7 +41,7 @@ class PurchaseDetailedParams:
 
 class PurchaseRepo(BaseRepo):
     async def add_purchase(
-        self, user_id: int, product_id: int, status: str = "stored", comment: str = None
+        self, user_id: int, product_id: int, status: str = "stored"
     ) -> Purchase:
         """Создаем новую покупку для пользователя
 
@@ -49,7 +49,6 @@ class PurchaseRepo(BaseRepo):
             user_id: ID пользователя Telegram
             product_id: ID предмета из таблицы products
             status: Статус покупки (по умолчанию "stored")
-            comment: Комментарий к покупке (опционально)
 
         Returns:
             Purchase: Созданная покупка пользователя
