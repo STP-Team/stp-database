@@ -64,16 +64,23 @@ class FilesRepo(BaseRepo):
             logger.error(f"[БД] Ошибка получения записей файлов: {e}")
             return []
 
-    async def get_file_by_id(self, file_id: str) -> Optional[File]:
+    async def get_file_by_id(
+        self, main_id: int = None, file_id: str = None
+    ) -> Optional[File]:
         """Получение файла по его Telegram file_id.
 
         Args:
+            main_id: Уникальный идентификатор файла
             file_id: Идентификатор Telegram файла
 
         Returns:
             Объект File или None, если файл не найден
         """
-        query = select(File).where(File.file_id == file_id)
+        if main_id:
+            query = select(File).where(File.id == main_id)
+        elif file_id:
+            query = select(File).where(File.file_id == file_id)
+
         try:
             result = await self.session.execute(query)
             return result.scalar_one_or_none()
