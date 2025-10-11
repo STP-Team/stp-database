@@ -10,12 +10,12 @@ from stp_database.models import (
     Achievement,
     Broadcast,
     Employee,
+    File,
     Group,
     GroupMember,
     HeadPremium,
     Product,
     Purchase,
-    Schedule,
     SpecKPI,
     SpecPremium,
     Transaction,
@@ -37,12 +37,12 @@ from stp_database.repo.KPI.spec_premium import SpecPremiumRepo
 from stp_database.repo.STP.achievement import AchievementsRepo
 from stp_database.repo.STP.broadcast import BroadcastRepo
 from stp_database.repo.STP.employee import EmployeeRepo
+from stp_database.repo.STP.files import FilesRepo
 from stp_database.repo.STP.group import GroupRepo
 from stp_database.repo.STP.group_member import GroupMemberRepo
 from stp_database.repo.STP.product import ProductsRepo
 from stp_database.repo.STP.purchase import PurchaseRepo
 from stp_database.repo.STP.requests import MainRequestsRepo
-from stp_database.repo.STP.schedule_log import ScheduleLogRepo
 from stp_database.repo.STP.transactions import TransactionRepo
 from stp_database.setup import create_engine, create_session_pool
 
@@ -67,7 +67,7 @@ __all__ = [
     "GroupMember",
     "Product",
     "Purchase",
-    "Schedule",
+    "File",
     "Transaction",
     # Модели KPI
     "HeadPremium",
@@ -84,7 +84,7 @@ __all__ = [
     "GroupMemberRepo",
     "ProductsRepo",
     "PurchaseRepo",
-    "ScheduleLogRepo",
+    "FilesRepo",
     "TransactionRepo",
     # Репозитории KPI
     "HeadPremiumRepo",

@@ -7,11 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from stp_database.repo.STP.achievement import AchievementsRepo
 from stp_database.repo.STP.broadcast import BroadcastRepo
 from stp_database.repo.STP.employee import EmployeeRepo
+from stp_database.repo.STP.files import FilesRepo
 from stp_database.repo.STP.group import GroupRepo
 from stp_database.repo.STP.group_member import GroupMemberRepo
 from stp_database.repo.STP.product import ProductsRepo
 from stp_database.repo.STP.purchase import PurchaseRepo
-from stp_database.repo.STP.schedule_log import ScheduleLogRepo
 from stp_database.repo.STP.transactions import TransactionRepo
 
 
@@ -55,9 +55,9 @@ class MainRequestsRepo:
         return BroadcastRepo(self.session)
 
     @property
-    def upload(self) -> ScheduleLogRepo:
+    def upload(self) -> FilesRepo:
         """Инициализация репозитория ScheduleLogRepo с сессией для работы с загрузкой файлов."""
-        return ScheduleLogRepo(self.session)
+        return FilesRepo(self.session)
 
     @property
     def group(self) -> GroupRepo:
