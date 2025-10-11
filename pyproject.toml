@@ -1,6 +1,6 @@
 [project]
 name = "stp-database"
-version = "0.1.1"
+version = "1.0"
 description = "Модели и репозитории для взаимодействия с БД СТП"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -23,3 +23,13 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["stp_database"]
+
+[tool.ruff]
+preview = true
+
+[tool.ruff.lint]
+select = ["D", "E", "F", "I"]
+ignore = ["D417", "E501"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

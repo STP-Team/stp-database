@@ -6,11 +6,10 @@ from sqlalchemy import URL
 
 @dataclass
 class DbConfig:
-    """
-    Database configuration class.
+    """Database configuration class.
     This class holds the settings for the database, such as host, password, port, etc.
 
-    Attributes
+    Attributes:
     ----------
     host : str
         Хост, на котором находится база данных
@@ -32,8 +31,7 @@ class DbConfig:
         db_name: Optional[str] = None,
         driver: str = "aiomysql",
     ) -> URL:
-        """
-        Constructs and returns SQLAlchemy URL for MariaDB database connection
+        """Constructs and returns SQLAlchemy URL for MariaDB database connection
 
         Parameters
         ----------
@@ -42,7 +40,7 @@ class DbConfig:
         driver : str, default="aiomysql"
             The MySQL driver to use (aiomysql, pymysql, etc.)
 
-        Returns
+        Returns:
         -------
         URL
             SQLAlchemy URL object for database connection

@@ -1,4 +1,6 @@
-from typing import Optional
+"""Репозиторий функций для взаимодействия с таблицей достижений."""
+
+from typing import Optional, Sequence
 
 from sqlalchemy import select
 
@@ -7,14 +9,17 @@ from stp_database.repo.base import BaseRepo
 
 
 class AchievementsRepo(BaseRepo):
-    async def get_achievements(self, division: str = None):
-        """
-        Получаем полный список достижений
+    """Класс репозитория достижений."""
+
+    async def get_achievements(self, division: str = None) -> Sequence[Achievement]:
+        """Получает полный список достижений.
 
         Args:
             division: Фильтр по направлению (НЦК, НТП и т.д.)
-        """
 
+        Returns:
+            Последовательность Achievement. С фильтрацией по направлению, если указан division
+        """
         if division:
             select_stmt = select(Achievement).where(Achievement.division == division)
         else:
@@ -26,13 +31,14 @@ class AchievementsRepo(BaseRepo):
         return list(achievements)
 
     async def get_achievement(self, achievement_id: int) -> Optional[Achievement]:
-        """
-        Получение информации о достижении по его идентификатору
+        """Получает информацию о достижении по идентификатору.
 
         Args:
             achievement_id: Уникальный идентификатор достижения в таблице achievements
-        """
 
+        Returns:
+            Achievement, если достижение найдено, иначе None
+        """
         select_stmt = select(Achievement).where(Achievement.id == achievement_id)
         result = await self.session.execute(select_stmt)
 

@@ -2,17 +2,15 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from stp_database.models.KPI.spec_kpi import SpecDayKPI, SpecMonthKPI, SpecWeekKPI
 from stp_database.repo.KPI.head_premium import HeadPremiumRepo
-from stp_database.repo.KPI.spec_day_kpi import SpecDayKPIRepo
-from stp_database.repo.KPI.spec_month_kpi import SpecMonthKPIRepo
+from stp_database.repo.KPI.spec_kpi import SpecKPIRepo
 from stp_database.repo.KPI.spec_premium import SpecPremiumRepo
-from stp_database.repo.KPI.spec_week_kpi import SpecWeekKPIRepo
 
 
 @dataclass
 class KPIRequestsRepo:
-    """
-    Repository for handling database operations. This class holds all the repositories for the database models.
+    """Repository for handling database operations. This class holds all the repositories for the database models.
 
     You can add more repositories as properties to this class, so they will be easily accessible.
     """
@@ -21,35 +19,25 @@ class KPIRequestsRepo:
 
     @property
     def head_premium(self) -> HeadPremiumRepo:
-        """
-        The HeadPremiumRepo repository sessions are required to manage head premium operations.
-        """
+        """The HeadPremiumRepo repository sessions are required to manage head premium operations."""
         return HeadPremiumRepo(self.session)
 
     @property
-    def spec_day_kpi(self) -> SpecDayKPIRepo:
-        """
-        The SpecDayKPIRepo repository sessions are required to manage specialist daily kpi operations.
-        """
-        return SpecDayKPIRepo(self.session)
+    def spec_day_kpi(self) -> SpecKPIRepo:
+        """The SpecKPIRepo repository sessions are required to manage specialist daily kpi operations."""
+        return SpecKPIRepo(self.session, SpecDayKPI)
 
     @property
-    def spec_week_kpi(self) -> SpecWeekKPIRepo:
-        """
-        The SpecWeekKPIRepo repository sessions are required to manage specialist weekly kpi operations.
-        """
-        return SpecWeekKPIRepo(self.session)
+    def spec_week_kpi(self) -> SpecKPIRepo:
+        """The SpecKPIRepo repository sessions are required to manage specialist weekly kpi operations."""
+        return SpecKPIRepo(self.session, SpecWeekKPI)
 
     @property
-    def spec_month_kpi(self) -> SpecMonthKPIRepo:
-        """
-        The SpecMonthKPIRepo repository sessions are required to manage specialist monthly kpi operations.
-        """
-        return SpecMonthKPIRepo(self.session)
+    def spec_month_kpi(self) -> SpecKPIRepo:
+        """The SpecKPIRepo repository sessions are required to manage specialist monthly kpi operations."""
+        return SpecKPIRepo(self.session, SpecMonthKPI)
 
     @property
     def spec_premium(self) -> SpecPremiumRepo:
-        """
-        The SpecPremiumRepo repository sessions are required to manage specialist premium operations.
-        """
+        """The SpecPremiumRepo repository sessions are required to manage specialist premium operations."""
         return SpecPremiumRepo(self.session)

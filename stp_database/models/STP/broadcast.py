@@ -1,32 +1,25 @@
-from sqlalchemy import BIGINT, Enum, Text, TIMESTAMP, func, Integer, String, JSON
+"""Модели, связанные с сущностями рассылок."""
+
+from typing import List, Optional
+
+from sqlalchemy import BIGINT, JSON, TIMESTAMP, Enum, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
-from typing import Optional, List
-
-from stp_database.models.base import Base, TableNameMixin
 
 
-class Broadcast(Base, TableNameMixin):
-    """
-    Модель, представляющая сущность рассылки в БД
+class Broadcast:
+    """Модель, представляющая сущность рассылки в БД.
 
-    Attributes:
-        id (Mapped[int]): Уникальный идентификатор рассылки.
-        user_id (Mapped[int]): Идентификатор владельца рассылки.
-        type (Mapped[str]): Тип рассылки: division или group.
-        target (Mapped[str]): Конкретная цель рассылки: подразделение (НЦК, НТП1, НТП2) или выбранная группа.
-        text (Mapped[str]): Текст рассылки.
-        recipients (Mapped[Optional[List[int]]]): Список user_id, получивших рассылку.
-        created_at (Mapped[TIMESTAMP]): Время создания рассылки.
+    Args:
+        id: Уникальный идентификатор рассылки
+        user_id: Идентификатор владельца рассылки
+        type: Тип рассылки: division или group
+        target: Конкретная цель рассылки: подразделение (НЦК, НТП1, НТП2) или выбранная группа
+        text: Текст рассылки
+        recipients: Список user_id, получивших рассылку
+        created_at: Время создания рассылки
 
     Methods:
-        __repr__(): Returns a string representation of the Broadcast object.
-
-    Inherited Attributes:
-        Inherits from Base and TableNameMixin classes, which provide additional attributes and functionality.
-
-    Inherited Methods:
-        Inherits methods from Base and TableNameMixin classes, which provide additional functionality.
-
+        __repr__(): Возвращает строковое представление объекта Broadcast.
     """
 
     __tablename__ = "broadcasts"
@@ -54,4 +47,5 @@ class Broadcast(Base, TableNameMixin):
     )
 
     def __repr__(self):
-        return f"<Broadcast {self.id} user_id={self.user_id} type={self.type} target={self.target} recipients={len(self.recipients or [])} created_at={self.created_at}>"
+        """Возвращает строковое представление объекта Broadcast."""
+        return f"<Broadcast {self.id} {self.user_id} {self.type} {self.target} {self.created_at}>"

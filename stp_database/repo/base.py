@@ -2,13 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class BaseRepo:
-    """
-    A class representing a base repository for handling database operations.
-
-    Attributes:
-        session (AsyncSession): The database session used by the repository.
-
-    """
+    """Класс, представляющий базовый репозиторий для обработки операций с базой данных."""
 
     def __init__(self, session):
         self.session: AsyncSession = session

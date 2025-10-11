@@ -52,8 +52,9 @@ htmlcov/
 .dmypy.json
 dmypy.json
 
-# Ruff
+# Ruff / uv
 .ruff_cache/
+uv.lock
 
 # Environment variables
 .env

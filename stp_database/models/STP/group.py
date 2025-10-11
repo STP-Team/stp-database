@@ -1,28 +1,24 @@
+"""Модели, связанные с сущностями групп."""
+
 from sqlalchemy import JSON, Boolean
 from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.orm import Mapped, mapped_column
 
-from stp_database.models.base import Base, TableNameMixin
 
+class Group:
+    """Класс, представляющий сущность группы в БД.
 
-class Group(Base, TableNameMixin):
-    """
-    Класс, представляющий сущность группы в БД.
-
-    Attributes:
-        group_id (Mapped[int]): Идентификатор группы Telegram.
-        invited_by (Mapped[int]): Идентификатор Telegram пригласившего.
-        remove_unemployed (Mapped[bool]): Удалять уволенных сотрудников из группы.
+    Args:
+        group_id: Идентификатор группы Telegram
+        invited_by: Идентификатор Telegram пригласившего
+        remove_unemployed: Удалять уволенных сотрудников из группы
+        is_casino_allowed: Разрешено ли использование команд казино в группе
+        new_user_notify: Уведомлять ли о новых пользователях в группе
+        allowed_roles: Список разрешенных ролей для доступа к группе
+        service_messages: Список сервисных сообщений на удаление
 
     Methods:
-        __repr__(): Returns a string representation of the Group object.
-
-    Inherited Attributes:
-        Inherits from Base and TableNameMixin classes, which provide additional attributes and functionality.
-
-    Inherited Methods:
-        Inherits methods from Base and TableNameMixin classes, which provide additional functionality.
-
+        __repr__(): Возвращает строковое представление объекта Group.
     """
 
     __tablename__ = "groups"
@@ -65,4 +61,5 @@ class Group(Base, TableNameMixin):
     )
 
     def __repr__(self):
-        return f"<Group group_id={self.group_id} invited_by={self.invited_by}>"
+        """Возвращает строковое представление объекта Group."""
+        return f"<Group {self.group_id} {self.invited_by} {self.remove_unemployed} {self.is_casino_allowed} {self.new_user_notify} {self.allowed_roles} {self.service_messages}>"

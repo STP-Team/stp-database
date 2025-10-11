@@ -1,32 +1,24 @@
+"""Модели, связанные с сущностями достижений."""
+
 from sqlalchemy import Integer
 from sqlalchemy.dialects.mysql import VARCHAR
 from sqlalchemy.orm import Mapped, mapped_column
 
-from stp_database.models.base import Base, TableNameMixin
 
+class Achievement:
+    """Класс, представляющий сущность достижения в БД.
 
-class Achievement(Base, TableNameMixin):
-    """
-    Класс, представляющий сущность достижения в БД.
-
-    Attributes:
-        id (Mapped[int]): Уникальный идентификатор пользователя.
-        name (Mapped[str]): Название достижения.
-        description (Mapped[int]): Описание достижения.
-        division (Mapped[str]): Направление для получения достижения.
-        kpi (Mapped[str]): Показатели для получения достижения.
-        reward (Mapped[str]): Награда за достижение в баллах.
-        position (Mapped[str]): Позиция специалиста для получения достижения.
+    Args:
+        id: Уникальный идентификатор достижения
+        name: Название достижения
+        description: Описание достижения
+        division: Направление сотрудника (НТП/НЦК) для получения достижения
+        kpi: Показатели KPI для получения достижения
+        reward: Награда за получение достижение в баллах
+        position: Позиция/должность сотрудника для получения достижения
 
     Methods:
-        __repr__(): Returns a string representation of the User object.
-
-    Inherited Attributes:
-        Inherits from Base and TableNameMixin classes, which provide additional attributes and functionality.
-
-    Inherited Methods:
-        Inherits methods from Base and TableNameMixin classes, which provide additional functionality.
-
+        __repr__(): Возвращает строковое представление объекта Achievement.
     """
 
     __tablename__ = "achievements"
@@ -41,7 +33,5 @@ class Achievement(Base, TableNameMixin):
     period: Mapped[str] = mapped_column(VARCHAR(1), nullable=False)
 
     def __repr__(self):
-        return (
-            f"<Achievement {self.id} {self.name} {self.description}"
-            f"{self.division} {self.kpi} {self.reward} {self.position} {self.period}>"
-        )
+        """Возвращает строковое представление объекта Achievement."""
+        return f"<Achievement {self.id} {self.name} {self.description} {self.division} {self.kpi} {self.reward} {self.position} {self.period}>"

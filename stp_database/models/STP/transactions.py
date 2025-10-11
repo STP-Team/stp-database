@@ -1,3 +1,5 @@
+"""Модели, связанные с сущностями транзакций."""
+
 from datetime import datetime
 from typing import Optional
 
@@ -6,33 +8,25 @@ from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
-from stp_database.models.base import Base, TableNameMixin
 
+class Transaction:
+    """Класс, представляющий сущность транзакции пользователя в БД.
 
-class Transaction(Base, TableNameMixin):
-    """
-    Класс, представляющий сущность транзакции пользователя в БД.
-
-    Attributes:
-        id (Mapped[int]): Уникальный идентификатор транзакции.
-        user_id (Mapped[int]): Идентификатор пользователя.
-        type (Mapped[str]): Тип операции: начисление или списание.
-        source_id (Mapped[Optional[int]]): Идентификатор достижения или предмета. Для manual или casino — NULL.
-        source_type (Mapped[str]): Источник транзакции: achievement, product, casino, manual.
-        amount (Mapped[int]): Количество баллов.
-        comment (Mapped[Optional[str]]): Комментарий.
-        created_by (Mapped[Optional[int]]): ID администратора, создавшего транзакцию.
-        created_at (Mapped[Optional[datetime]]): Дата создания транзакции.
+    Args:
+        id: Уникальный идентификатор транзакции
+        user_id: Идентификатор Telegram сотрудника
+        type: Тип операции: начисление или списание (earn/spend)
+        source_id: Идентификатор достижения или предмета. Для manual или casino — None
+        source_type: Источник транзакции: achievement, product, casino, manual
+        amount: Количество баллов
+        user_comment: Комментарий сотрудника, подавшего предмет на активацию
+        manager_comment: Комментарий менеджера, ответственного за активацию предмета
+        kpi_extracted_at: Дата выгрузки показателей. Указывается в случае награды за достижения
+        created_by: ID администратора, создавшего транзакцию. None если создана автоматически
+        created_at: Дата создания транзакции
 
     Methods:
-        __repr__(): Returns a string representation of the Transaction object.
-
-    Inherited Attributes:
-        Inherits from Base and TableNameMixin classes, which provide additional attributes and functionality.
-
-    Inherited Methods:
-        Inherits methods from Base and TableNameMixin classes, which provide additional functionality.
-
+        __repr__(): Возвращает строковое представление объекта Transaction.
     """
 
     __tablename__ = "transactions"
@@ -57,16 +51,19 @@ class Transaction(Base, TableNameMixin):
     amount: Mapped[int] = mapped_column(
         Integer, nullable=False, comment="Количество баллов"
     )
-    comment: Mapped[Optional[str]] = mapped_column(
+    user_comment: Mapped[Optional[str]] = mapped_column(
         String(255), nullable=True, comment="Комментарий"
     )
-    created_by: Mapped[Optional[int]] = mapped_column(
-        BIGINT, nullable=True, comment="ID администратора, создавшего транзакцию"
+    manager_comment: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True, comment="Комментарий"
     )
     kpi_extracted_at: Mapped[Optional[datetime]] = mapped_column(
         TIMESTAMP,
         nullable=True,
         comment="Начальная дата выгружаемых показателей",
+    )
+    created_by: Mapped[Optional[int]] = mapped_column(
+        BIGINT, nullable=True, comment="ID администратора, создавшего транзакцию"
     )
     created_at: Mapped[Optional[datetime]] = mapped_column(
         TIMESTAMP,
@@ -76,4 +73,5 @@ class Transaction(Base, TableNameMixin):
     )
 
     def __repr__(self):
-        return f"<Transaction id={self.id} user_id={self.user_id} type={self.type} source_id={self.source_id} source_type={self.source_type} amount={self.amount} comment={self.comment} created_by={self.created_by} created_at={self.created_at}>"
+        """Возвращает строковое представление объекта Transaction."""
+        return f"<Transaction {self.id} {self.user_id} {self.type} {self.source_id} {self.source_type} {self.amount} {self.created_at}>"

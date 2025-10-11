@@ -1,35 +1,26 @@
+"""Модели, связанные с сущностями покупок предметов."""
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, Integer
 from sqlalchemy.dialects.mysql import BIGINT, VARCHAR
 from sqlalchemy.orm import Mapped, mapped_column
 
-from stp_database.models.base import Base, TableNameMixin
 
+class Purchase:
+    """Класс, представляющий сущность покупки пользователя в БД.
 
-class Purchase(Base, TableNameMixin):
-    """
-    Класс, представляющий сущность покупки пользователя в БД.
-
-    Attributes:
-        id (Mapped[int]): Уникальный идентификатор пользователя.
-        user_id (Mapped[int]): Идентификатор пользователя, который приобрел предмет.
-        product_id (Mapped[int]): Идентификатор предмета в таблице products.
-        comment (Mapped[str]): Комментарий пользователя к поданному предмету.
-        usage_count (Mapped[int]): Кол-во использований предмета.
-        bought_at (Mapped[datetime]): Время приобретения предмета.
-        updated_at (Mapped[datetime]): Время подтверждения предмета.
-        updated_by_user_id (Mapped[int]): Идентификатор пользователя Telegram, активировавшего покупку
+    Args:
+        id: Уникальный идентификатор покупки
+        user_id: Идентификатор сотрудника в Telegram, купившего предмет
+        product_id: Идентификатор предмета
+        usage_count: Кол-во использований предмета
+        bought_at: Время приобретения предмета
+        updated_at: Время подтверждения активации предмета
+        updated_by_user_id: Идентификатор пользователя Telegram, изменившего статус активации предмета
 
     Methods:
-        __repr__(): Returns a string representation of the User object.
-
-    Inherited Attributes:
-        Inherits from Base and TableNameMixin classes, which provide additional attributes and functionality.
-
-    Inherited Methods:
-        Inherits methods from Base and TableNameMixin classes, which provide additional functionality.
-
+        __repr__(): Возвращает строковое представление объекта Purchase.
     """
 
     __tablename__ = "purchases"
@@ -37,7 +28,6 @@ class Purchase(Base, TableNameMixin):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BIGINT, nullable=True)
     product_id: Mapped[int] = mapped_column(VARCHAR(255), nullable=False)
-    comment: Mapped[str] = mapped_column(VARCHAR, nullable=True)
     usage_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     bought_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
@@ -47,4 +37,5 @@ class Purchase(Base, TableNameMixin):
     status: Mapped[str] = mapped_column(VARCHAR(10), nullable=False, default="stored")
 
     def __repr__(self):
-        return f"<ProductUsage {self.id} {self.user_id} {self.product_id} {self.comment} {self.usage_count} {self.bought_at} {self.updated_at} {self.updated_by_user_id} {self.status}>"
+        """Возвращает строковое представление объекта Purchase."""
+        return f"<ProductUsage {self.id} {self.user_id} {self.product_id} {self.usage_count} {self.bought_at} {self.updated_at} {self.updated_by_user_id} {self.status}>"
