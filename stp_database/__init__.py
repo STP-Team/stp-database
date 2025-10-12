@@ -1,15 +1,18 @@
 """Управление БД СТП."""
 
-__version__ = "1.3.5"
+__version__ = "1.3.6"
 
 # Конфигурация и настройка
 from stp_database.config import DbConfig
 
-# Модели
+# Модели STP
+# Модели KPI
+# Модели Gifter
 from stp_database.models import (
     Achievement,
     Broadcast,
     Employee,
+    Event,
     File,
     Group,
     GroupMember,
@@ -19,6 +22,8 @@ from stp_database.models import (
     SpecKPI,
     SpecPremium,
     Transaction,
+    User,
+    UserEvent,
 )
 
 # Базовые классы
@@ -63,28 +68,32 @@ __all__ = [
     "Achievement",
     "Broadcast",
     "Employee",
+    "File",
     "Group",
     "GroupMember",
     "Product",
     "Purchase",
-    "File",
     "Transaction",
     # Модели KPI
     "HeadPremium",
     "SpecKPI",
     "SpecPremium",
-    # Основные репозитории запросов
+    # Модели Gifter
+    "Event",
+    "User",
+    "UserEvent",
+    # Репозитории запросов
     "KPIRequestsRepo",
     "MainRequestsRepo",
     # Репозитории STP
     "AchievementsRepo",
     "BroadcastRepo",
     "EmployeeRepo",
+    "FilesRepo",
     "GroupRepo",
     "GroupMemberRepo",
     "ProductsRepo",
     "PurchaseRepo",
-    "FilesRepo",
     "TransactionRepo",
     # Репозитории KPI
     "HeadPremiumRepo",

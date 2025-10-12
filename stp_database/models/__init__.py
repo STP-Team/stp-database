@@ -1,5 +1,8 @@
 """Импорт моделей."""
 
+from stp_database.models.Gifter.events import Event as Event
+from stp_database.models.Gifter.user import User as User
+from stp_database.models.Gifter.users_events import UserEvent as UserEvent
 from stp_database.models.KPI.head_premium import HeadPremium as HeadPremium
 from stp_database.models.KPI.spec_kpi import SpecKPI as SpecKPI
 from stp_database.models.KPI.spec_premium import SpecPremium as SpecPremium
