@@ -1,6 +1,6 @@
 """Управление БД СТП."""
 
-__version__ = "1.4"
+__version__ = "1.4.1"
 
 # Конфигурация и настройка
 from stp_database.config import DbConfig
@@ -41,6 +41,7 @@ from stp_database.repo.KPI.head_premium import HeadPremiumRepo
 from stp_database.repo.KPI.requests import KPIRequestsRepo
 from stp_database.repo.KPI.spec_kpi import SpecKPIRepo
 from stp_database.repo.KPI.spec_premium import SpecPremiumRepo
+from stp_database.repo.Questions.requests import QuestionsRequestsRepo
 
 # Репозитории STP
 from stp_database.repo.STP.achievement import AchievementsRepo
@@ -93,6 +94,7 @@ __all__ = [
     # Репозитории запросов
     "KPIRequestsRepo",
     "MainRequestsRepo",
+    "QuestionsRequestsRepo",
     # Репозитории STP
     "AchievementsRepo",
     "BroadcastRepo",
