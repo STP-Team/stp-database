@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import BOOLEAN, Boolean, DateTime, Integer, Unicode
+from sqlalchemy import BOOLEAN, DateTime, Integer, Unicode
 from sqlalchemy.orm import Mapped, mapped_column
 
 from stp_database.models.base import Base
@@ -35,7 +35,7 @@ class Event(Base):
         Unicode(250), nullable=True, comment="Название события"
     )
     sum: Mapped[int] = mapped_column(Integer, nullable=True, comment="Сумма события")
-    is_published: Mapped[Boolean] = mapped_column(
+    is_published: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=True, comment="Опубликовано ли событие"
     )
     payment_link: Mapped[str] = mapped_column(

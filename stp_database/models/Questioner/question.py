@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import BIGINT, BOOLEAN, Boolean, DateTime, Integer, Unicode
+from sqlalchemy import BIGINT, BOOLEAN, DateTime, Integer, Unicode
 from sqlalchemy.orm import Mapped, mapped_column
 
 from stp_database.models.base import Base
@@ -62,19 +62,19 @@ class Question(Base):
     clever_link: Mapped[str] = mapped_column(
         Unicode(5000), nullable=True, comment="Ссылка на Clever"
     )
-    quality_duty: Mapped[Boolean] = mapped_column(
+    quality_duty: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=True, comment="Оценка качества дежурного"
     )
-    quality_employee: Mapped[Boolean] = mapped_column(
+    quality_employee: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=True, comment="Оценка качества сотрудника"
     )
     status: Mapped[str] = mapped_column(
         Unicode(5000), nullable=True, comment="Статус вопроса"
     )
-    allow_return: Mapped[Boolean] = mapped_column(
+    allow_return: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=False, comment="Разрешен ли возврат"
     )
-    activity_status_enabled: Mapped[Boolean] = mapped_column(
+    activity_status_enabled: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=True, comment="Включен ли статус активности"
     )
 

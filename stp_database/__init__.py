@@ -1,6 +1,6 @@
 """Управление БД СТП."""
 
-__version__ = "1.3.7"
+__version__ = "1.4"
 
 # Конфигурация и настройка
 from stp_database.config import DbConfig

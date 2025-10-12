@@ -1,6 +1,6 @@
 """Модели, связанные с сущностями связей пользователей и событий."""
 
-from sqlalchemy import BOOLEAN, Boolean, Integer
+from sqlalchemy import BOOLEAN, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 from stp_database.models.base import Base
@@ -33,7 +33,7 @@ class UserEvent(Base):
     event_id: Mapped[int] = mapped_column(
         Integer, nullable=True, comment="Идентификатор события"
     )
-    paid: Mapped[Boolean] = mapped_column(
+    paid: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=True, comment="Оплачено ли участие"
     )
 

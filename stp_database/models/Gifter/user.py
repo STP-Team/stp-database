@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import BIGINT, BOOLEAN, Boolean, DateTime, Integer, Unicode
+from sqlalchemy import BIGINT, BOOLEAN, DateTime, Integer, Unicode
 from sqlalchemy.orm import Mapped, mapped_column
 
 from stp_database.models.base import Base
@@ -54,7 +54,7 @@ class User(Base):
     fullname: Mapped[str] = mapped_column(
         Unicode(250), nullable=True, comment="ФИО пользователя", name="FIO"
     )
-    is_admin: Mapped[Boolean] = mapped_column(
+    is_admin: Mapped[bool] = mapped_column(
         BOOLEAN,
         nullable=True,
         comment="Является ли пользователь администратором",
@@ -69,13 +69,13 @@ class User(Base):
     birth_date: Mapped[datetime] = mapped_column(
         DateTime, nullable=True, comment="Дата рождения пользователя"
     )
-    verified: Mapped[Boolean] = mapped_column(
+    verified: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=True, comment="Верифицирован ли пользователь"
     )
-    notify_all: Mapped[Boolean] = mapped_column(
+    notify_all: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=True, comment="Уведомления для всех", name="notif_4_all"
     )
-    gathering: Mapped[Boolean] = mapped_column(
+    gathering: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=True, comment="Участие в сборе", name="sbor"
     )
     need_pay: Mapped[int] = mapped_column(
@@ -87,7 +87,7 @@ class User(Base):
     group_name: Mapped[str] = mapped_column(
         Unicode(500), nullable=True, comment="Название группы пользователя"
     )
-    curator: Mapped[Boolean] = mapped_column(
+    curator: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=True, comment="Является ли пользователь куратором"
     )
     group_id: Mapped[int] = mapped_column(
@@ -96,7 +96,7 @@ class User(Base):
         comment="Идентификатор группы",
         name="group_identificator",
     )
-    ignore: Mapped[Boolean] = mapped_column(
+    ignore: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=True, comment="Игнорировать пользователя"
     )
 

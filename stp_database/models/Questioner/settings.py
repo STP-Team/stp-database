@@ -1,6 +1,8 @@
 """Модели, связанные с сущностями настроек."""
 
+import json
 from datetime import datetime
+from typing import Any, Dict
 
 from sqlalchemy import BIGINT, DateTime, Index, Unicode, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -20,6 +22,10 @@ class Settings(Base):
 
     Methods:
         __repr__(): Возвращает строковое представление объекта Settings.
+        get_values(): Получить настройки в виде словаря.
+        set_values(values): Установить настройки из словаря.
+        get_setting(key, default): Получить значение конкретной настройки.
+        set_setting(key, value): Установить значение конкретной настройки.
     """
 
     __tablename__ = "settings"
@@ -57,3 +63,46 @@ class Settings(Base):
     def __repr__(self):
         """Возвращает строковое представление объекта Settings."""
         return f"<Settings {self.id} group_id={self.group_id} {self.group_name}>"
+
+    def get_values(self) -> Dict[str, Any]:
+        """Получить настройки в виде словаря.
+
+        Returns:
+            Словарь с настройками
+        """
+        try:
+            return json.loads(self.values)
+        except (json.JSONDecodeError, TypeError):
+            return {}
+
+    def set_values(self, values: Dict[str, Any]) -> None:
+        """Установить настройки из словаря.
+
+        Args:
+            values: Словарь с настройками
+        """
+        self.values = json.dumps(values, ensure_ascii=False)
+
+    def get_setting(self, key: str, default: Any = None) -> Any:
+        """Получить значение конкретной настройки.
+
+        Args:
+            key: Ключ настройки
+            default: Значение по умолчанию, если ключ не найден
+
+        Returns:
+            Значение настройки или default
+        """
+        values = self.get_values()
+        return values.get(key, default)
+
+    def set_setting(self, key: str, value: Any) -> None:
+        """Установить значение конкретной настройки.
+
+        Args:
+            key: Ключ настройки
+            value: Новое значение
+        """
+        values = self.get_values()
+        values[key] = value
+        self.set_values(values)

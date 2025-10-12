@@ -1,6 +1,6 @@
 """Модели, связанные с сущностями сотрудников."""
 
-from sqlalchemy import BIGINT, BOOLEAN, Boolean, Unicode
+from sqlalchemy import BIGINT, BOOLEAN, Unicode
 from sqlalchemy.orm import Mapped, mapped_column
 
 from stp_database.models.base import Base
@@ -55,10 +55,10 @@ class Employee(Base):
     role: Mapped[int] = mapped_column(
         BIGINT, nullable=False, comment="Уровень доступа сотрудника в БД"
     )
-    is_trainee: Mapped[Boolean] = mapped_column(
+    is_trainee: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=False, default=True, comment="Является ли сотрудник стажером"
     )
-    is_casino_allowed: Mapped[Boolean] = mapped_column(
+    is_casino_allowed: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=False, comment="Разрешено ли казино сотруднику"
     )
 

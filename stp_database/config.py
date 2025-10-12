@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import Optional
 
+import pytz
+from pytz.tzinfo import DstTzInfo
 from sqlalchemy import URL
 
 
@@ -21,6 +23,7 @@ class DbConfig:
     user: str
     password: str
     port: int = 3306
+    tz: DstTzInfo = pytz.timezone("Asia/Yekaterinburg")
 
     def construct_sqlalchemy_url(
         self,
