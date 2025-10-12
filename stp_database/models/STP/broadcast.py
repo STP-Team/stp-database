@@ -13,11 +13,11 @@ class Broadcast(Base):
 
     Args:
         id: Уникальный идентификатор рассылки
-        user_id: Идентификатор владельца рассылки
-        type: Тип рассылки: division или group
+        user_id: Идентификатор Telegram владельца рассылки
+        type: Тип рассылки: all, division или group
         target: Конкретная цель рассылки: подразделение (НЦК, НТП1, НТП2) или выбранная группа
         text: Текст рассылки
-        recipients: Список user_id, получивших рассылку
+        recipients: Список user_id для рассылки
         created_at: Время создания рассылки
 
     Methods:
@@ -26,14 +26,19 @@ class Broadcast(Base):
 
     __tablename__ = "broadcasts"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+        comment="Уникальный идентификатор рассылки",
+    )
     user_id: Mapped[int] = mapped_column(
-        BIGINT, nullable=False, comment="Идентификатор владельца рассылки"
+        BIGINT, nullable=False, comment="Идентификатор Telegram владельца рассылки"
     )
     type: Mapped[str] = mapped_column(
-        Enum("division", "group"),
+        Enum("all", "division", "group"),
         nullable=False,
-        comment="Тип рассылки: division или group",
+        comment="Тип рассылки: all, division или group",
     )
     target: Mapped[str] = mapped_column(
         String(255),
@@ -42,10 +47,13 @@ class Broadcast(Base):
     )
     text: Mapped[str] = mapped_column(Text, nullable=False, comment="Текст рассылки")
     recipients: Mapped[Optional[List[int]]] = mapped_column(
-        JSON, nullable=True, comment="Список user_id, получивших рассылку"
+        JSON, nullable=True, comment="Список user_id для рассылки"
     )
     created_at: Mapped[TIMESTAMP] = mapped_column(
-        TIMESTAMP, nullable=False, server_default=func.current_timestamp()
+        TIMESTAMP,
+        nullable=False,
+        server_default=func.current_timestamp(),
+        comment="Время создания рассылки",
     )
 
     def __repr__(self):

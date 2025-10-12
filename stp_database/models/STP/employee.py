@@ -19,6 +19,8 @@ class Employee(Base):
         head: ФИО руководителя сотрудника
         email: Email сотрудника
         role: Уровень доступа сотрудника в БД
+        is_trainee: Является ли сотрудник стажером
+        is_casino_allowed: Разрешено ли казино сотруднику
 
     Methods:
         __repr__(): Возвращает строковое представление объекта Employee.
@@ -26,17 +28,39 @@ class Employee(Base):
 
     __tablename__ = "employees"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
-    user_id: Mapped[int] = mapped_column(BIGINT, nullable=True)
-    username: Mapped[str] = mapped_column(Unicode, nullable=True)
-    division: Mapped[str] = mapped_column(Unicode, nullable=True)
-    position: Mapped[str] = mapped_column(Unicode, nullable=True)
-    fullname: Mapped[str] = mapped_column(Unicode, nullable=False)
-    head: Mapped[str] = mapped_column(Unicode, nullable=True)
-    email: Mapped[str] = mapped_column(Unicode, nullable=True)
-    role: Mapped[int] = mapped_column(BIGINT, nullable=False)
-    is_trainee: Mapped[Boolean] = mapped_column(BOOLEAN, nullable=False, default=True)
-    is_casino_allowed: Mapped[Boolean] = mapped_column(BOOLEAN, nullable=False)
+    id: Mapped[int] = mapped_column(
+        BIGINT, primary_key=True, comment="Уникальный идентификатор пользователя"
+    )
+    user_id: Mapped[int] = mapped_column(
+        BIGINT, nullable=True, comment="Идентификатор сотрудника в Telegram"
+    )
+    username: Mapped[str] = mapped_column(
+        Unicode, nullable=True, comment="Username сотрудника в Telegram"
+    )
+    division: Mapped[str] = mapped_column(
+        Unicode, nullable=True, comment="Направление сотрудника (НТП/НЦК)"
+    )
+    position: Mapped[str] = mapped_column(
+        Unicode, nullable=True, comment="Позиция/должность сотрудника"
+    )
+    fullname: Mapped[str] = mapped_column(
+        Unicode, nullable=False, comment="ФИО сотрудника"
+    )
+    head: Mapped[str] = mapped_column(
+        Unicode, nullable=True, comment="ФИО руководителя сотрудника"
+    )
+    email: Mapped[str] = mapped_column(
+        Unicode, nullable=True, comment="Email сотрудника"
+    )
+    role: Mapped[int] = mapped_column(
+        BIGINT, nullable=False, comment="Уровень доступа сотрудника в БД"
+    )
+    is_trainee: Mapped[Boolean] = mapped_column(
+        BOOLEAN, nullable=False, default=True, comment="Является ли сотрудник стажером"
+    )
+    is_casino_allowed: Mapped[Boolean] = mapped_column(
+        BOOLEAN, nullable=False, comment="Разрешено ли казино сотруднику"
+    )
 
     def __repr__(self):
         """Возвращает строковое представление объекта Employee."""

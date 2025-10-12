@@ -17,7 +17,7 @@ class Transaction(Base):
     Args:
         id: Уникальный идентификатор транзакции
         user_id: Идентификатор Telegram сотрудника
-        type: Тип операции: начисление или списание (earn/spend)
+        type: Тип операции: начисление или списание
         source_id: Идентификатор достижения или предмета. Для manual или casino — None
         source_type: Источник транзакции: achievement, product, casino, manual
         amount: Количество баллов
@@ -32,8 +32,15 @@ class Transaction(Base):
 
     __tablename__ = "transactions"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(BIGINT, nullable=False)
+    id: Mapped[int] = mapped_column(
+        BIGINT,
+        primary_key=True,
+        autoincrement=True,
+        comment="Уникальный идентификатор транзакции",
+    )
+    user_id: Mapped[int] = mapped_column(
+        BIGINT, nullable=False, comment="Идентификатор Telegram сотрудника"
+    )
     type: Mapped[str] = mapped_column(
         Enum("earn", "spend"),
         nullable=False,
@@ -42,12 +49,12 @@ class Transaction(Base):
     source_id: Mapped[Optional[int]] = mapped_column(
         Integer,
         nullable=True,
-        comment="Идентификатор достижения или предмета. Для manual — NULL",
+        comment="Идентификатор достижения или предмета. Для manual или casino — None",
     )
     source_type: Mapped[str] = mapped_column(
         Enum("achievement", "product", "manual", "casino"),
         nullable=False,
-        comment="Источник транзакции",
+        comment="Источник транзакции: achievement, product, casino, manual",
     )
     amount: Mapped[int] = mapped_column(
         Integer, nullable=False, comment="Количество баллов"
@@ -58,10 +65,12 @@ class Transaction(Base):
     kpi_extracted_at: Mapped[Optional[datetime]] = mapped_column(
         TIMESTAMP,
         nullable=True,
-        comment="Начальная дата выгружаемых показателей",
+        comment="Дата выгрузки показателей. Указывается в случае награды за достижения",
     )
     created_by: Mapped[Optional[int]] = mapped_column(
-        BIGINT, nullable=True, comment="ID администратора, создавшего транзакцию"
+        BIGINT,
+        nullable=True,
+        comment="ID администратора, создавшего транзакцию. None если создана автоматически",
     )
     created_at: Mapped[Optional[datetime]] = mapped_column(
         TIMESTAMP,

@@ -22,7 +22,6 @@ class SpecKPI(Base):
         flr: Значение показателя FLR за период
         csi: Значение показателя оценки за период
         pok: Значение показателя отклика за период
-
         delay: Значение показателя задержки за период (только НТП)
 
         sales_count: Кол-во реальных продаж за период
@@ -42,50 +41,60 @@ class SpecKPI(Base):
         Unicode(250),
         nullable=False,
         name="FULLNAME",
+        comment="ФИО специалиста",
         primary_key=True,
     )
     contacts_count: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="Общее кол-во контактов", name="TC"
+        Integer, nullable=True, comment="Кол-во контактов специалиста", name="TC"
     )
+
     aht: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="AHT специалиста", name="AHT"
+        Integer, nullable=True, comment="Значение показателя AHT за период", name="AHT"
     )
     flr: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="FLR специалиста", name="FLR"
+        Float, nullable=True, comment="Значение показателя FLR за период", name="FLR"
     )
     csi: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="OK специалиста", name="CSI"
+        Float, nullable=True, comment="Значение показателя оценки за период", name="CSI"
     )
     pok: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Отклик специалиста", name="POK"
+        Float,
+        nullable=True,
+        comment="Значение показателя отклика за период",
+        name="POK",
     )
     delay: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Задержка специалиста", name="DELAY"
+        Float,
+        nullable=True,
+        comment="Значение показателя задержки за период (только НТП)",
+        name="DELAY",
     )
+
     sales_count: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
-        comment="Кол-во продаж специалиста",
+        comment="Кол-во реальных продаж за период",
         name="SalesCount",
         default=0,
     )
     sales_potential: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
-        comment="Кол-во потенциальных продаж специалиста",
+        comment="Кол-во потенциальных продаж за период",
         name="SalesPotential",
     )
+
     updated_at: Mapped[datetime | None] = mapped_column(
         DateTime,
         nullable=True,
-        comment="Дата обновления показателей",
+        comment="Дата выгрузки показателей в БД",
         name="UpdateData",
         default=datetime.now,
     )
     kpi_extract_date: Mapped[datetime | None] = mapped_column(
         DateTime,
         nullable=True,
-        comment="Начальная дата выгружаемых показателей",
+        comment="Дата, с которой производилась выгрузка показателей",
         name="KpiExtractDate",
     )
 

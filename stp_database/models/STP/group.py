@@ -40,13 +40,13 @@ class Group(Base):
     is_casino_allowed: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
-        comment="Возможность использовать казино в группе",
+        comment="Разрешено ли использование команд казино в группе",
         default=1,
     )
     new_user_notify: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
-        comment="Уведомлять о новых вступивших участниках в группу",
+        comment="Уведомлять ли о новых пользователях в группе",
         default=1,
     )
     allowed_roles: Mapped[list] = mapped_column(

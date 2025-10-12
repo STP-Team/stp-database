@@ -31,7 +31,7 @@ class HeadPremium(Base):
         target_normative_first: Норматив показателя первой спец. цели
         target_normative_second: Норматив показателя второй спец. цели
         target_normative_rate_first: Процент выполнения норматива первой спец. цели
-        target_normative_rate_second: Процент выполнения норматива первой спец. цели
+        target_normative_rate_second: Процент выполнения норматива второй спец. цели
         target_premium: Процент премии руководителя за спец. цель
         pers_target_manual: Тип спец. цели (Старое, не используется)
 
@@ -41,6 +41,7 @@ class HeadPremium(Base):
         head_adjust: Ручная правка премии руководителем
         total_premium: Общий процент премии
         updated_at: Дата обновления показателей премии
+        kpi_extract_date: Дата, с которой производилась выгрузка премии
 
     Methods:
         __repr__(): Возвращает строковое представление объекта HeadPremium.
@@ -174,6 +175,12 @@ class HeadPremium(Base):
         name="UpdateData",
         comment="Дата обновления показателей премии",
         default=datetime.now,
+    )
+    kpi_extract_date: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+        comment="Дата, с которой производилась выгрузка премии",
+        name="KpiExtractDate",
     )
 
     def __repr__(self):
