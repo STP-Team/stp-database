@@ -14,7 +14,7 @@ class Broadcast(Base):
     Args:
         id: Уникальный идентификатор рассылки
         user_id: Идентификатор Telegram владельца рассылки
-        type: Тип рассылки: all, division или group
+        type: Тип рассылки: all, division, role или group
         target: Конкретная цель рассылки: подразделение (НЦК, НТП1, НТП2) или выбранная группа
         text: Текст рассылки
         recipients: Список user_id для рассылки
@@ -36,9 +36,9 @@ class Broadcast(Base):
         BIGINT, nullable=False, comment="Идентификатор Telegram владельца рассылки"
     )
     type: Mapped[str] = mapped_column(
-        Enum("all", "division", "group"),
+        Enum("all", "division", "role", "group"),
         nullable=False,
-        comment="Тип рассылки: all, division или group",
+        comment="Тип рассылки: all, division, role или group",
     )
     target: Mapped[str] = mapped_column(
         String(255),
