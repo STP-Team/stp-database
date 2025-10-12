@@ -1,6 +1,6 @@
 """Управление БД СТП."""
 
-__version__ = "1.3.6"
+__version__ = "1.3.7"
 
 # Конфигурация и настройка
 from stp_database.config import DbConfig
@@ -8,6 +8,7 @@ from stp_database.config import DbConfig
 # Модели STP
 # Модели KPI
 # Модели Gifter
+# Модели Questioner
 from stp_database.models import (
     Achievement,
     Broadcast,
@@ -17,8 +18,11 @@ from stp_database.models import (
     Group,
     GroupMember,
     HeadPremium,
+    MessagesPair,
     Product,
     Purchase,
+    Question,
+    Settings,
     SpecKPI,
     SpecPremium,
     Transaction,
@@ -82,6 +86,10 @@ __all__ = [
     "Event",
     "User",
     "UserEvent",
+    # Модели Questioner
+    "Question",
+    "MessagesPair",
+    "Settings",
     # Репозитории запросов
     "KPIRequestsRepo",
     "MainRequestsRepo",
@@ -99,4 +107,7 @@ __all__ = [
     "HeadPremiumRepo",
     "SpecKPIRepo",
     "SpecPremiumRepo",
+    "MessagesPair",
+    "Question",
+    "Settings",
 ]

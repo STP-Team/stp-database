@@ -6,6 +6,9 @@ from stp_database.models.Gifter.users_events import UserEvent as UserEvent
 from stp_database.models.KPI.head_premium import HeadPremium as HeadPremium
 from stp_database.models.KPI.spec_kpi import SpecKPI as SpecKPI
 from stp_database.models.KPI.spec_premium import SpecPremium as SpecPremium
+from stp_database.models.Questioner.messages_pair import MessagesPair as MessagesPair
+from stp_database.models.Questioner.question import Question as Question
+from stp_database.models.Questioner.settings import Settings as Settings
 from stp_database.models.STP.achievement import Achievement as Achievement
 from stp_database.models.STP.broadcast import Broadcast as Broadcast
 from stp_database.models.STP.employee import Employee as Employee
