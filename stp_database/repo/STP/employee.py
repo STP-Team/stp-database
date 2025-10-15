@@ -15,6 +15,49 @@ logger = logging.getLogger(__name__)
 class EmployeeRepo(BaseRepo):
     """Репозиторий для работы с сотрудниками."""
 
+    async def add_user(
+        self,
+        division: str,
+        position: str,
+        fullname: str,
+        head: str,
+        role: int = 0,
+        user_id: int | None = None,
+    ) -> Employee | None:
+        """Добавление нового сотрудника.
+
+        Args:
+            user_id: Идентификатор Telegram сотрудника
+            division: Подразделение
+            position: Должность
+            fullname: ФИО сотрудника
+            head: ФИО руководителя
+            role: Роль пользователя (по умолчанию 0)
+
+        Returns:
+            Созданный объект Employee или None в случае ошибки
+        """
+        new_user = Employee(
+            user_id=user_id,
+            division=division,
+            position=position,
+            fullname=fullname,
+            head=head,
+            role=role,
+            is_casino_allowed=True,
+        )
+
+        try:
+            self.session.add(new_user)
+            await self.session.commit()
+            await self.session.refresh(new_user)
+            logger.info(f"[БД] Создан новый пользователь: {fullname}")
+            return new_user
+        except SQLAlchemyError as e:
+            logger.error(f"[БД] Ошибка добавления пользователя {fullname}: {e}")
+            await self.session.rollback()
+            return None
+
     async def get_users(
         self,
         main_id: Optional[int | list[int]] = None,
