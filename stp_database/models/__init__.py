@@ -13,6 +13,10 @@ from stp_database.models.STP.achievement import Achievement as Achievement
 from stp_database.models.STP.broadcast import Broadcast as Broadcast
 from stp_database.models.STP.employee import Employee as Employee
 from stp_database.models.STP.event_log import EventLog as EventLog
+from stp_database.models.STP.exchange import Exchange as Exchange
+from stp_database.models.STP.exchange import (
+    ExchangeSubscription as ExchangeSubscription,
+)
 from stp_database.models.STP.file import File as File
 from stp_database.models.STP.group import Group as Group
 from stp_database.models.STP.group_member import GroupMember as GroupMember

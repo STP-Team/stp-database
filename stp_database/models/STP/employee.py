@@ -9,6 +9,7 @@ from stp_database.models.base import Base
 
 if TYPE_CHECKING:
     from stp_database.models.STP.event_log import EventLog
+    from stp_database.models.STP.exchange import Exchange, ExchangeSubscription
 
 
 class Employee(Base):
@@ -26,6 +27,7 @@ class Employee(Base):
         role: Уровень доступа сотрудника в БД
         is_trainee: Является ли сотрудник стажером
         is_casino_allowed: Разрешено ли казино сотруднику
+        is_exchange_banned: Забанен ли сотрудник на бирже смен
 
     Methods:
         __repr__(): Возвращает строковое представление объекта Employee.
@@ -66,10 +68,31 @@ class Employee(Base):
     is_casino_allowed: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=False, comment="Разрешено ли казино сотруднику"
     )
+    is_exchange_banned: Mapped[bool] = mapped_column(
+        BOOLEAN,
+        nullable=False,
+        default=False,
+        comment="Забанен ли сотрудник на бирже подмен",
+    )
 
     # Отношения
     event_logs: Mapped[list["EventLog"]] = relationship(
         "EventLog", back_populates="employee", lazy="select"
+    )
+    sold_exchanges: Mapped[list["Exchange"]] = relationship(
+        "Exchange",
+        foreign_keys="Exchange.seller_id",
+        back_populates="seller",
+        lazy="select",
+    )
+    bought_exchanges: Mapped[list["Exchange"]] = relationship(
+        "Exchange",
+        foreign_keys="Exchange.buyer_id",
+        back_populates="buyer",
+        lazy="select",
+    )
+    exchange_subscriptions: Mapped[list["ExchangeSubscription"]] = relationship(
+        "ExchangeSubscription", back_populates="subscriber", lazy="select"
     )
 
     def __repr__(self):

@@ -1,0 +1,743 @@
+"""Репозиторий функций для взаимодействия с биржей смен."""
+
+import logging
+from datetime import date, datetime
+from typing import Any, Optional, Sequence
+
+from sqlalchemy import and_, asc, desc, func, or_, select
+from sqlalchemy.exc import SQLAlchemyError
+
+from stp_database.models.STP.employee import Employee
+from stp_database.models.STP.exchange import Exchange, ExchangeSubscription
+from stp_database.repo.base import BaseRepo
+
+logger = logging.getLogger(__name__)
+
+
+class ExchangeRepo(BaseRepo):
+    """Репозиторий для работы с биржей смен."""
+
+    # ===========================================
+    # СОЗДАНИЕ И УПРАВЛЕНИЕ ОБМЕНАМИ
+    # ===========================================
+
+    async def create_exchange(
+        self,
+        seller_id: int,
+        shift_date: datetime,
+        shift_start_time: str,
+        price: float,
+        is_partial: bool = False,
+        shift_end_time: Optional[str] = None,
+        description: Optional[str] = None,
+        is_private: bool = False,
+        payment_type: str = "immediate",
+        payment_date: Optional[datetime] = None,
+        schedule_file_path: Optional[str] = None,
+    ) -> Exchange | None:
+        """Создание нового обмена смены.
+
+        Args:
+            seller_id: Идентификатор продавца
+            shift_date: Дата смены
+            shift_start_time: Время начала смены
+            price: Цена за смену
+            is_partial: Частичная ли смена
+            shift_end_time: Время окончания (для частичной смены)
+            description: Описание
+            is_private: Приватный ли обмен
+            payment_type: Тип оплаты ('immediate' или 'on_date')
+            payment_date: Дата оплаты (если payment_type == 'on_date')
+            schedule_file_path: Путь к файлу графика
+
+        Returns:
+            Созданный объект Exchange или None в случае ошибки
+        """
+        # Проверяем, что пользователь не забанен
+        if await self.is_user_exchange_banned(seller_id):
+            logger.warning(f"[Биржа] Пользователь {seller_id} забанен на бирже")
+            return None
+
+        new_exchange = Exchange(
+            seller_id=seller_id,
+            shift_date=shift_date,
+            shift_start_time=shift_start_time,
+            shift_end_time=shift_end_time,
+            is_partial=is_partial,
+            price=price,
+            description=description,
+            is_private=is_private,
+            payment_type=payment_type,
+            payment_date=payment_date,
+            schedule_file_path=schedule_file_path,
+        )
+
+        try:
+            self.session.add(new_exchange)
+            await self.session.commit()
+            await self.session.refresh(new_exchange)
+            logger.info(
+                f"[Биржа] Создан новый обмен: {new_exchange.id} от пользователя {seller_id}"
+            )
+            return new_exchange
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка создания обмена: {e}")
+            await self.session.rollback()
+            return None
+
+    async def create_exchange_from_schedule_file(
+        self,
+        seller_id: int,
+        schedule_file_path: str,
+        shifts_data: list[dict],
+        **kwargs: Any,
+    ) -> list[Exchange]:
+        """Создание обменов используя график из файла.
+
+        Args:
+            seller_id: Идентификатор продавца
+            schedule_file_path: Путь к файлу графика
+            shifts_data: Список данных о сменах [{'date': datetime, 'start': str, 'end': str, 'price': float}, ...]
+            **kwargs: Дополнительные параметры для всех обменов
+
+        Returns:
+            Список созданных объектов Exchange
+        """
+        if await self.is_user_exchange_banned(seller_id):
+            logger.warning(f"[Биржа] Пользователь {seller_id} забанен на бирже")
+            return []
+
+        created_exchanges = []
+        for shift_info in shifts_data:
+            exchange = await self.create_exchange(
+                seller_id=seller_id,
+                shift_date=shift_info["date"],
+                shift_start_time=shift_info["start"],
+                shift_end_time=shift_info.get("end"),
+                price=shift_info["price"],
+                is_partial=bool(shift_info.get("end")),
+                schedule_file_path=schedule_file_path,
+                **kwargs,
+            )
+            if exchange:
+                created_exchanges.append(exchange)
+
+        logger.info(
+            f"[Биржа] Создано {len(created_exchanges)} обменов из файла {schedule_file_path}"
+        )
+        return created_exchanges
+
+    async def hide_exchange(self, exchange_id: int, seller_id: int) -> bool:
+        """Скрытие созданной подмены.
+
+        Args:
+            exchange_id: Идентификатор обмена
+            seller_id: Идентификатор продавца (для проверки прав)
+
+        Returns:
+            True если обмен успешно скрыт, False иначе
+        """
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+            if not exchange or exchange.seller_id != seller_id:
+                return False
+
+            exchange.is_hidden = True
+            exchange.status = "hidden"
+            await self.session.commit()
+            logger.info(f"[Биржа] Обмен {exchange_id} скрыт пользователем {seller_id}")
+            return True
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка скрытия обмена {exchange_id}: {e}")
+            await self.session.rollback()
+            return False
+
+    async def unhide_exchange(self, exchange_id: int, seller_id: int) -> bool:
+        """Отображение скрытой подмены.
+
+        Args:
+            exchange_id: Идентификатор обмена
+            seller_id: Идентификатор продавца (для проверки прав)
+
+        Returns:
+            True если обмен успешно отображен, False иначе
+        """
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+            if not exchange or exchange.seller_id != seller_id:
+                return False
+
+            exchange.is_hidden = False
+            exchange.status = "active"
+            await self.session.commit()
+            logger.info(
+                f"[Биржа] Обмен {exchange_id} отображен пользователем {seller_id}"
+            )
+            return True
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка отображения обмена {exchange_id}: {e}")
+            await self.session.rollback()
+            return False
+
+    async def buy_exchange(
+        self, exchange_id: int, buyer_id: int, mark_as_paid: bool = False
+    ) -> Exchange | None:
+        """Покупка обмена.
+
+        Args:
+            exchange_id: Идентификатор обмена
+            buyer_id: Идентификатор покупателя
+            mark_as_paid: Отметить ли сразу как оплаченный
+
+        Returns:
+            Обновленный объект Exchange или None в случае ошибки
+        """
+        if await self.is_user_exchange_banned(buyer_id):
+            logger.warning(f"[Биржа] Покупатель {buyer_id} забанен на бирже")
+            return None
+
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+            if (
+                not exchange
+                or exchange.status != "active"
+                or exchange.buyer_id is not None
+            ):
+                return None
+
+            exchange.buyer_id = buyer_id
+            exchange.status = "sold"
+            exchange.sold_at = func.current_timestamp()
+
+            if mark_as_paid:
+                exchange.is_paid = True
+
+            await self.session.commit()
+            await self.session.refresh(exchange)
+            logger.info(f"[Биржа] Обмен {exchange_id} куплен пользователем {buyer_id}")
+            return exchange
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка покупки обмена {exchange_id}: {e}")
+            await self.session.rollback()
+            return None
+
+    async def mark_exchange_paid(self, exchange_id: int, user_id: int) -> bool:
+        """Отметка о наличии оплаты.
+
+        Args:
+            exchange_id: Идентификатор обмена
+            user_id: Идентификатор пользователя (продавец или покупатель)
+
+        Returns:
+            True если успешно отмечен как оплаченный, False иначе
+        """
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+            if not exchange or (
+                exchange.seller_id != user_id and exchange.buyer_id != user_id
+            ):
+                return False
+
+            exchange.is_paid = True
+            await self.session.commit()
+            logger.info(
+                f"[Биржа] Обмен {exchange_id} отмечен как оплаченный пользователем {user_id}"
+            )
+            return True
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка отметки оплаты обмена {exchange_id}: {e}")
+            await self.session.rollback()
+            return False
+
+    # ===========================================
+    # ПОЛУЧЕНИЕ ОБМЕНОВ
+    # ===========================================
+
+    async def get_exchange_by_id(self, exchange_id: int) -> Exchange | None:
+        """Получение обмена по ID.
+
+        Args:
+            exchange_id: Идентификатор обмена
+
+        Returns:
+            Объект Exchange или None
+        """
+        try:
+            query = select(Exchange).where(Exchange.id == exchange_id)
+            result = await self.session.execute(query)
+            return result.scalar_one_or_none()
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка получения обмена {exchange_id}: {e}")
+            return None
+
+    async def get_active_exchanges(
+        self,
+        include_private: bool = False,
+        exclude_user_id: Optional[int] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> Sequence[Exchange]:
+        """Получение активных обменов.
+
+        Args:
+            include_private: Включать ли приватные обмены
+            exclude_user_id: Исключить обмены этого пользователя
+            limit: Лимит записей
+            offset: Смещение
+
+        Returns:
+            Список активных обменов
+        """
+        try:
+            filters = [
+                Exchange.status == "active",
+                not Exchange.is_hidden,
+            ]
+
+            if not include_private:
+                filters.append(not Exchange.is_private)
+
+            if exclude_user_id:
+                filters.append(Exchange.seller_id != exclude_user_id)
+
+            query = (
+                select(Exchange)
+                .where(and_(*filters))
+                .order_by(desc(Exchange.created_at))
+                .limit(limit)
+                .offset(offset)
+            )
+
+            result = await self.session.execute(query)
+            return result.scalars().all()
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка получения активных обменов: {e}")
+            return []
+
+    async def get_user_exchanges(
+        self,
+        user_id: int,
+        exchange_type: str = "all",  # "sold", "bought", "all"
+        status: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> Sequence[Exchange]:
+        """Получение обменов пользователя.
+
+        Args:
+            user_id: Идентификатор пользователя
+            exchange_type: Тип обменов ("sold", "bought", "all")
+            status: Фильтр по статусу
+            limit: Лимит записей
+            offset: Смещение
+
+        Returns:
+            Список обменов пользователя
+        """
+        try:
+            filters = []
+
+            if exchange_type == "sold":
+                filters.append(Exchange.seller_id == user_id)
+            elif exchange_type == "bought":
+                filters.append(Exchange.buyer_id == user_id)
+            else:  # "all"
+                filters.append(
+                    or_(Exchange.seller_id == user_id, Exchange.buyer_id == user_id)
+                )
+
+            if status:
+                filters.append(Exchange.status == status)
+
+            query = (
+                select(Exchange)
+                .where(and_(*filters))
+                .order_by(desc(Exchange.created_at))
+                .limit(limit)
+                .offset(offset)
+            )
+
+            result = await self.session.execute(query)
+            return result.scalars().all()
+        except SQLAlchemyError as e:
+            logger.error(
+                f"[Биржа] Ошибка получения обменов пользователя {user_id}: {e}"
+            )
+            return []
+
+    async def get_exchanges_by_date_range(
+        self,
+        start_date: date,
+        end_date: date,
+        status: Optional[str] = None,
+        limit: int = 100,
+    ) -> Sequence[Exchange]:
+        """Получение обменов за период.
+
+        Args:
+            start_date: Начальная дата
+            end_date: Конечная дата
+            status: Фильтр по статусу
+            limit: Лимит записей
+
+        Returns:
+            Список обменов за период
+        """
+        try:
+            filters = [
+                Exchange.shift_date >= start_date,
+                Exchange.shift_date <= end_date,
+            ]
+
+            if status:
+                filters.append(Exchange.status == status)
+
+            query = (
+                select(Exchange)
+                .where(and_(*filters))
+                .order_by(asc(Exchange.shift_date))
+                .limit(limit)
+            )
+
+            result = await self.session.execute(query)
+            return result.scalars().all()
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка получения обменов за период: {e}")
+            return []
+
+    # ===========================================
+    # АНАЛИТИКА И СТАТИСТИКА
+    # ===========================================
+
+    async def get_sales_stats_for_period(
+        self,
+        user_id: int,
+        start_date: date,
+        end_date: date,
+    ) -> dict[str, Any]:
+        """Подсчет продаж за период.
+
+        Args:
+            user_id: Идентификатор пользователя
+            start_date: Начальная дата
+            end_date: Конечная дата
+
+        Returns:
+            Словарь со статистикой продаж
+        """
+        try:
+            query = select(
+                func.count(Exchange.id).label("total_sales"),
+                func.sum(Exchange.price).label("total_amount"),
+                func.avg(Exchange.price).label("average_price"),
+            ).where(
+                and_(
+                    Exchange.seller_id == user_id,
+                    Exchange.status == "sold",
+                    Exchange.shift_date >= start_date,
+                    Exchange.shift_date <= end_date,
+                )
+            )
+
+            result = await self.session.execute(query)
+            row = result.first()
+
+            return {
+                "total_sales": row.total_sales or 0,
+                "total_amount": float(row.total_amount or 0),
+                "average_price": float(row.average_price or 0),
+                "period_start": start_date,
+                "period_end": end_date,
+            }
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка получения статистики продаж: {e}")
+            return {
+                "total_sales": 0,
+                "total_amount": 0.0,
+                "average_price": 0.0,
+                "period_start": start_date,
+                "period_end": end_date,
+            }
+
+    async def get_purchases_stats_for_period(
+        self,
+        user_id: int,
+        start_date: date,
+        end_date: date,
+    ) -> dict[str, Any]:
+        """Подсчет покупок за период.
+
+        Args:
+            user_id: Идентификатор пользователя
+            start_date: Начальная дата
+            end_date: Конечная дата
+
+        Returns:
+            Словарь со статистикой покупок
+        """
+        try:
+            query = select(
+                func.count(Exchange.id).label("total_purchases"),
+                func.sum(Exchange.price).label("total_amount"),
+                func.avg(Exchange.price).label("average_price"),
+            ).where(
+                and_(
+                    Exchange.buyer_id == user_id,
+                    Exchange.status == "sold",
+                    Exchange.shift_date >= start_date,
+                    Exchange.shift_date <= end_date,
+                )
+            )
+
+            result = await self.session.execute(query)
+            row = result.first()
+
+            return {
+                "total_purchases": row.total_purchases or 0,
+                "total_amount": float(row.total_amount or 0),
+                "average_price": float(row.average_price or 0),
+                "period_start": start_date,
+                "period_end": end_date,
+            }
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка получения статистики покупок: {e}")
+            return {
+                "total_purchases": 0,
+                "total_amount": 0.0,
+                "average_price": 0.0,
+                "period_start": start_date,
+                "period_end": end_date,
+            }
+
+    # ===========================================
+    # ПОДПИСКИ НА НОВЫЕ ОБМЕНЫ
+    # ===========================================
+
+    async def subscribe_to_exchanges(
+        self,
+        subscriber_id: int,
+        subscription_type: str = "all",
+        shift_date: Optional[datetime] = None,
+        exchange_id: Optional[int] = None,
+    ) -> ExchangeSubscription | None:
+        """Подписка на новые подмены.
+
+        Args:
+            subscriber_id: Идентификатор подписчика
+            subscription_type: Тип подписки ('all', 'specific_date', 'specific_seller')
+            shift_date: Дата смены (для подписки на конкретную дату)
+            exchange_id: Идентификатор обмена (для подписки на конкретный обмен)
+
+        Returns:
+            Созданный объект ExchangeSubscription или None
+        """
+        try:
+            # Проверяем, нет ли уже такой подписки
+            existing_query = select(ExchangeSubscription).where(
+                and_(
+                    ExchangeSubscription.subscriber_id == subscriber_id,
+                    ExchangeSubscription.subscription_type == subscription_type,
+                    ExchangeSubscription.is_active,
+                )
+            )
+
+            if shift_date:
+                existing_query = existing_query.where(
+                    ExchangeSubscription.shift_date == shift_date
+                )
+            if exchange_id:
+                existing_query = existing_query.where(
+                    ExchangeSubscription.exchange_id == exchange_id
+                )
+
+            result = await self.session.execute(existing_query)
+            if result.scalar_one_or_none():
+                logger.info(
+                    f"[Биржа] Подписка уже существует для пользователя {subscriber_id}"
+                )
+                return None
+
+            subscription = ExchangeSubscription(
+                subscriber_id=subscriber_id,
+                subscription_type=subscription_type,
+                shift_date=shift_date,
+                exchange_id=exchange_id,
+            )
+
+            self.session.add(subscription)
+            await self.session.commit()
+            await self.session.refresh(subscription)
+
+            logger.info(
+                f"[Биржа] Создана подписка {subscription.id} для пользователя {subscriber_id}"
+            )
+            return subscription
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка создания подписки: {e}")
+            await self.session.rollback()
+            return None
+
+    async def unsubscribe_from_exchanges(
+        self,
+        subscriber_id: int,
+        subscription_id: Optional[int] = None,
+    ) -> bool:
+        """Отписка от уведомлений.
+
+        Args:
+            subscriber_id: Идентификатор подписчика
+            subscription_id: Идентификатор конкретной подписки (опционально)
+
+        Returns:
+            True если успешно отписан, False иначе
+        """
+        try:
+            if subscription_id:
+                # Отписка от конкретной подписки
+                query = select(ExchangeSubscription).where(
+                    and_(
+                        ExchangeSubscription.id == subscription_id,
+                        ExchangeSubscription.subscriber_id == subscriber_id,
+                    )
+                )
+                result = await self.session.execute(query)
+                subscription = result.scalar_one_or_none()
+
+                if subscription:
+                    subscription.is_active = False
+                    await self.session.commit()
+                    logger.info(f"[Биржа] Деактивирована подписка {subscription_id}")
+                    return True
+            else:
+                # Отписка от всех подписок пользователя
+                query = select(ExchangeSubscription).where(
+                    and_(
+                        ExchangeSubscription.subscriber_id == subscriber_id,
+                        ExchangeSubscription.is_active,
+                    )
+                )
+                result = await self.session.execute(query)
+                subscriptions = result.scalars().all()
+
+                for subscription in subscriptions:
+                    subscription.is_active = False
+
+                await self.session.commit()
+                logger.info(
+                    f"[Биржа] Деактивированы все подписки пользователя {subscriber_id}"
+                )
+                return True
+
+            return False
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка отписки: {e}")
+            await self.session.rollback()
+            return False
+
+    async def get_user_subscriptions(
+        self,
+        subscriber_id: int,
+        active_only: bool = True,
+    ) -> Sequence[ExchangeSubscription]:
+        """Получение подписок пользователя.
+
+        Args:
+            subscriber_id: Идентификатор подписчика
+            active_only: Только активные подписки
+
+        Returns:
+            Список подписок пользователя
+        """
+        try:
+            filters = [ExchangeSubscription.subscriber_id == subscriber_id]
+
+            if active_only:
+                filters.append(ExchangeSubscription.is_active)
+
+            query = (
+                select(ExchangeSubscription)
+                .where(and_(*filters))
+                .order_by(desc(ExchangeSubscription.created_at))
+            )
+
+            result = await self.session.execute(query)
+            return result.scalars().all()
+        except SQLAlchemyError as e:
+            logger.error(
+                f"[Биржа] Ошибка получения подписок пользователя {subscriber_id}: {e}"
+            )
+            return []
+
+    # ===========================================
+    # УПРАВЛЕНИЕ БАНАМИ
+    # ===========================================
+
+    async def ban_user_from_exchange(self, user_id: int) -> bool:
+        """Бан пользователя на бирже.
+
+        Args:
+            user_id: Идентификатор пользователя
+
+        Returns:
+            True если успешно забанен, False иначе
+        """
+        try:
+            query = select(Employee).where(Employee.user_id == user_id)
+            result = await self.session.execute(query)
+            employee = result.scalar_one_or_none()
+
+            if employee:
+                employee.is_exchange_banned = True
+                await self.session.commit()
+                logger.info(f"[Биржа] Пользователь {user_id} забанен на бирже")
+                return True
+            return False
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка бана пользователя {user_id}: {e}")
+            await self.session.rollback()
+            return False
+
+    async def unban_user_from_exchange(self, user_id: int) -> bool:
+        """Разбан пользователя на бирже.
+
+        Args:
+            user_id: Идентификатор пользователя
+
+        Returns:
+            True если успешно разбанен, False иначе
+        """
+        try:
+            query = select(Employee).where(Employee.user_id == user_id)
+            result = await self.session.execute(query)
+            employee = result.scalar_one_or_none()
+
+            if employee:
+                employee.is_exchange_banned = False
+                await self.session.commit()
+                logger.info(f"[Биржа] Пользователь {user_id} разбанен на бирже")
+                return True
+            return False
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка разбана пользователя {user_id}: {e}")
+            await self.session.rollback()
+            return False
+
+    async def is_user_exchange_banned(self, user_id: int) -> bool:
+        """Проверка бана пользователя на бирже.
+
+        Args:
+            user_id: Идентификатор пользователя
+
+        Returns:
+            True если пользователь забанен, False иначе
+        """
+        try:
+            query = select(Employee.is_exchange_banned).where(
+                Employee.user_id == user_id
+            )
+            result = await self.session.execute(query)
+            is_banned = result.scalar_one_or_none()
+            return bool(is_banned)
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка проверки бана пользователя {user_id}: {e}")
+            return False
