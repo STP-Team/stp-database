@@ -65,7 +65,7 @@ class EventLog(Base):
         nullable=True,
         comment="Категория события (UI/System/Network и т.п.)",
     )
-    timestamp: Mapped[datetime] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP,
         server_default=func.current_timestamp(),
         nullable=True,

@@ -1,6 +1,6 @@
 [project]
 name = "stp-database"
-version = "1.5.4"
+version = "1.5.5"
 description = "Модели и репозитории для взаимодействия с БД СТП"
 readme = "README.md"
 requires-python = ">=3.13"
