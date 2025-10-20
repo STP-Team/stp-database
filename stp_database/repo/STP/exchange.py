@@ -283,11 +283,11 @@ class ExchangeRepo(BaseRepo):
         try:
             filters = [
                 Exchange.status == "active",
-                Exchange.is_hidden != True,  # This handles 0, False, and NULL values correctly
+                Exchange.is_hidden != True,
             ]
 
             if not include_private:
-                filters.append(Exchange.is_private != True)  # Handle 0, False, and NULL values correctly
+                filters.append(Exchange.is_private != True)
 
             if exclude_user_id:
                 filters.append(Exchange.seller_id != exclude_user_id)
