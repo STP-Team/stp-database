@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BIGINT, JSON, DateTime, ForeignKey, Index, String
+from sqlalchemy import BIGINT, JSON, TIMESTAMP, ForeignKey, Index, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from stp_database.models.base import Base
@@ -31,6 +31,11 @@ class EventLog(Base):
         employee: Объект `Employee`, связанный с данным событием
 
     Indexes:
+        idx_user_id: (user_id)
+        idx_event_type: (event_type)
+        idx_event_category: (event_category)
+        idx_timestamp: (timestamp)
+        idx_session_id: (session_id)
         idx_user_time: (user_id, timestamp)
         idx_category_time: (event_category, timestamp)
         idx_type_time: (event_type, timestamp)
@@ -46,31 +51,28 @@ class EventLog(Base):
     )
     user_id: Mapped[int] = mapped_column(
         BIGINT,
-        ForeignKey("employees.user_id"),
-        index=True,
+        ForeignKey("employees.user_id", name="fk_event_logs_user"),
         nullable=True,
         comment="Идентификатор сотрудника (внешний ключ на таблицу employees)",
     )
     event_type: Mapped[str] = mapped_column(
         String(50),
-        index=True,
         nullable=True,
         comment="Тип события (click/login/logout и т.п.)",
     )
     event_category: Mapped[str] = mapped_column(
         String(30),
-        index=True,
         nullable=True,
         comment="Категория события (UI/System/Network и т.п.)",
     )
     timestamp: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.now,
-        index=True,
+        TIMESTAMP,
+        server_default=text("current_timestamp()"),
+        nullable=True,
         comment="Время регистрации события",
     )
     session_id: Mapped[str] = mapped_column(
-        String(100), index=True, nullable=True, comment="Идентификатор сессии"
+        String(100), nullable=True, comment="Идентификатор сессии"
     )
 
     dialog_state: Mapped[str] = mapped_column(
@@ -95,11 +97,17 @@ class EventLog(Base):
         "Employee", back_populates="event_logs", lazy="joined"
     )
 
-    # Индексы
+    # Индексы и настройки таблицы
     __table_args__ = (
+        Index("idx_user_id", "user_id"),
+        Index("idx_event_type", "event_type"),
+        Index("idx_event_category", "event_category"),
+        Index("idx_timestamp", "timestamp"),
+        Index("idx_session_id", "session_id"),
         Index("idx_user_time", "user_id", "timestamp"),
         Index("idx_category_time", "event_category", "timestamp"),
         Index("idx_type_time", "event_type", "timestamp"),
+        {"mysql_collate": "utf8mb4_unicode_ci"},
     )
 
     def __repr__(self):
