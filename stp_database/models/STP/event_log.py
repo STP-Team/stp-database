@@ -20,7 +20,7 @@ class EventLog(Base):
         user_id: Идентификатор сотрудника (внешний ключ на таблицу employees)
         event_type: Тип события (например, 'click', 'login', 'logout')
         event_category: Категория события (например, 'UI', 'System', 'Network')
-        timestamp: Время регистрации события
+        created_at: Время регистрации события
         session_id: Идентификатор сессии, к которой относится событие
         dialog_state: Состояние диалога на момент события
         window_name: Имя окна или экрана, где произошло событие
@@ -34,11 +34,11 @@ class EventLog(Base):
         idx_user_id: (user_id)
         idx_event_type: (event_type)
         idx_event_category: (event_category)
-        idx_timestamp: (timestamp)
+        idx_created_at: (created_at)
         idx_session_id: (session_id)
-        idx_user_time: (user_id, timestamp)
-        idx_category_time: (event_category, timestamp)
-        idx_type_time: (event_type, timestamp)
+        idx_user_time: (user_id, created_at)
+        idx_category_time: (event_category, created_at)
+        idx_type_time: (event_type, created_at)
     """
 
     __tablename__ = "event_logs"
@@ -102,17 +102,14 @@ class EventLog(Base):
         Index("idx_user_id", "user_id"),
         Index("idx_event_type", "event_type"),
         Index("idx_event_category", "event_category"),
-        Index("idx_timestamp", "timestamp"),
+        Index("idx_created_at", "created_at"),
         Index("idx_session_id", "session_id"),
-        Index("idx_user_time", "user_id", "timestamp"),
-        Index("idx_category_time", "event_category", "timestamp"),
-        Index("idx_type_time", "event_type", "timestamp"),
+        Index("idx_user_time", "user_id", "created_at"),
+        Index("idx_category_time", "event_category", "created_at"),
+        Index("idx_type_time", "event_type", "created_at"),
         {"mysql_collate": "utf8mb4_unicode_ci"},
     )
 
     def __repr__(self):
         """Возвращает строковое представление объекта EventLog."""
-        return (
-            f"<EventLog id={self.id}, user_id={self.user_id}, type={self.event_type}, "
-            f"category={self.event_category}, timestamp={self.timestamp}>"
-        )
+        return f"<EventLog {self.id} {self.user_id} {self.event_type} {self.event_category} {self.created_at}>"
