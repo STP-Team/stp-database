@@ -17,10 +17,6 @@ logger = logging.getLogger(__name__)
 class ExchangeRepo(BaseRepo):
     """Репозиторий для работы с биржей смен."""
 
-    # ===========================================
-    # СОЗДАНИЕ И УПРАВЛЕНИЕ ОБМЕНАМИ
-    # ===========================================
-
     async def create_exchange(
         self,
         seller_id: int,
@@ -249,10 +245,6 @@ class ExchangeRepo(BaseRepo):
             await self.session.rollback()
             return False
 
-    # ===========================================
-    # ПОЛУЧЕНИЕ ОБМЕНОВ
-    # ===========================================
-
     async def get_exchange_by_id(self, exchange_id: int) -> Exchange | None:
         """Получение обмена по ID.
 
@@ -405,10 +397,6 @@ class ExchangeRepo(BaseRepo):
             logger.error(f"[Биржа] Ошибка получения обменов за период: {e}")
             return []
 
-    # ===========================================
-    # АНАЛИТИКА И СТАТИСТИКА
-    # ===========================================
-
     async def get_sales_stats_for_period(
         self,
         user_id: int,
@@ -508,10 +496,6 @@ class ExchangeRepo(BaseRepo):
                 "period_start": start_date,
                 "period_end": end_date,
             }
-
-    # ===========================================
-    # ПОДПИСКИ НА НОВЫЕ ОБМЕНЫ
-    # ===========================================
 
     async def subscribe_to_exchanges(
         self,
@@ -667,10 +651,6 @@ class ExchangeRepo(BaseRepo):
                 f"[Биржа] Ошибка получения подписок пользователя {subscriber_id}: {e}"
             )
             return []
-
-    # ===========================================
-    # УПРАВЛЕНИЕ БАНАМИ
-    # ===========================================
 
     async def ban_user_from_exchange(self, user_id: int) -> bool:
         """Бан пользователя на бирже.

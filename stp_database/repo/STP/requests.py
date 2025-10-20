@@ -8,6 +8,7 @@ from stp_database.repo.STP.achievement import AchievementsRepo
 from stp_database.repo.STP.broadcast import BroadcastRepo
 from stp_database.repo.STP.employee import EmployeeRepo
 from stp_database.repo.STP.event_log import EventLogRepo
+from stp_database.repo.STP.exchange import ExchangeRepo
 from stp_database.repo.STP.files import FilesRepo
 from stp_database.repo.STP.group import GroupRepo
 from stp_database.repo.STP.group_member import GroupMemberRepo
@@ -69,6 +70,11 @@ class MainRequestsRepo:
     def group_member(self) -> GroupMemberRepo:
         """Инициализация репозитория GroupMemberRepo с сессией для работы с участниками отслеживаемых групп."""
         return GroupMemberRepo(self.session)
+
+    @property
+    def exchange(self) -> ExchangeRepo:
+        """Инициализация репозитория ExchangeRepo с сессией для работы с биржей подменов."""
+        return ExchangeRepo(self.session)
 
     @property
     def event_log(self) -> EventLogRepo:
