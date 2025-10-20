@@ -14,6 +14,7 @@ from stp_database.models import (
     Broadcast,
     Employee,
     Event,
+    EventLog,
     File,
     Group,
     GroupMember,
@@ -47,6 +48,7 @@ from stp_database.repo.Questions.requests import QuestionsRequestsRepo
 from stp_database.repo.STP.achievement import AchievementsRepo
 from stp_database.repo.STP.broadcast import BroadcastRepo
 from stp_database.repo.STP.employee import EmployeeRepo
+from stp_database.repo.STP.event_log import EventLogRepo
 from stp_database.repo.STP.files import FilesRepo
 from stp_database.repo.STP.group import GroupRepo
 from stp_database.repo.STP.group_member import GroupMemberRepo
@@ -112,4 +114,6 @@ __all__ = [
     "MessagesPair",
     "Question",
     "Settings",
+    "EventLog",
+    "EventLogRepo",
 ]
