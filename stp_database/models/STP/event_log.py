@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BIGINT, JSON, TIMESTAMP, ForeignKey, Index, String, text
+from sqlalchemy import BIGINT, JSON, TIMESTAMP, ForeignKey, Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from stp_database.models.base import Base
@@ -67,7 +67,7 @@ class EventLog(Base):
     )
     timestamp: Mapped[datetime] = mapped_column(
         TIMESTAMP,
-        server_default=text("current_timestamp()"),
+        server_default=func.current_timestamp(),
         nullable=True,
         comment="Время регистрации события",
     )
