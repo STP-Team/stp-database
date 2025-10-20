@@ -48,7 +48,7 @@ class EventLogRepo(BaseRepo):
             dialog_state=dialog_state,
             window_name=window_name,
             action=action,
-            metadata=metadata,
+            event_metadata=metadata,
         )
 
         try:

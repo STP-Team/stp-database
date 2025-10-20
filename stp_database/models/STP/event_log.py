@@ -1,12 +1,15 @@
 """Модель событий, связанных с действиями сотрудников."""
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import BIGINT, JSON, DateTime, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from stp_database import Employee
 from stp_database.models.base import Base
+
+if TYPE_CHECKING:
+    from stp_database.models.STP.employee import Employee
 
 
 class EventLog(Base):
@@ -80,12 +83,15 @@ class EventLog(Base):
         String(100), nullable=True, comment="Действие, совершённое пользователем"
     )
 
-    metadata: Mapped[dict] = mapped_column(
-        JSON, nullable=True, comment="Дополнительные данные события в формате JSON"
+    event_metadata: Mapped[dict] = mapped_column(
+        "metadata",
+        JSON,
+        nullable=True,
+        comment="Дополнительные данные события в формате JSON",
     )
 
     # Отношения
-    employee: Mapped[Employee] = relationship(
+    employee: Mapped["Employee"] = relationship(
         "Employee", back_populates="event_logs", lazy="joined"
     )
 

@@ -1,9 +1,14 @@
 """Модели, связанные с сущностями сотрудников."""
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import BIGINT, BOOLEAN, Unicode
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from stp_database.models.base import Base
+
+if TYPE_CHECKING:
+    from stp_database.models.STP.event_log import EventLog
 
 
 class Employee(Base):
@@ -60,6 +65,11 @@ class Employee(Base):
     )
     is_casino_allowed: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=False, comment="Разрешено ли казино сотруднику"
+    )
+
+    # Отношения
+    event_logs: Mapped[list["EventLog"]] = relationship(
+        "EventLog", back_populates="employee", lazy="select"
     )
 
     def __repr__(self):
