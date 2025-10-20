@@ -65,7 +65,7 @@ class EventLog(Base):
     )
     timestamp: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.now(),
+        default=datetime.now,
         index=True,
         comment="Время регистрации события",
     )
