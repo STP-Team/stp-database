@@ -110,6 +110,11 @@ __all__ = [
     "ProductsRepo",
     "PurchaseRepo",
     "TransactionRepo",
+    "EventLog",
+    "EventLogRepo",
+    "Exchange",
+    "ExchangeSubscription",
+    "ExchangeRepo",
     # Репозитории KPI
     "HeadPremiumRepo",
     "SpecKPIRepo",
@@ -117,9 +122,4 @@ __all__ = [
     "MessagesPair",
     "Question",
     "Settings",
-    "EventLog",
-    "EventLogRepo",
-    "Exchange",
-    "ExchangeSubscription",
-    "ExchangeRepo",
 ]
