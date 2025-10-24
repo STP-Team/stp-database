@@ -29,7 +29,6 @@ class ExchangeRepo(BaseRepo):
         is_private: bool = False,
         payment_type: str = "immediate",
         payment_date: Optional[datetime] = None,
-        schedule_file_path: Optional[str] = None,
     ) -> Exchange | None:
         """Создание нового обмена смены.
 
@@ -44,7 +43,6 @@ class ExchangeRepo(BaseRepo):
             is_private: Приватный ли обмен
             payment_type: Тип оплаты ('immediate' или 'on_date')
             payment_date: Дата оплаты (если payment_type == 'on_date')
-            schedule_file_path: Путь к файлу графика
 
         Returns:
             Созданный объект Exchange или None в случае ошибки
@@ -65,7 +63,6 @@ class ExchangeRepo(BaseRepo):
             is_private=is_private,
             payment_type=payment_type,
             payment_date=payment_date,
-            schedule_file_path=schedule_file_path,
         )
 
         try:
@@ -80,48 +77,6 @@ class ExchangeRepo(BaseRepo):
             logger.error(f"[Биржа] Ошибка создания обмена: {e}")
             await self.session.rollback()
             return None
-
-    async def create_exchange_from_schedule_file(
-        self,
-        seller_id: int,
-        schedule_file_path: str,
-        shifts_data: list[dict],
-        **kwargs: Any,
-    ) -> list[Exchange]:
-        """Создание обменов используя график из файла.
-
-        Args:
-            seller_id: Идентификатор продавца
-            schedule_file_path: Путь к файлу графика
-            shifts_data: Список данных о сменах [{'date': datetime, 'start': str, 'end': str, 'price': float}, ...]
-            **kwargs: Дополнительные параметры для всех обменов
-
-        Returns:
-            Список созданных объектов Exchange
-        """
-        if await self.is_user_exchange_banned(seller_id):
-            logger.warning(f"[Биржа] Пользователь {seller_id} забанен на бирже")
-            return []
-
-        created_exchanges = []
-        for shift_info in shifts_data:
-            exchange = await self.create_exchange(
-                seller_id=seller_id,
-                shift_date=shift_info["date"],
-                shift_start_time=shift_info["start"],
-                shift_end_time=shift_info.get("end"),
-                price=shift_info["price"],
-                is_partial=bool(shift_info.get("end")),
-                schedule_file_path=schedule_file_path,
-                **kwargs,
-            )
-            if exchange:
-                created_exchanges.append(exchange)
-
-        logger.info(
-            f"[Биржа] Создано {len(created_exchanges)} обменов из файла {schedule_file_path}"
-        )
-        return created_exchanges
 
     async def hide_exchange(self, exchange_id: int, seller_id: int) -> bool:
         """Скрытие созданной подмены.
