@@ -308,10 +308,12 @@ class ExchangeRepo(BaseRepo):
         exclude_user_id: Optional[int] = None,
         limit: int = 50,
         offset: int = 0,
+        division: str | list[str] = None,
     ) -> Sequence[Exchange]:
         """Получение активных обменов.
 
         Args:
+            division: Направление
             include_private: Включать ли приватные сделки
             exclude_user_id: Исключить сделки этого пользователя
             limit: Лимит записей
@@ -324,14 +326,23 @@ class ExchangeRepo(BaseRepo):
             filters = [Exchange.status == "active"]
 
             if not include_private:
-                filters.append(Exchange.is_private is False)
+                filters.append(Exchange.is_private.is_(False))
 
             if exclude_user_id:
                 filters.append(Exchange.seller_id != exclude_user_id)
 
+            query = select(Exchange).join(
+                Employee, Employee.user_id == Exchange.seller_id
+            )
+
+            if division:
+                if isinstance(division, list):
+                    filters.append(Employee.division.in_(division))
+                else:
+                    filters.append(Employee.division == division)
+
             query = (
-                select(Exchange)
-                .where(and_(*filters))
+                query.where(and_(*filters))
                 .order_by(desc(Exchange.created_at))
                 .limit(limit)
                 .offset(offset)
@@ -339,6 +350,7 @@ class ExchangeRepo(BaseRepo):
 
             result = await self.session.execute(query)
             return result.scalars().all()
+
         except SQLAlchemyError as e:
             logger.error(f"[Биржа] Ошибка получения активных обменов: {e}")
             return []
