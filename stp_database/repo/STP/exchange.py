@@ -120,6 +120,50 @@ class ExchangeRepo(BaseRepo):
             await self.session.rollback()
             return False
 
+    async def set_private(self, exchange_id: int):
+        """Установка приватности предложения.
+
+        Args:
+            exchange_id: Идентификатор сделки
+
+        Returns:
+            True если предложение успешно запривачено, False иначе
+        """
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+
+            exchange.is_private = True
+            await self.session.commit()
+            logger.info(f"[Биржа] Предложение {exchange_id} запривачено")
+            return True
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка привата предложения {exchange_id}: {e}")
+            await self.session.rollback()
+            return False
+
+    async def set_public(self, exchange_id: int):
+        """Установка публичности предложения.
+
+        Args:
+            exchange_id: Идентификатор сделки
+
+        Returns:
+            True если предложение успешно распривачено, False иначе
+        """
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+
+            exchange.is_private = False
+            await self.session.commit()
+            logger.info(f"[Биржа] Предложение {exchange_id} опубликовано")
+            return True
+        except SQLAlchemyError as e:
+            logger.error(
+                f"[Биржа] Ошибка изменения публичности предложения {exchange_id}: {e}"
+            )
+            await self.session.rollback()
+            return False
+
     async def expire_exchange(self, exchange_id: int) -> bool:
         """Истечение подмены.
 
