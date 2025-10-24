@@ -135,10 +135,10 @@ class Exchange(Base):
 
     # Статус и видимость
     status: Mapped[str] = mapped_column(
-        Enum("active", "inactive", "sold", "canceled"),
+        Enum("active", "inactive", "sold", "canceled", "expired"),
         nullable=False,
         default="active",
-        comment="Статус сделки (active, inactive, sold, canceled)",
+        comment="Статус сделки (active, inactive, sold, canceled, expired)",
     )
     is_hidden: Mapped[bool] = mapped_column(
         BOOLEAN,

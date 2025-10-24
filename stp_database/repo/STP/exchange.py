@@ -78,6 +78,48 @@ class ExchangeRepo(BaseRepo):
             await self.session.rollback()
             return None
 
+    async def activate_exchange(self, exchange_id: int):
+        """Активация подмены.
+
+        Args:
+            exchange_id: Идентификатор сделки
+
+        Returns:
+            True если сделка успешно активирована, False иначе
+        """
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+
+            exchange.status = "active"
+            await self.session.commit()
+            logger.info(f"[Биржа] Сделка {exchange_id} активирована")
+            return True
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка активации сделки {exchange_id}: {e}")
+            await self.session.rollback()
+            return False
+
+    async def inactivate_exchange(self, exchange_id: int):
+        """Деактивация подмены.
+
+        Args:
+            exchange_id: Идентификатор сделки
+
+        Returns:
+            True если сделка успешно деактивирована, False иначе
+        """
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+
+            exchange.status = "inactive"
+            await self.session.commit()
+            logger.info(f"[Биржа] Сделка {exchange_id} деактивирована")
+            return True
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка деактивации сделки {exchange_id}: {e}")
+            await self.session.rollback()
+            return False
+
     async def hide_exchange(self, exchange_id: int, seller_id: int) -> bool:
         """Скрытие созданной подмены.
 
@@ -96,7 +138,9 @@ class ExchangeRepo(BaseRepo):
             exchange.is_hidden = True
             exchange.status = "hidden"
             await self.session.commit()
-            logger.info(f"[Биржа] Обмен {exchange_id} скрыт пользователем {seller_id}")
+            logger.info(
+                f"[Биржа] Сделка {exchange_id} скрыта пользователем {seller_id}"
+            )
             return True
         except SQLAlchemyError as e:
             logger.error(f"[Биржа] Ошибка скрытия сделки {exchange_id}: {e}")
@@ -122,11 +166,32 @@ class ExchangeRepo(BaseRepo):
             exchange.status = "active"
             await self.session.commit()
             logger.info(
-                f"[Биржа] Обмен {exchange_id} отображен пользователем {seller_id}"
+                f"[Биржа] Сделка {exchange_id} отображена пользователем {seller_id}"
             )
             return True
         except SQLAlchemyError as e:
             logger.error(f"[Биржа] Ошибка отображения сделки {exchange_id}: {e}")
+            await self.session.rollback()
+            return False
+
+    async def expire_exchange(self, exchange_id: int) -> bool:
+        """Истечение подмены.
+
+        Args:
+            exchange_id: Идентификатор сделки
+
+        Returns:
+            True если сделка успешно скрыт, False иначе
+        """
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+
+            exchange.status = "expired"
+            await self.session.commit()
+            logger.info(f"[Биржа] Сделка {exchange_id} истечена")
+            return True
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка истечения сделки {exchange_id}: {e}")
             await self.session.rollback()
             return False
 
@@ -194,7 +259,9 @@ class ExchangeRepo(BaseRepo):
 
             await self.session.commit()
             await self.session.refresh(exchange)
-            logger.info(f"[Биржа] Обмен {exchange_id} куплен пользователем {buyer_id}")
+            logger.info(
+                f"[Биржа] Сделка {exchange_id} куплена пользователем {buyer_id}"
+            )
             return exchange
         except SQLAlchemyError as e:
             logger.error(f"[Биржа] Ошибка покупки сделки {exchange_id}: {e}")
@@ -221,7 +288,7 @@ class ExchangeRepo(BaseRepo):
             exchange.is_paid = True
             await self.session.commit()
             logger.info(
-                f"[Биржа] Обмен {exchange_id} отмечен как оплаченный пользователем {user_id}"
+                f"[Биржа] Сделка {exchange_id} отмечена как оплаченная пользователем {user_id}"
             )
             return True
         except SQLAlchemyError as e:
