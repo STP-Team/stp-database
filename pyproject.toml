@@ -1,6 +1,6 @@
 [project]
 name = "stp-database"
-version = "1.6.8"
+version = "1.6.9"
 description = "Модели и репозитории для взаимодействия с БД СТП"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -9,7 +9,7 @@ authors = [
 ]
 dependencies = [
     "sqlalchemy>=2.0.43",
-    "aiomysql>=0.2.0",
+    "aiomysql>=0.3.2",
     "infrastructure>=3.5.6",
     "pytz>=2025.2",
 ]
