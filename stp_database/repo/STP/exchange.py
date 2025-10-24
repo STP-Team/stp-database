@@ -30,7 +30,7 @@ class ExchangeRepo(BaseRepo):
         payment_type: str = "immediate",
         payment_date: Optional[datetime] = None,
     ) -> Exchange | None:
-        """Создание нового обмена смены.
+        """Создание нового сделки смены.
 
         Args:
             seller_id: Идентификатор продавца
@@ -40,7 +40,7 @@ class ExchangeRepo(BaseRepo):
             is_partial: Частичная ли смена
             shift_end_time: Время окончания (для частичной смены)
             description: Описание
-            is_private: Приватный ли обмен
+            is_private: Приватный ли сделка
             payment_type: Тип оплаты ('immediate' или 'on_date')
             payment_date: Дата оплаты (если payment_type == 'on_date')
 
@@ -70,11 +70,11 @@ class ExchangeRepo(BaseRepo):
             await self.session.commit()
             await self.session.refresh(new_exchange)
             logger.info(
-                f"[Биржа] Создан новый обмен: {new_exchange.id} от пользователя {seller_id}"
+                f"[Биржа] Создан новый сделка: {new_exchange.id} от пользователя {seller_id}"
             )
             return new_exchange
         except SQLAlchemyError as e:
-            logger.error(f"[Биржа] Ошибка создания обмена: {e}")
+            logger.error(f"[Биржа] Ошибка создания сделки: {e}")
             await self.session.rollback()
             return None
 
@@ -82,11 +82,11 @@ class ExchangeRepo(BaseRepo):
         """Скрытие созданной подмены.
 
         Args:
-            exchange_id: Идентификатор обмена
+            exchange_id: Идентификатор сделки
             seller_id: Идентификатор продавца (для проверки прав)
 
         Returns:
-            True если обмен успешно скрыт, False иначе
+            True если сделка успешно скрыт, False иначе
         """
         try:
             exchange = await self.get_exchange_by_id(exchange_id)
@@ -99,7 +99,7 @@ class ExchangeRepo(BaseRepo):
             logger.info(f"[Биржа] Обмен {exchange_id} скрыт пользователем {seller_id}")
             return True
         except SQLAlchemyError as e:
-            logger.error(f"[Биржа] Ошибка скрытия обмена {exchange_id}: {e}")
+            logger.error(f"[Биржа] Ошибка скрытия сделки {exchange_id}: {e}")
             await self.session.rollback()
             return False
 
@@ -107,11 +107,11 @@ class ExchangeRepo(BaseRepo):
         """Отображение скрытой подмены.
 
         Args:
-            exchange_id: Идентификатор обмена
+            exchange_id: Идентификатор сделки
             seller_id: Идентификатор продавца (для проверки прав)
 
         Returns:
-            True если обмен успешно отображен, False иначе
+            True если сделка успешно отображен, False иначе
         """
         try:
             exchange = await self.get_exchange_by_id(exchange_id)
@@ -126,17 +126,46 @@ class ExchangeRepo(BaseRepo):
             )
             return True
         except SQLAlchemyError as e:
-            logger.error(f"[Биржа] Ошибка отображения обмена {exchange_id}: {e}")
+            logger.error(f"[Биржа] Ошибка отображения сделки {exchange_id}: {e}")
+            await self.session.rollback()
+            return False
+
+    async def cancel_exchange(
+        self, exchange_id: int, exchange_owner_userid: int
+    ) -> bool:
+        """Отмена сделки.
+
+        Args:
+            exchange_id: Идентификатор сделки
+            exchange_owner_userid: Идентификатор владельца сделки (для проверки прав)
+
+        Returns:
+            True если сделка успешно отменен, False иначе
+        """
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+            if not exchange or exchange.seller_id != exchange_owner_userid:
+                return False
+
+            exchange.is_hidden = False
+            exchange.status = "canceled"
+            await self.session.commit()
+            logger.info(
+                f"[Биржа] Сделка {exchange_id} отменена пользователем {exchange_owner_userid}"
+            )
+            return True
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка отмены сделки {exchange_id}: {e}")
             await self.session.rollback()
             return False
 
     async def buy_exchange(
         self, exchange_id: int, buyer_id: int, mark_as_paid: bool = False
     ) -> Exchange | None:
-        """Покупка обмена.
+        """Покупка сделки.
 
         Args:
-            exchange_id: Идентификатор обмена
+            exchange_id: Идентификатор сделки
             buyer_id: Идентификатор покупателя
             mark_as_paid: Отметить ли сразу как оплаченный
 
@@ -168,7 +197,7 @@ class ExchangeRepo(BaseRepo):
             logger.info(f"[Биржа] Обмен {exchange_id} куплен пользователем {buyer_id}")
             return exchange
         except SQLAlchemyError as e:
-            logger.error(f"[Биржа] Ошибка покупки обмена {exchange_id}: {e}")
+            logger.error(f"[Биржа] Ошибка покупки сделки {exchange_id}: {e}")
             await self.session.rollback()
             return None
 
@@ -176,7 +205,7 @@ class ExchangeRepo(BaseRepo):
         """Отметка о наличии оплаты.
 
         Args:
-            exchange_id: Идентификатор обмена
+            exchange_id: Идентификатор сделки
             user_id: Идентификатор пользователя (продавец или покупатель)
 
         Returns:
@@ -196,15 +225,15 @@ class ExchangeRepo(BaseRepo):
             )
             return True
         except SQLAlchemyError as e:
-            logger.error(f"[Биржа] Ошибка отметки оплаты обмена {exchange_id}: {e}")
+            logger.error(f"[Биржа] Ошибка отметки оплаты сделки {exchange_id}: {e}")
             await self.session.rollback()
             return False
 
     async def get_exchange_by_id(self, exchange_id: int) -> Exchange | None:
-        """Получение обмена по ID.
+        """Получение сделки по ID.
 
         Args:
-            exchange_id: Идентификатор обмена
+            exchange_id: Идентификатор сделки
 
         Returns:
             Объект Exchange или None
@@ -214,7 +243,7 @@ class ExchangeRepo(BaseRepo):
             result = await self.session.execute(query)
             return result.scalar_one_or_none()
         except SQLAlchemyError as e:
-            logger.error(f"[Биржа] Ошибка получения обмена {exchange_id}: {e}")
+            logger.error(f"[Биржа] Ошибка получения сделки {exchange_id}: {e}")
             return None
 
     async def get_active_exchanges(
@@ -227,8 +256,8 @@ class ExchangeRepo(BaseRepo):
         """Получение активных обменов.
 
         Args:
-            include_private: Включать ли приватные обмены
-            exclude_user_id: Исключить обмены этого пользователя
+            include_private: Включать ли приватные сделки
+            exclude_user_id: Исключить сделки этого пользователя
             limit: Лимит записей
             offset: Смещение
 
@@ -465,7 +494,7 @@ class ExchangeRepo(BaseRepo):
             subscriber_id: Идентификатор подписчика
             subscription_type: Тип подписки ('all', 'specific_date', 'specific_seller')
             shift_date: Дата смены (для подписки на конкретную дату)
-            exchange_id: Идентификатор обмена (для подписки на конкретный обмен)
+            exchange_id: Идентификатор сделки (для подписки на конкретный сделка)
 
         Returns:
             Созданный объект ExchangeSubscription или None

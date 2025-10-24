@@ -1,4 +1,4 @@
-"""Модели для системы обмена сменами (биржи смен)."""
+"""Модели для системы сделки сменами (биржи смен)."""
 
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -8,6 +8,7 @@ from sqlalchemy import (
     BOOLEAN,
     DECIMAL,
     TIMESTAMP,
+    Enum,
     ForeignKey,
     Index,
     String,
@@ -23,21 +24,21 @@ if TYPE_CHECKING:
 
 
 class Exchange(Base):
-    """Модель обмена сменой или частью смены.
+    """Модель сделки сменой или частью смены.
 
     Представляет объявление о продаже/обмене смены на бирже.
 
     Args:
-        id: Уникальный идентификатор обмена
+        id: Уникальный идентификатор сделки
         seller_id: Идентификатор продавца (внешний ключ на employees.user_id)
         buyer_id: Идентификатор покупателя (внешний ключ на employees.user_id)
         shift_date: Дата смены
         shift_start_time: Время начала смены
         shift_end_time: Время окончания смены (для частичной смены)
-        is_partial: Является ли обмен частичной сменой
+        is_partial: Является ли сделка частичной сменой
         price: Цена за смену или часть смены
-        description: Описание обмена
-        status: Статус обмена (active, sold, hidden, cancelled)
+        description: Описание сделки
+        status: Статус сделки (active, sold, hidden, cancelled)
         is_hidden: Скрыта ли подмена
         is_private: Является ли подмена приватной
         is_paid: Отметка о наличии оплаты
@@ -50,7 +51,7 @@ class Exchange(Base):
     Relationships:
         seller: Объект Employee продавца
         buyer: Объект Employee покупателя
-        subscriptions: Подписки на этот обмен
+        subscriptions: Подписки на этот сделка
 
     Indexes:
         idx_seller_id: (seller_id)
@@ -68,10 +69,10 @@ class Exchange(Base):
         BIGINT,
         primary_key=True,
         autoincrement=True,
-        comment="Уникальный идентификатор обмена",
+        comment="Уникальный идентификатор сделки",
     )
 
-    # Участники обмена
+    # Участники сделки
     seller_id: Mapped[int] = mapped_column(
         BIGINT,
         ForeignKey("employees.user_id", name="fk_exchanges_seller"),
@@ -105,7 +106,7 @@ class Exchange(Base):
         BOOLEAN,
         nullable=False,
         default=False,
-        comment="Является ли обмен частичной сменой",
+        comment="Является ли сделка частичной сменой",
     )
 
     # Финансовая информация
@@ -134,10 +135,10 @@ class Exchange(Base):
 
     # Статус и видимость
     status: Mapped[str] = mapped_column(
-        String(20),
+        Enum("active", "inactive", "sold", "canceled"),
         nullable=False,
         default="active",
-        comment="Статус обмена (active, sold, hidden, cancelled)",
+        comment="Статус сделки (active, inactive, sold, canceled)",
     )
     is_hidden: Mapped[bool] = mapped_column(
         BOOLEAN,
@@ -156,7 +157,7 @@ class Exchange(Base):
     description: Mapped[str | None] = mapped_column(
         Unicode(500),
         nullable=True,
-        comment="Описание обмена",
+        comment="Описание сделки",
     )
 
     # Временные метки
@@ -221,14 +222,14 @@ class Exchange(Base):
 
 
 class ExchangeSubscription(Base):
-    """Модель подписки на новые обмены.
+    """Модель подписки на новые сделки.
 
-    Позволяет пользователям подписываться на уведомления о новых обменах.
+    Позволяет пользователям подписываться на уведомления о новых сделких.
 
     Args:
         id: Уникальный идентификатор подписки
         subscriber_id: Идентификатор подписчика (внешний ключ на employees.user_id)
-        exchange_id: Идентификатор обмена (внешний ключ на exchanges.id)
+        exchange_id: Идентификатор сделки (внешний ключ на exchanges.id)
         subscription_type: Тип подписки (all, specific_date, specific_seller)
         shift_date: Дата смены (для подписки на конкретную дату)
         is_active: Активна ли подписка
@@ -237,7 +238,7 @@ class ExchangeSubscription(Base):
 
     Relationships:
         subscriber: Объект Employee подписчика
-        exchange: Объект Exchange (если подписка на конкретный обмен)
+        exchange: Объект Exchange (если подписка на конкретный сделка)
 
     Indexes:
         idx_subscriber_id: (subscriber_id)
@@ -264,7 +265,7 @@ class ExchangeSubscription(Base):
         BIGINT,
         ForeignKey("exchanges.id", name="fk_subscriptions_exchange"),
         nullable=True,
-        comment="Идентификатор обмена (для подписки на конкретный обмен)",
+        comment="Идентификатор сделки (для подписки на конкретный сделка)",
     )
     subscription_type: Mapped[str] = mapped_column(
         String(30),
