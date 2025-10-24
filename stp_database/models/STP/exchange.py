@@ -38,6 +38,7 @@ class Exchange(Base):
         is_partial: Является ли сделка частичной сменой
         price: Цена за смену или часть смены
         description: Описание сделки
+        type: Тип обмена (sell, buy)
         status: Статус сделки (active, sold, cancelled)
         is_private: Является ли подмена приватной
         is_paid: Отметка о наличии оплаты
@@ -132,7 +133,13 @@ class Exchange(Base):
         comment="Конкретная дата оплаты (если payment_type равен 'on_date')",
     )
 
-    # Статус и видимость
+    # Тип и статус
+    type: Mapped[str] = mapped_column(
+        Enum("sell", "buy"),
+        nullable=False,
+        default="sell",
+        comment="Тип обмена: sell - предложение продать смену, buy - запрос на покупку смены",
+    )
     status: Mapped[str] = mapped_column(
         Enum("active", "inactive", "sold", "canceled", "expired"),
         nullable=False,
@@ -208,7 +215,7 @@ class Exchange(Base):
     def __repr__(self):
         """Возвращает строковое представление объекта Exchange."""
         return (
-            f"<Exchange {self.id} seller={self.seller_id} "
+            f"<Exchange {self.id} type={self.type} seller={self.seller_id} "
             f"buyer={self.buyer_id} status={self.status} "
             f"date={self.shift_date} price={self.price}>"
         )

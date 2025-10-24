@@ -23,6 +23,7 @@ class ExchangeRepo(BaseRepo):
         shift_date: datetime,
         shift_start_time: str,
         price: int,
+        type: str = "sell",
         is_partial: bool = False,
         shift_end_time: Optional[str] = None,
         description: Optional[str] = None,
@@ -37,6 +38,7 @@ class ExchangeRepo(BaseRepo):
             shift_date: Дата смены
             shift_start_time: Время начала смены
             price: Цена за смену
+            type: Тип обмена ('sell' или 'buy')
             is_partial: Частичная ли смена
             shift_end_time: Время окончания (для частичной смены)
             description: Описание
@@ -59,6 +61,7 @@ class ExchangeRepo(BaseRepo):
             shift_end_time=shift_end_time,
             is_partial=is_partial,
             price=price,
+            type=type,
             description=description,
             is_private=is_private,
             payment_type=payment_type,
@@ -309,15 +312,17 @@ class ExchangeRepo(BaseRepo):
         limit: int = 50,
         offset: int = 0,
         division: str | list[str] = None,
+        exchange_type: Optional[str] = None,
     ) -> Sequence[Exchange]:
         """Получение активных обменов.
 
         Args:
-            division: Направление
             include_private: Включать ли приватные сделки
             exclude_user_id: Исключить сделки этого пользователя
             limit: Лимит записей
             offset: Смещение
+            division: Направление
+            exchange_type: Тип обмена ('sell' или 'buy')
 
         Returns:
             Список активных обменов
@@ -330,6 +335,9 @@ class ExchangeRepo(BaseRepo):
 
             if exclude_user_id:
                 filters.append(Exchange.seller_id != exclude_user_id)
+
+            if exchange_type:
+                filters.append(Exchange.type == exchange_type)
 
             query = select(Exchange).join(
                 Employee, Employee.user_id == Exchange.seller_id
