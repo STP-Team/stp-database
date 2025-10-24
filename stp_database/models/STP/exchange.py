@@ -6,11 +6,11 @@ from typing import TYPE_CHECKING
 from sqlalchemy import (
     BIGINT,
     BOOLEAN,
-    DECIMAL,
     TIMESTAMP,
     Enum,
     ForeignKey,
     Index,
+    Integer,
     String,
     Unicode,
     func,
@@ -110,10 +110,10 @@ class Exchange(Base):
     )
 
     # Финансовая информация
-    price: Mapped[float] = mapped_column(
-        DECIMAL(10, 2),
+    price: Mapped[int] = mapped_column(
+        Integer,
         nullable=False,
-        comment="Цена за смену или часть смены",
+        comment="Цена за сделку",
     )
     is_paid: Mapped[bool] = mapped_column(
         BOOLEAN,

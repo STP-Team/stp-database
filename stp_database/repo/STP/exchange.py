@@ -22,7 +22,7 @@ class ExchangeRepo(BaseRepo):
         seller_id: int,
         shift_date: datetime,
         shift_start_time: str,
-        price: float,
+        price: int,
         is_partial: bool = False,
         shift_end_time: Optional[str] = None,
         description: Optional[str] = None,
