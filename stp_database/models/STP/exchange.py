@@ -46,7 +46,6 @@ class Exchange(Base):
         created_at: Время создания объявления
         updated_at: Время последнего обновления
         sold_at: Время продажи
-        schedule_file_path: Путь к файлу графика
 
     Relationships:
         seller: Объект Employee продавца
@@ -158,11 +157,6 @@ class Exchange(Base):
         Unicode(500),
         nullable=True,
         comment="Описание обмена",
-    )
-    schedule_file_path: Mapped[str | None] = mapped_column(
-        Unicode(255),
-        nullable=True,
-        comment="Путь к файлу графика (если создан из файла)",
     )
 
     # Временные метки
