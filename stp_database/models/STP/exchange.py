@@ -38,8 +38,7 @@ class Exchange(Base):
         is_partial: Является ли сделка частичной сменой
         price: Цена за смену или часть смены
         description: Описание сделки
-        status: Статус сделки (active, sold, hidden, cancelled)
-        is_hidden: Скрыта ли подмена
+        status: Статус сделки (active, sold, cancelled)
         is_private: Является ли подмена приватной
         is_paid: Отметка о наличии оплаты
         payment_type: Тип оплаты (immediate, on_date)
@@ -139,12 +138,6 @@ class Exchange(Base):
         nullable=False,
         default="active",
         comment="Статус сделки (active, inactive, sold, canceled, expired)",
-    )
-    is_hidden: Mapped[bool] = mapped_column(
-        BOOLEAN,
-        nullable=False,
-        default=False,
-        comment="Скрыта ли подмена (для временного скрытия)",
     )
     is_private: Mapped[bool] = mapped_column(
         BOOLEAN,

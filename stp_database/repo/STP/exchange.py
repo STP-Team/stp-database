@@ -120,60 +120,6 @@ class ExchangeRepo(BaseRepo):
             await self.session.rollback()
             return False
 
-    async def hide_exchange(self, exchange_id: int, seller_id: int) -> bool:
-        """Скрытие созданной подмены.
-
-        Args:
-            exchange_id: Идентификатор сделки
-            seller_id: Идентификатор продавца (для проверки прав)
-
-        Returns:
-            True если сделка успешно скрыт, False иначе
-        """
-        try:
-            exchange = await self.get_exchange_by_id(exchange_id)
-            if not exchange or exchange.seller_id != seller_id:
-                return False
-
-            exchange.is_hidden = True
-            exchange.status = "hidden"
-            await self.session.commit()
-            logger.info(
-                f"[Биржа] Сделка {exchange_id} скрыта пользователем {seller_id}"
-            )
-            return True
-        except SQLAlchemyError as e:
-            logger.error(f"[Биржа] Ошибка скрытия сделки {exchange_id}: {e}")
-            await self.session.rollback()
-            return False
-
-    async def unhide_exchange(self, exchange_id: int, seller_id: int) -> bool:
-        """Отображение скрытой подмены.
-
-        Args:
-            exchange_id: Идентификатор сделки
-            seller_id: Идентификатор продавца (для проверки прав)
-
-        Returns:
-            True если сделка успешно отображен, False иначе
-        """
-        try:
-            exchange = await self.get_exchange_by_id(exchange_id)
-            if not exchange or exchange.seller_id != seller_id:
-                return False
-
-            exchange.is_hidden = False
-            exchange.status = "active"
-            await self.session.commit()
-            logger.info(
-                f"[Биржа] Сделка {exchange_id} отображена пользователем {seller_id}"
-            )
-            return True
-        except SQLAlchemyError as e:
-            logger.error(f"[Биржа] Ошибка отображения сделки {exchange_id}: {e}")
-            await self.session.rollback()
-            return False
-
     async def expire_exchange(self, exchange_id: int) -> bool:
         """Истечение подмены.
 
@@ -212,7 +158,6 @@ class ExchangeRepo(BaseRepo):
             if not exchange or exchange.seller_id != exchange_owner_userid:
                 return False
 
-            exchange.is_hidden = False
             exchange.status = "canceled"
             await self.session.commit()
             logger.info(
@@ -332,13 +277,10 @@ class ExchangeRepo(BaseRepo):
             Список активных обменов
         """
         try:
-            filters = [
-                Exchange.status == "active",
-                Exchange.is_hidden != True,
-            ]
+            filters = [Exchange.status == "active"]
 
             if not include_private:
-                filters.append(Exchange.is_private != True)
+                filters.append(Exchange.is_private is False)
 
             if exclude_user_id:
                 filters.append(Exchange.seller_id != exclude_user_id)
