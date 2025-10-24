@@ -23,7 +23,7 @@ class ExchangeRepo(BaseRepo):
         shift_date: datetime,
         shift_start_time: str,
         price: int,
-        type: str = "sell",
+        exchange_type: str = "sell",
         is_partial: bool = False,
         shift_end_time: Optional[str] = None,
         description: Optional[str] = None,
@@ -38,7 +38,7 @@ class ExchangeRepo(BaseRepo):
             shift_date: Дата смены
             shift_start_time: Время начала смены
             price: Цена за смену
-            type: Тип обмена ('sell' или 'buy')
+            exchange_type: Тип обмена ('sell' или 'buy')
             is_partial: Частичная ли смена
             shift_end_time: Время окончания (для частичной смены)
             description: Описание
@@ -61,7 +61,7 @@ class ExchangeRepo(BaseRepo):
             shift_end_time=shift_end_time,
             is_partial=is_partial,
             price=price,
-            type=type,
+            type=exchange_type,
             description=description,
             is_private=is_private,
             payment_type=payment_type,
