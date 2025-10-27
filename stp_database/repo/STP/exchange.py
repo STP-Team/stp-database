@@ -1,7 +1,7 @@
 """Репозиторий функций для взаимодействия с биржей смен."""
 
 import logging
-from datetime import date, datetime
+from datetime import datetime
 from typing import Any, Optional, Sequence
 
 from sqlalchemy import and_, asc, desc, func, or_, select
@@ -20,13 +20,11 @@ class ExchangeRepo(BaseRepo):
     async def create_exchange(
         self,
         seller_id: int,
-        shift_date: datetime,
-        shift_start_time: str,
+        start_time: Optional[datetime],
         price: int,
         exchange_type: str = "sell",
-        is_partial: bool = False,
-        shift_end_time: Optional[str] = None,
-        description: Optional[str] = None,
+        end_time: Optional[datetime] = None,
+        comment: Optional[str] = None,
         is_private: bool = False,
         payment_type: str = "immediate",
         payment_date: Optional[datetime] = None,
@@ -35,13 +33,11 @@ class ExchangeRepo(BaseRepo):
 
         Args:
             seller_id: Идентификатор продавца
-            shift_date: Дата смены
-            shift_start_time: Время начала смены
+            start_time: Начало смены
             price: Цена за смену
             exchange_type: Тип обмена ('sell' или 'buy')
-            is_partial: Частичная ли смена
-            shift_end_time: Время окончания (для частичной смены)
-            description: Описание
+            end_time: Окончание смены (если частичная смена)
+            comment: Комментарий к сделке
             is_private: Приватный ли сделка
             payment_type: Тип оплаты ('immediate' или 'on_date')
             payment_date: Дата оплаты (если payment_type == 'on_date')
@@ -56,13 +52,11 @@ class ExchangeRepo(BaseRepo):
 
         new_exchange = Exchange(
             seller_id=seller_id,
-            shift_date=shift_date,
-            shift_start_time=shift_start_time,
-            shift_end_time=shift_end_time,
-            is_partial=is_partial,
+            start_time=start_time,
+            end_time=end_time,
             price=price,
             type=exchange_type,
-            description=description,
+            comment=comment,
             is_private=is_private,
             payment_type=payment_type,
             payment_date=payment_date,
@@ -425,16 +419,16 @@ class ExchangeRepo(BaseRepo):
 
     async def get_exchanges_by_date_range(
         self,
-        start_date: date,
-        end_date: date,
+        start_date: datetime,
+        end_date: datetime,
         status: Optional[str] = None,
         limit: int = 100,
     ) -> Sequence[Exchange]:
         """Получение обменов за период.
 
         Args:
-            start_date: Начальная дата
-            end_date: Конечная дата
+            start_date: Начальная дата и время
+            end_date: Конечная дата и время
             status: Фильтр по статусу
             limit: Лимит записей
 
@@ -443,8 +437,8 @@ class ExchangeRepo(BaseRepo):
         """
         try:
             filters = [
-                Exchange.shift_date >= start_date,
-                Exchange.shift_date <= end_date,
+                Exchange.start_time >= start_date,
+                Exchange.start_time <= end_date,
             ]
 
             if status:
@@ -453,7 +447,7 @@ class ExchangeRepo(BaseRepo):
             query = (
                 select(Exchange)
                 .where(and_(*filters))
-                .order_by(asc(Exchange.shift_date))
+                .order_by(asc(Exchange.start_time))
                 .limit(limit)
             )
 
@@ -466,15 +460,15 @@ class ExchangeRepo(BaseRepo):
     async def get_sales_stats_for_period(
         self,
         user_id: int,
-        start_date: date,
-        end_date: date,
+        start_date: datetime,
+        end_date: datetime,
     ) -> dict[str, Any]:
         """Подсчет продаж за период.
 
         Args:
             user_id: Идентификатор пользователя
-            start_date: Начальная дата
-            end_date: Конечная дата
+            start_date: Начальная дата и время
+            end_date: Конечная дата и время
 
         Returns:
             Словарь со статистикой продаж
@@ -488,8 +482,8 @@ class ExchangeRepo(BaseRepo):
                 and_(
                     Exchange.seller_id == user_id,
                     Exchange.status == "sold",
-                    Exchange.shift_date >= start_date,
-                    Exchange.shift_date <= end_date,
+                    Exchange.start_time >= start_date,
+                    Exchange.start_time <= end_date,
                 )
             )
 
@@ -516,15 +510,15 @@ class ExchangeRepo(BaseRepo):
     async def get_purchases_stats_for_period(
         self,
         user_id: int,
-        start_date: date,
-        end_date: date,
+        start_date: datetime,
+        end_date: datetime,
     ) -> dict[str, Any]:
         """Подсчет покупок за период.
 
         Args:
             user_id: Идентификатор пользователя
-            start_date: Начальная дата
-            end_date: Конечная дата
+            start_date: Начальная дата и время
+            end_date: Конечная дата и время
 
         Returns:
             Словарь со статистикой покупок
@@ -538,8 +532,8 @@ class ExchangeRepo(BaseRepo):
                 and_(
                     Exchange.buyer_id == user_id,
                     Exchange.status == "sold",
-                    Exchange.shift_date >= start_date,
-                    Exchange.shift_date <= end_date,
+                    Exchange.start_time >= start_date,
+                    Exchange.start_time <= end_date,
                 )
             )
 
@@ -567,15 +561,13 @@ class ExchangeRepo(BaseRepo):
         self,
         subscriber_id: int,
         subscription_type: str = "all",
-        shift_date: Optional[datetime] = None,
         exchange_id: Optional[int] = None,
     ) -> ExchangeSubscription | None:
         """Подписка на новые подмены.
 
         Args:
             subscriber_id: Идентификатор подписчика
-            subscription_type: Тип подписки ('all', 'specific_date', 'specific_seller')
-            shift_date: Дата смены (для подписки на конкретную дату)
+            subscription_type: Тип подписки ('all', 'specific_exchange', 'specific_seller')
             exchange_id: Идентификатор сделки (для подписки на конкретный сделка)
 
         Returns:
@@ -591,10 +583,6 @@ class ExchangeRepo(BaseRepo):
                 )
             )
 
-            if shift_date:
-                existing_query = existing_query.where(
-                    ExchangeSubscription.shift_date == shift_date
-                )
             if exchange_id:
                 existing_query = existing_query.where(
                     ExchangeSubscription.exchange_id == exchange_id
@@ -610,7 +598,6 @@ class ExchangeRepo(BaseRepo):
             subscription = ExchangeSubscription(
                 subscriber_id=subscriber_id,
                 subscription_type=subscription_type,
-                shift_date=shift_date,
                 exchange_id=exchange_id,
             )
 

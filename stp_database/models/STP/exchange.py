@@ -32,12 +32,10 @@ class Exchange(Base):
         id: Уникальный идентификатор сделки
         seller_id: Идентификатор продавца (внешний ключ на employees.user_id)
         buyer_id: Идентификатор покупателя (внешний ключ на employees.user_id)
-        shift_date: Дата смены
-        shift_start_time: Время начала смены
-        shift_end_time: Время окончания смены (для частичной смены)
-        is_partial: Является ли сделка частичной сменой
+        start_time: Начало смены
+        end_time: Окончание смены (если частичная смена)
         price: Цена за смену или часть смены
-        description: Описание сделки
+        comment: Комментарий к сделке
         type: Тип обмена (sell, buy)
         status: Статус сделки (active, sold, cancelled)
         is_private: Является ли подмена приватной
@@ -57,9 +55,9 @@ class Exchange(Base):
         idx_seller_id: (seller_id)
         idx_buyer_id: (buyer_id)
         idx_status: (status)
-        idx_shift_date: (shift_date)
+        idx_start_time: (start_time)
         idx_created_at: (created_at)
-        idx_status_date: (status, shift_date)
+        idx_status_start_time: (status, start_time)
         idx_seller_status: (seller_id, status)
     """
 
@@ -87,26 +85,15 @@ class Exchange(Base):
     )
 
     # Информация о смене
-    shift_date: Mapped[datetime] = mapped_column(
+    start_time: Mapped[datetime | None] = mapped_column(
         TIMESTAMP,
-        nullable=False,
-        comment="Дата смены",
-    )
-    shift_start_time: Mapped[str] = mapped_column(
-        String(10),
-        nullable=False,
-        comment="Время начала смены (например, '09:00')",
-    )
-    shift_end_time: Mapped[str | None] = mapped_column(
-        String(10),
         nullable=True,
-        comment="Время окончания смены (для частичной смены)",
+        comment="Начало смены",
     )
-    is_partial: Mapped[bool] = mapped_column(
-        BOOLEAN,
-        nullable=False,
-        default=False,
-        comment="Является ли сделка частичной сменой",
+    end_time: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP,
+        nullable=True,
+        comment="Окончание смены (если частичная смена)",
     )
 
     # Финансовая информация
@@ -154,10 +141,10 @@ class Exchange(Base):
     )
 
     # Дополнительная информация
-    description: Mapped[str | None] = mapped_column(
+    comment: Mapped[str | None] = mapped_column(
         Unicode(500),
         nullable=True,
-        comment="Описание сделки",
+        comment="Комментарий к сделке",
     )
 
     # Временные метки
@@ -205,9 +192,9 @@ class Exchange(Base):
         Index("idx_seller_id", "seller_id"),
         Index("idx_buyer_id", "buyer_id"),
         Index("idx_status", "status"),
-        Index("idx_shift_date", "shift_date"),
+        Index("idx_start_time", "start_time"),
         Index("idx_created_at", "created_at"),
-        Index("idx_status_date", "status", "shift_date"),
+        Index("idx_status_start_time", "status", "start_time"),
         Index("idx_seller_status", "seller_id", "status"),
         {"mysql_collate": "utf8mb4_unicode_ci"},
     )
@@ -217,7 +204,7 @@ class Exchange(Base):
         return (
             f"<Exchange {self.id} type={self.type} seller={self.seller_id} "
             f"buyer={self.buyer_id} status={self.status} "
-            f"date={self.shift_date} price={self.price}>"
+            f"start_time={self.start_time} price={self.price}>"
         )
 
 
@@ -230,8 +217,7 @@ class ExchangeSubscription(Base):
         id: Уникальный идентификатор подписки
         subscriber_id: Идентификатор подписчика (внешний ключ на employees.user_id)
         exchange_id: Идентификатор сделки (внешний ключ на exchanges.id)
-        subscription_type: Тип подписки (all, specific_date, specific_seller)
-        shift_date: Дата смены (для подписки на конкретную дату)
+        subscription_type: Тип подписки (all, specific_exchange, specific_seller)
         is_active: Активна ли подписка
         created_at: Время создания подписки
         notified_at: Время последнего уведомления
@@ -271,12 +257,7 @@ class ExchangeSubscription(Base):
         String(30),
         nullable=False,
         default="all",
-        comment="Тип подписки (all, specific_date, specific_seller)",
-    )
-    shift_date: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP,
-        nullable=True,
-        comment="Дата смены (для подписки на конкретную дату)",
+        comment="Тип подписки (all, specific_exchange, specific_seller)",
     )
     is_active: Mapped[bool] = mapped_column(
         BOOLEAN,
