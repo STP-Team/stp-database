@@ -139,6 +139,9 @@ class Exchange(Base):
         default=False,
         comment="Является ли подмена приватной (для отправки в личные сообщения)",
     )
+    in_schedule: Mapped[bool] = mapped_column(
+        BOOLEAN, nullable=False, default=False, comment="Показывать ли в графике"
+    )
 
     # Дополнительная информация
     comment: Mapped[str | None] = mapped_column(
