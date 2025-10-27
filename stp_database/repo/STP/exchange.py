@@ -291,6 +291,198 @@ class ExchangeRepo(BaseRepo):
             await self.session.rollback()
             return False
 
+    async def update_exchange_date(
+        self,
+        exchange_id: int,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+    ) -> bool:
+        """Обновление даты и времени сделки.
+
+        Args:
+            exchange_id: Идентификатор сделки
+            start_time: Новое время начала смены
+            end_time: Новое время окончания смены
+
+        Returns:
+            True если успешно обновлено, False иначе
+        """
+        if start_time is None and end_time is None:
+            logger.warning("[Биржа] Не указаны параметры для обновления даты")
+            return False
+
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+            if not exchange:
+                logger.warning(f"[Биржа] Сделка с ID {exchange_id} не найдена")
+                return False
+
+            if start_time is not None:
+                exchange.start_time = start_time
+            if end_time is not None:
+                exchange.end_time = end_time
+
+            await self.session.commit()
+            logger.info(f"[Биржа] Обновлена дата сделки {exchange_id}")
+            return True
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка обновления даты сделки {exchange_id}: {e}")
+            await self.session.rollback()
+            return False
+
+    async def update_exchange_price(self, exchange_id: int, price: int) -> bool:
+        """Обновление цены сделки.
+
+        Args:
+            exchange_id: Идентификатор сделки
+            price: Новая цена
+
+        Returns:
+            True если успешно обновлено, False иначе
+        """
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+            if not exchange:
+                logger.warning(f"[Биржа] Сделка с ID {exchange_id} не найдена")
+                return False
+
+            exchange.price = price
+            await self.session.commit()
+            logger.info(f"[Биржа] Обновлена цена сделки {exchange_id} на {price}")
+            return True
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка обновления цены сделки {exchange_id}: {e}")
+            await self.session.rollback()
+            return False
+
+    async def update_payment_timing(
+        self,
+        exchange_id: int,
+        payment_type: Optional[str] = None,
+        payment_date: Optional[datetime] = None,
+    ) -> bool:
+        """Обновление условий оплаты сделки.
+
+        Args:
+            exchange_id: Идентификатор сделки
+            payment_type: Тип оплаты ('immediate' или 'on_date')
+            payment_date: Дата оплаты (если payment_type == 'on_date')
+
+        Returns:
+            True если успешно обновлено, False иначе
+        """
+        if payment_type is None and payment_date is None:
+            logger.warning("[Биржа] Не указаны параметры для обновления условий оплаты")
+            return False
+
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+            if not exchange:
+                logger.warning(f"[Биржа] Сделка с ID {exchange_id} не найдена")
+                return False
+
+            if payment_type is not None:
+                exchange.payment_type = payment_type
+            if payment_date is not None:
+                exchange.payment_date = payment_date
+
+            await self.session.commit()
+            logger.info(f"[Биржа] Обновлены условия оплаты сделки {exchange_id}")
+            return True
+        except SQLAlchemyError as e:
+            logger.error(
+                f"[Биржа] Ошибка обновления условий оплаты сделки {exchange_id}: {e}"
+            )
+            await self.session.rollback()
+            return False
+
+    async def update_exchange_comment(
+        self, exchange_id: int, comment: Optional[str]
+    ) -> bool:
+        """Обновление комментария к сделке.
+
+        Args:
+            exchange_id: Идентификатор сделки
+            comment: Новый комментарий
+
+        Returns:
+            True если успешно обновлено, False иначе
+        """
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+            if not exchange:
+                logger.warning(f"[Биржа] Сделка с ID {exchange_id} не найдена")
+                return False
+
+            exchange.comment = comment
+            await self.session.commit()
+            logger.info(f"[Биржа] Обновлен комментарий сделки {exchange_id}")
+            return True
+        except SQLAlchemyError as e:
+            logger.error(
+                f"[Биржа] Ошибка обновления комментария сделки {exchange_id}: {e}"
+            )
+            await self.session.rollback()
+            return False
+
+    async def update_exchange(
+        self,
+        exchange_id: int,
+        **kwargs,
+    ) -> bool:
+        """Универсальное обновление полей сделки.
+
+        Args:
+            exchange_id: Идентификатор сделки
+            **kwargs: Словарь полей для обновления. Поддерживаемые поля:
+                     start_time, end_time, price, comment, payment_type, payment_date,
+                     is_private
+
+        Returns:
+            True если успешно обновлено, False иначе
+        """
+        if not kwargs:
+            logger.warning("[Биржа] Не указаны параметры для обновления")
+            return False
+
+        # Разрешенные поля для обновления
+        allowed_fields = {
+            "start_time",
+            "end_time",
+            "price",
+            "comment",
+            "payment_type",
+            "payment_date",
+            "is_private",
+        }
+
+        # Фильтруем только разрешенные поля
+        update_fields = {k: v for k, v in kwargs.items() if k in allowed_fields}
+
+        if not update_fields:
+            logger.warning("[Биржа] Нет допустимых полей для обновления")
+            return False
+
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+            if not exchange:
+                logger.warning(f"[Биржа] Сделка с ID {exchange_id} не найдена")
+                return False
+
+            # Обновляем поля
+            for field, value in update_fields.items():
+                setattr(exchange, field, value)
+
+            await self.session.commit()
+            logger.info(
+                f"[Биржа] Обновлена сделка {exchange_id}, поля: {list(update_fields.keys())}"
+            )
+            return True
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка обновления сделки {exchange_id}: {e}")
+            await self.session.rollback()
+            return False
+
     async def get_exchange_by_id(self, exchange_id: int) -> Exchange | None:
         """Получение сделки по ID.
 
