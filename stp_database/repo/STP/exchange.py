@@ -276,28 +276,21 @@ class ExchangeRepo(BaseRepo):
             await self.session.rollback()
             return None
 
-    async def mark_exchange_paid(self, exchange_id: int, user_id: int) -> bool:
+    async def mark_exchange_paid(self, exchange_id: int) -> bool:
         """Отметка о наличии оплаты.
 
         Args:
             exchange_id: Идентификатор сделки
-            user_id: Идентификатор пользователя (продавец или покупатель)
 
         Returns:
             True если успешно отмечен как оплаченный, False иначе
         """
         try:
             exchange = await self.get_exchange_by_id(exchange_id)
-            if not exchange or (
-                exchange.seller_id != user_id and exchange.buyer_id != user_id
-            ):
-                return False
 
             exchange.is_paid = True
             await self.session.commit()
-            logger.info(
-                f"[Биржа] Сделка {exchange_id} отмечена как оплаченная пользователем {user_id}"
-            )
+            logger.info(f"[Биржа] Сделка {exchange_id} отмечена как оплаченная")
             return True
         except SQLAlchemyError as e:
             logger.error(f"[Биржа] Ошибка отметки оплаты сделки {exchange_id}: {e}")
