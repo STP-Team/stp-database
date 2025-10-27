@@ -188,31 +188,47 @@ class ExchangeRepo(BaseRepo):
             await self.session.rollback()
             return False
 
-    async def cancel_exchange(
-        self, exchange_id: int, exchange_owner_userid: int
-    ) -> bool:
+    async def cancel_exchange(self, exchange_id: int) -> bool:
         """Отмена сделки.
 
         Args:
             exchange_id: Идентификатор сделки
-            exchange_owner_userid: Идентификатор владельца сделки (для проверки прав)
 
         Returns:
             True если сделка успешно отменен, False иначе
         """
         try:
             exchange = await self.get_exchange_by_id(exchange_id)
-            if not exchange or exchange.seller_id != exchange_owner_userid:
-                return False
 
             exchange.status = "canceled"
             await self.session.commit()
-            logger.info(
-                f"[Биржа] Сделка {exchange_id} отменена пользователем {exchange_owner_userid}"
-            )
             return True
         except SQLAlchemyError as e:
             logger.error(f"[Биржа] Ошибка отмены сделки {exchange_id}: {e}")
+            await self.session.rollback()
+            return False
+
+    async def delete_exchange(self, exchange_id: int):
+        """Удаление сделки.
+
+        Args:
+            exchange_id: Идентификатор сделки
+
+        Returns:
+            True если сделка успешно отменен, False иначе
+        """
+        try:
+            exchange = await self.get_exchange_by_id(exchange_id)
+            if not exchange:
+                logger.warning(f"[Биржа] Сделка с ID {exchange_id} не найдена.")
+                return False
+
+            await self.session.delete(exchange)
+            await self.session.commit()
+            return True
+
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка удаления сделки {exchange_id}: {e}")
             await self.session.rollback()
             return False
 
