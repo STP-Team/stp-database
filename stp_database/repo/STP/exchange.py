@@ -455,6 +455,7 @@ class ExchangeRepo(BaseRepo):
             "payment_date",
             "is_private",
             "is_paid",
+            "status",
             "in_seller_schedule",
             "in_buyer_schedule",
         }
