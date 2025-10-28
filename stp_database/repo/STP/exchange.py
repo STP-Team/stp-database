@@ -455,7 +455,8 @@ class ExchangeRepo(BaseRepo):
             "payment_date",
             "is_private",
             "is_paid",
-            "in_schedule",
+            "in_seller_schedule",
+            "in_buyer_schedule",
         }
 
         # Фильтруем только разрешенные поля

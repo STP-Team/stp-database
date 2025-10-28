@@ -139,8 +139,17 @@ class Exchange(Base):
         default=False,
         comment="Является ли подмена приватной (для отправки в личные сообщения)",
     )
-    in_schedule: Mapped[bool] = mapped_column(
-        BOOLEAN, nullable=False, default=False, comment="Показывать ли в графике"
+    in_seller_schedule: Mapped[bool] = mapped_column(
+        BOOLEAN,
+        nullable=False,
+        default=False,
+        comment="Показывать ли в графике продающего",
+    )
+    in_buyer_schedule: Mapped[bool] = mapped_column(
+        BOOLEAN,
+        nullable=False,
+        default=False,
+        comment="Показывать ли в графике покупающего",
     )
 
     # Дополнительная информация
