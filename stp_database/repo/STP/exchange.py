@@ -996,19 +996,15 @@ class ExchangeRepo(BaseRepo):
             logger.error(f"[Биржа] Ошибка проверки бана пользователя {user_id}: {e}")
             return False
 
-    # --- Новые методы для работы с расширенными подписками ---
-
     async def update_subscription(
         self,
         subscription_id: int,
-        subscriber_id: int,
         **kwargs,
     ) -> bool:
         """Универсальное обновление подписки.
 
         Args:
             subscription_id: Идентификатор подписки
-            subscriber_id: Идентификатор подписчика (для безопасности)
             **kwargs: Поля для обновления
 
         Returns:
@@ -1044,10 +1040,7 @@ class ExchangeRepo(BaseRepo):
 
         try:
             query = select(ExchangeSubscription).where(
-                and_(
-                    ExchangeSubscription.id == subscription_id,
-                    ExchangeSubscription.subscriber_id == subscriber_id,
-                )
+                ExchangeSubscription.id == subscription_id
             )
             result = await self.session.execute(query)
             subscription = result.scalar_one_or_none()
@@ -1070,23 +1063,18 @@ class ExchangeRepo(BaseRepo):
     async def delete_subscription(
         self,
         subscription_id: int,
-        subscriber_id: int,
     ) -> bool:
         """Удаление подписки по ID.
 
         Args:
             subscription_id: Идентификатор подписки
-            subscriber_id: Идентификатор подписчика (для безопасности)
 
         Returns:
             True если успешно удалена, False иначе
         """
         try:
             query = select(ExchangeSubscription).where(
-                and_(
-                    ExchangeSubscription.id == subscription_id,
-                    ExchangeSubscription.subscriber_id == subscriber_id,
-                )
+                ExchangeSubscription.id == subscription_id
             )
             result = await self.session.execute(query)
             subscription = result.scalar_one_or_none()
