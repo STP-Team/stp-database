@@ -1,14 +1,18 @@
 """Репозиторий функций для взаимодействия с биржей смен."""
 
 import logging
-from datetime import datetime, date, time
+from datetime import date, datetime, time
 from typing import Any, Optional, Sequence
 
 from sqlalchemy import and_, asc, desc, func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from stp_database.models.STP.employee import Employee
-from stp_database.models.STP.exchange import Exchange, ExchangeSubscription, SubscriptionNotification
+from stp_database.models.STP.exchange import (
+    Exchange,
+    ExchangeSubscription,
+    SubscriptionNotification,
+)
 from stp_database.repo.base import BaseRepo
 
 logger = logging.getLogger(__name__)
@@ -1015,10 +1019,23 @@ class ExchangeRepo(BaseRepo):
 
         # Разрешенные поля для обновления
         allowed_fields = {
-            "name", "exchange_type", "subscription_type", "min_price", "max_price",
-            "start_date", "end_date", "start_time", "end_time", "days_of_week",
-            "target_seller_id", "target_divisions", "notify_immediately",
-            "notify_daily_digest", "notify_before_expire", "digest_time", "is_active"
+            "name",
+            "exchange_type",
+            "subscription_type",
+            "min_price",
+            "max_price",
+            "start_date",
+            "end_date",
+            "start_time",
+            "end_time",
+            "days_of_week",
+            "target_seller_id",
+            "target_divisions",
+            "notify_immediately",
+            "notify_daily_digest",
+            "notify_before_expire",
+            "digest_time",
+            "is_active",
         }
 
         update_fields = {k: v for k, v in kwargs.items() if k in allowed_fields}
@@ -1123,7 +1140,9 @@ class ExchangeRepo(BaseRepo):
             base_filters.append(seller_filter)
 
             # Исключаем собственные обмены продавца
-            base_filters.append(ExchangeSubscription.subscriber_id != exchange.seller_id)
+            base_filters.append(
+                ExchangeSubscription.subscriber_id != exchange.seller_id
+            )
 
             all_filters = base_filters + price_filters
 
@@ -1170,12 +1189,18 @@ class ExchangeRepo(BaseRepo):
 
             # Проверка дней недели (1=Monday, 7=Sunday)
             if subscription.days_of_week:
-                weekday = exchange.start_time.weekday() + 1  # Python: 0=Monday, SQL: 1=Monday
+                weekday = (
+                    exchange.start_time.weekday() + 1
+                )  # Python: 0=Monday, SQL: 1=Monday
                 if weekday not in subscription.days_of_week:
                     return False
 
         # Проверка подразделений
-        if subscription.target_divisions and exchange.seller and exchange.seller.division:
+        if (
+            subscription.target_divisions
+            and exchange.seller
+            and exchange.seller.division
+        ):
             if exchange.seller.division not in subscription.target_divisions:
                 return False
 

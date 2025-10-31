@@ -1,15 +1,15 @@
 """Модели для системы сделки сменами (биржи смен)."""
 
-from datetime import datetime, date, time
+from datetime import date, datetime, time
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     BIGINT,
     BOOLEAN,
-    TIMESTAMP,
     DATE,
-    TIME,
     JSON,
+    TIME,
+    TIMESTAMP,
     Enum,
     ForeignKey,
     Index,
@@ -277,7 +277,12 @@ class ExchangeSubscription(Base):
     )
     subscriber_id: Mapped[int] = mapped_column(
         BIGINT,
-        ForeignKey("employees.user_id", name="fk_subscriptions_subscriber", onupdate="CASCADE", ondelete="CASCADE"),
+        ForeignKey(
+            "employees.user_id",
+            name="fk_subscriptions_subscriber",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
         nullable=False,
         comment="Идентификатор подписчика (внешний ключ на employees.user_id)",
     )
@@ -345,7 +350,12 @@ class ExchangeSubscription(Base):
     # Seller filtering
     target_seller_id: Mapped[int | None] = mapped_column(
         BIGINT,
-        ForeignKey("employees.user_id", name="fk_subscriptions_target_seller", onupdate="CASCADE", ondelete="SET NULL"),
+        ForeignKey(
+            "employees.user_id",
+            name="fk_subscriptions_target_seller",
+            onupdate="CASCADE",
+            ondelete="SET NULL",
+        ),
         nullable=True,
         comment="Конкретный продавец (для подписки на конкретного человека)",
     )
@@ -500,13 +510,23 @@ class SubscriptionNotification(Base):
     )
     subscription_id: Mapped[int] = mapped_column(
         BIGINT,
-        ForeignKey("exchange_subscriptions.id", name="fk_notifications_subscription", onupdate="CASCADE", ondelete="CASCADE"),
+        ForeignKey(
+            "exchange_subscriptions.id",
+            name="fk_notifications_subscription",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
         nullable=False,
         comment="Идентификатор подписки",
     )
     exchange_id: Mapped[int] = mapped_column(
         BIGINT,
-        ForeignKey("exchanges.id", name="fk_notifications_exchange", onupdate="CASCADE", ondelete="CASCADE"),
+        ForeignKey(
+            "exchanges.id",
+            name="fk_notifications_exchange",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
         nullable=False,
         comment="Идентификатор сделки",
     )
