@@ -1067,6 +1067,43 @@ class ExchangeRepo(BaseRepo):
             await self.session.rollback()
             return False
 
+    async def delete_subscription(
+        self,
+        subscription_id: int,
+        subscriber_id: int,
+    ) -> bool:
+        """Удаление подписки по ID.
+
+        Args:
+            subscription_id: Идентификатор подписки
+            subscriber_id: Идентификатор подписчика (для безопасности)
+
+        Returns:
+            True если успешно удалена, False иначе
+        """
+        try:
+            query = select(ExchangeSubscription).where(
+                and_(
+                    ExchangeSubscription.id == subscription_id,
+                    ExchangeSubscription.subscriber_id == subscriber_id,
+                )
+            )
+            result = await self.session.execute(query)
+            subscription = result.scalar_one_or_none()
+
+            if not subscription:
+                logger.warning(f"[Биржа] Подписка {subscription_id} не найдена")
+                return False
+
+            await self.session.delete(subscription)
+            await self.session.commit()
+            logger.info(f"[Биржа] Удалена подписка {subscription_id}")
+            return True
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка удаления подписки {subscription_id}: {e}")
+            await self.session.rollback()
+            return False
+
     async def get_subscription_by_id(
         self,
         subscription_id: int,
