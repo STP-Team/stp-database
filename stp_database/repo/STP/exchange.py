@@ -1,14 +1,14 @@
 """Репозиторий функций для взаимодействия с биржей смен."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, date, time
 from typing import Any, Optional, Sequence
 
 from sqlalchemy import and_, asc, desc, func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from stp_database.models.STP.employee import Employee
-from stp_database.models.STP.exchange import Exchange, ExchangeSubscription
+from stp_database.models.STP.exchange import Exchange, ExchangeSubscription, SubscriptionNotification
 from stp_database.repo.base import BaseRepo
 
 logger = logging.getLogger(__name__)
@@ -753,48 +753,69 @@ class ExchangeRepo(BaseRepo):
                 "period_end": end_date,
             }
 
-    async def subscribe_to_exchanges(
+    async def create_subscription(
         self,
         subscriber_id: int,
+        name: Optional[str] = None,
+        exchange_type: str = "buy",
         subscription_type: str = "all",
-        exchange_id: Optional[int] = None,
+        min_price: Optional[int] = None,
+        max_price: Optional[int] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        start_time: Optional[time] = None,
+        end_time: Optional[time] = None,
+        days_of_week: Optional[list] = None,
+        target_seller_id: Optional[int] = None,
+        target_divisions: Optional[list] = None,
+        notify_immediately: bool = True,
+        notify_daily_digest: bool = False,
+        notify_before_expire: bool = False,
+        digest_time: time = time(9, 0),
     ) -> ExchangeSubscription | None:
-        """Подписка на новые подмены.
+        """Создание новой подписки на обмены.
 
         Args:
             subscriber_id: Идентификатор подписчика
-            subscription_type: Тип подписки ('all', 'specific_exchange', 'specific_seller')
-            exchange_id: Идентификатор сделки (для подписки на конкретный сделка)
+            name: Название подписки
+            exchange_type: Тип обменов ('buy', 'sell', 'both')
+            subscription_type: Тип подписки ('all', 'price_range', 'date_range', 'time_range', 'seller_specific')
+            min_price: Минимальная цена
+            max_price: Максимальная цена
+            start_date: Начальная дата диапазона
+            end_date: Конечная дата диапазона
+            start_time: Начальное время дня
+            end_time: Конечное время дня
+            days_of_week: Дни недели [1,2,3,4,5]
+            target_seller_id: Конкретный продавец
+            target_divisions: Подразделения
+            notify_immediately: Уведомлять сразу
+            notify_daily_digest: Ежедневная сводка
+            notify_before_expire: Уведомлять перед истечением
+            digest_time: Время отправки сводки
 
         Returns:
             Созданный объект ExchangeSubscription или None
         """
         try:
-            # Проверяем, нет ли уже такой подписки
-            existing_query = select(ExchangeSubscription).where(
-                and_(
-                    ExchangeSubscription.subscriber_id == subscriber_id,
-                    ExchangeSubscription.subscription_type == subscription_type,
-                    ExchangeSubscription.is_active,
-                )
-            )
-
-            if exchange_id:
-                existing_query = existing_query.where(
-                    ExchangeSubscription.exchange_id == exchange_id
-                )
-
-            result = await self.session.execute(existing_query)
-            if result.scalar_one_or_none():
-                logger.info(
-                    f"[Биржа] Подписка уже существует для пользователя {subscriber_id}"
-                )
-                return None
-
             subscription = ExchangeSubscription(
                 subscriber_id=subscriber_id,
+                name=name,
+                exchange_type=exchange_type,
                 subscription_type=subscription_type,
-                exchange_id=exchange_id,
+                min_price=min_price,
+                max_price=max_price,
+                start_date=start_date,
+                end_date=end_date,
+                start_time=start_time,
+                end_time=end_time,
+                days_of_week=days_of_week,
+                target_seller_id=target_seller_id,
+                target_divisions=target_divisions,
+                notify_immediately=notify_immediately,
+                notify_daily_digest=notify_daily_digest,
+                notify_before_expire=notify_before_expire,
+                digest_time=digest_time,
             )
 
             self.session.add(subscription)
@@ -802,7 +823,7 @@ class ExchangeRepo(BaseRepo):
             await self.session.refresh(subscription)
 
             logger.info(
-                f"[Биржа] Создана подписка {subscription.id} для пользователя {subscriber_id}"
+                f"[Биржа] Создана подписка {subscription.id} '{name}' для пользователя {subscriber_id}"
             )
             return subscription
         except SQLAlchemyError as e:
@@ -810,23 +831,23 @@ class ExchangeRepo(BaseRepo):
             await self.session.rollback()
             return None
 
-    async def unsubscribe_from_exchanges(
+    async def deactivate_subscription(
         self,
         subscriber_id: int,
         subscription_id: Optional[int] = None,
     ) -> bool:
-        """Отписка от уведомлений.
+        """Деактивация подписки.
 
         Args:
             subscriber_id: Идентификатор подписчика
             subscription_id: Идентификатор конкретной подписки (опционально)
 
         Returns:
-            True если успешно отписан, False иначе
+            True если успешно деактивирована, False иначе
         """
         try:
             if subscription_id:
-                # Отписка от конкретной подписки
+                # Деактивация конкретной подписки
                 query = select(ExchangeSubscription).where(
                     and_(
                         ExchangeSubscription.id == subscription_id,
@@ -842,7 +863,7 @@ class ExchangeRepo(BaseRepo):
                     logger.info(f"[Биржа] Деактивирована подписка {subscription_id}")
                     return True
             else:
-                # Отписка от всех подписок пользователя
+                # Деактивация всех подписок пользователя
                 query = select(ExchangeSubscription).where(
                     and_(
                         ExchangeSubscription.subscriber_id == subscriber_id,
@@ -863,7 +884,7 @@ class ExchangeRepo(BaseRepo):
 
             return False
         except SQLAlchemyError as e:
-            logger.error(f"[Биржа] Ошибка отписки: {e}")
+            logger.error(f"[Биржа] Ошибка деактивации подписки: {e}")
             await self.session.rollback()
             return False
 
@@ -969,4 +990,287 @@ class ExchangeRepo(BaseRepo):
             return bool(is_banned)
         except SQLAlchemyError as e:
             logger.error(f"[Биржа] Ошибка проверки бана пользователя {user_id}: {e}")
+            return False
+
+    # --- Новые методы для работы с расширенными подписками ---
+
+    async def update_subscription(
+        self,
+        subscription_id: int,
+        subscriber_id: int,
+        **kwargs,
+    ) -> bool:
+        """Универсальное обновление подписки.
+
+        Args:
+            subscription_id: Идентификатор подписки
+            subscriber_id: Идентификатор подписчика (для безопасности)
+            **kwargs: Поля для обновления
+
+        Returns:
+            True если успешно обновлено, False иначе
+        """
+        if not kwargs:
+            return False
+
+        # Разрешенные поля для обновления
+        allowed_fields = {
+            "name", "exchange_type", "subscription_type", "min_price", "max_price",
+            "start_date", "end_date", "start_time", "end_time", "days_of_week",
+            "target_seller_id", "target_divisions", "notify_immediately",
+            "notify_daily_digest", "notify_before_expire", "digest_time", "is_active"
+        }
+
+        update_fields = {k: v for k, v in kwargs.items() if k in allowed_fields}
+        if not update_fields:
+            return False
+
+        try:
+            query = select(ExchangeSubscription).where(
+                and_(
+                    ExchangeSubscription.id == subscription_id,
+                    ExchangeSubscription.subscriber_id == subscriber_id,
+                )
+            )
+            result = await self.session.execute(query)
+            subscription = result.scalar_one_or_none()
+
+            if not subscription:
+                logger.warning(f"[Биржа] Подписка {subscription_id} не найдена")
+                return False
+
+            for field, value in update_fields.items():
+                setattr(subscription, field, value)
+
+            await self.session.commit()
+            logger.info(f"[Биржа] Обновлена подписка {subscription_id}")
+            return True
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка обновления подписки {subscription_id}: {e}")
+            await self.session.rollback()
+            return False
+
+    async def get_subscription_by_id(
+        self,
+        subscription_id: int,
+        subscriber_id: Optional[int] = None,
+    ) -> ExchangeSubscription | None:
+        """Получение подписки по ID.
+
+        Args:
+            subscription_id: Идентификатор подписки
+            subscriber_id: Идентификатор подписчика (для фильтрации)
+
+        Returns:
+            Объект ExchangeSubscription или None
+        """
+        try:
+            filters = [ExchangeSubscription.id == subscription_id]
+            if subscriber_id:
+                filters.append(ExchangeSubscription.subscriber_id == subscriber_id)
+
+            query = select(ExchangeSubscription).where(and_(*filters))
+            result = await self.session.execute(query)
+            return result.scalar_one_or_none()
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка получения подписки {subscription_id}: {e}")
+            return None
+
+    async def find_matching_subscriptions(
+        self,
+        exchange: Exchange,
+    ) -> Sequence[ExchangeSubscription]:
+        """Поиск подписок, которые соответствуют новому обмену.
+
+        Args:
+            exchange: Объект Exchange для проверки
+
+        Returns:
+            Список подходящих подписок
+        """
+        try:
+            base_filters = [
+                ExchangeSubscription.is_active.is_(True),
+                ExchangeSubscription.notify_immediately.is_(True),
+            ]
+
+            # Фильтр по типу обмена
+            exchange_type_filters = or_(
+                ExchangeSubscription.exchange_type == "both",
+                ExchangeSubscription.exchange_type == exchange.type,
+            )
+            base_filters.append(exchange_type_filters)
+
+            # Фильтр по цене
+            price_filters = []
+            if exchange.price is not None:
+                price_filters.extend([
+                    or_(
+                        ExchangeSubscription.min_price.is_(None),
+                        ExchangeSubscription.min_price <= exchange.price,
+                    ),
+                    or_(
+                        ExchangeSubscription.max_price.is_(None),
+                        ExchangeSubscription.max_price >= exchange.price,
+                    ),
+                ])
+
+            # Фильтр по продавцу
+            seller_filter = or_(
+                ExchangeSubscription.target_seller_id.is_(None),
+                ExchangeSubscription.target_seller_id == exchange.seller_id,
+            )
+            base_filters.append(seller_filter)
+
+            # Исключаем собственные обмены продавца
+            base_filters.append(ExchangeSubscription.subscriber_id != exchange.seller_id)
+
+            all_filters = base_filters + price_filters
+
+            query = (
+                select(ExchangeSubscription)
+                .join(Employee, Employee.user_id == ExchangeSubscription.subscriber_id)
+                .where(and_(*all_filters))
+            )
+
+            result = await self.session.execute(query)
+            subscriptions = result.scalars().all()
+
+            # Дополнительная фильтрация в Python для сложных условий
+            matching_subscriptions = []
+            for sub in subscriptions:
+                if self._subscription_matches_exchange(sub, exchange):
+                    matching_subscriptions.append(sub)
+
+            return matching_subscriptions
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка поиска подходящих подписок: {e}")
+            return []
+
+    def _subscription_matches_exchange(
+        self,
+        subscription: ExchangeSubscription,
+        exchange: Exchange,
+    ) -> bool:
+        """Проверка соответствия подписки обмену."""
+        # Проверка даты
+        if exchange.start_time:
+            exchange_date = exchange.start_time.date()
+            if subscription.start_date and exchange_date < subscription.start_date:
+                return False
+            if subscription.end_date and exchange_date > subscription.end_date:
+                return False
+
+            # Проверка времени
+            exchange_time = exchange.start_time.time()
+            if subscription.start_time and exchange_time < subscription.start_time:
+                return False
+            if subscription.end_time and exchange_time > subscription.end_time:
+                return False
+
+            # Проверка дней недели (1=Monday, 7=Sunday)
+            if subscription.days_of_week:
+                weekday = exchange.start_time.weekday() + 1  # Python: 0=Monday, SQL: 1=Monday
+                if weekday not in subscription.days_of_week:
+                    return False
+
+        # Проверка подразделений
+        if subscription.target_divisions and exchange.seller and exchange.seller.division:
+            if exchange.seller.division not in subscription.target_divisions:
+                return False
+
+        return True
+
+    async def record_notification(
+        self,
+        subscription_id: int,
+        exchange_id: int,
+        notification_type: str = "immediate",
+    ) -> SubscriptionNotification | None:
+        """Запись уведомления в историю.
+
+        Args:
+            subscription_id: Идентификатор подписки
+            exchange_id: Идентификатор обмена
+            notification_type: Тип уведомления ('immediate', 'digest', 'expiry')
+
+        Returns:
+            Созданный объект SubscriptionNotification или None
+        """
+        try:
+            notification = SubscriptionNotification(
+                subscription_id=subscription_id,
+                exchange_id=exchange_id,
+                notification_type=notification_type,
+            )
+
+            self.session.add(notification)
+
+            # Обновляем статистику подписки
+            subscription = await self.get_subscription_by_id(subscription_id)
+            if subscription:
+                subscription.notifications_sent += 1
+                subscription.last_notified_at = func.current_timestamp()
+
+            await self.session.commit()
+            await self.session.refresh(notification)
+
+            logger.info(
+                f"[Биржа] Записано уведомление: подписка {subscription_id}, обмен {exchange_id}"
+            )
+            return notification
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка записи уведомления: {e}")
+            await self.session.rollback()
+            return None
+
+    async def get_subscriptions_for_digest(
+        self,
+        digest_time: time,
+    ) -> Sequence[ExchangeSubscription]:
+        """Получение подписок для отправки дневной сводки.
+
+        Args:
+            digest_time: Время отправки сводки
+
+        Returns:
+            Список подписок для сводки
+        """
+        try:
+            query = select(ExchangeSubscription).where(
+                and_(
+                    ExchangeSubscription.is_active.is_(True),
+                    ExchangeSubscription.notify_daily_digest.is_(True),
+                    ExchangeSubscription.digest_time == digest_time,
+                )
+            )
+
+            result = await self.session.execute(query)
+            return result.scalars().all()
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка получения подписок для сводки: {e}")
+            return []
+
+    async def update_digest_timestamp(
+        self,
+        subscription_id: int,
+    ) -> bool:
+        """Обновление времени последней сводки.
+
+        Args:
+            subscription_id: Идентификатор подписки
+
+        Returns:
+            True если успешно обновлено
+        """
+        try:
+            subscription = await self.get_subscription_by_id(subscription_id)
+            if subscription:
+                subscription.last_digest_at = func.current_timestamp()
+                await self.session.commit()
+                return True
+            return False
+        except SQLAlchemyError as e:
+            logger.error(f"[Биржа] Ошибка обновления времени сводки: {e}")
+            await self.session.rollback()
             return False
