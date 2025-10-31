@@ -92,7 +92,16 @@ class Employee(Base):
         lazy="select",
     )
     exchange_subscriptions: Mapped[list["ExchangeSubscription"]] = relationship(
-        "ExchangeSubscription", back_populates="subscriber", lazy="select"
+        "ExchangeSubscription",
+        foreign_keys="ExchangeSubscription.subscriber_id",
+        back_populates="subscriber",
+        lazy="select",
+    )
+    target_subscriptions: Mapped[list["ExchangeSubscription"]] = relationship(
+        "ExchangeSubscription",
+        foreign_keys="ExchangeSubscription.target_seller_id",
+        back_populates="target_seller",
+        lazy="select",
     )
 
     def __repr__(self):
