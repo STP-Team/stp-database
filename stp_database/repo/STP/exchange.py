@@ -23,7 +23,6 @@ class ExchangeRepo(BaseRepo):
 
     async def create_exchange(
         self,
-        seller_id: int,
         start_time: Optional[datetime],
         price: int,
         exchange_type: str = "sell",
@@ -32,11 +31,12 @@ class ExchangeRepo(BaseRepo):
         is_private: bool = False,
         payment_type: str = "immediate",
         payment_date: Optional[datetime] = None,
+        seller_id: Optional[int] = None,
+        buyer_id: Optional[int] = None,
     ) -> Exchange | None:
         """Создание нового сделки смены.
 
         Args:
-            seller_id: Идентификатор продавца
             start_time: Начало смены
             price: Цена за смену
             exchange_type: Тип обмена ('sell' или 'buy')
@@ -45,17 +45,31 @@ class ExchangeRepo(BaseRepo):
             is_private: Приватный ли сделка
             payment_type: Тип оплаты ('immediate' или 'on_date')
             payment_date: Дата оплаты (если payment_type == 'on_date')
+            seller_id: Идентификатор продавца (для типа 'sell')
+            buyer_id: Идентификатор покупателя (для типа 'buy')
 
         Returns:
             Созданный объект Exchange или None в случае ошибки
         """
+        # Проверяем, что указан ровно один из seller_id или buyer_id
+        if (seller_id is None and buyer_id is None) or (
+            seller_id is not None and buyer_id is not None
+        ):
+            logger.warning("[Биржа] Должен быть указан либо seller_id, либо buyer_id")
+            return None
+
+        # Определяем пользователя для проверки бана
+        user_id = seller_id if seller_id is not None else buyer_id
+        user_type = "продавца" if seller_id is not None else "покупателя"
+
         # Проверяем, что пользователь не забанен
-        if await self.is_user_exchange_banned(seller_id):
-            logger.warning(f"[Биржа] Пользователь {seller_id} забанен на бирже")
+        if await self.is_user_exchange_banned(user_id):
+            logger.warning(f"[Биржа] Пользователь {user_id} забанен на бирже")
             return None
 
         new_exchange = Exchange(
             seller_id=seller_id,
+            buyer_id=buyer_id,
             start_time=start_time,
             end_time=end_time,
             price=price,
@@ -71,7 +85,7 @@ class ExchangeRepo(BaseRepo):
             await self.session.commit()
             await self.session.refresh(new_exchange)
             logger.info(
-                f"[Биржа] Создан новый сделка: {new_exchange.id} от пользователя {seller_id}"
+                f"[Биржа] Создан новый сделка: {new_exchange.id} от {user_type} {user_id}"
             )
             return new_exchange
         except SQLAlchemyError as e:
