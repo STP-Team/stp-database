@@ -576,14 +576,14 @@ class ExchangeRepo(BaseRepo):
                     Employee,
                     or_(
                         Employee.user_id == Exchange.seller_id,
-                        Employee.user_id == Exchange.buyer_id
-                    )
+                        Employee.user_id == Exchange.buyer_id,
+                    ),
                 )
                 if exclude_user_id:
                     filters.append(
                         and_(
                             Exchange.seller_id != exclude_user_id,
-                            Exchange.buyer_id != exclude_user_id
+                            Exchange.buyer_id != exclude_user_id,
                         )
                     )
 
@@ -606,6 +606,38 @@ class ExchangeRepo(BaseRepo):
         except SQLAlchemyError as e:
             logger.error(f"[Биржа] Ошибка получения активных обменов: {e}")
             return []
+
+    async def get_upcoming_sold_exchanges(
+        self,
+        start_after: datetime,
+        start_before: Optional[datetime] = None,
+        limit: int = 500,
+        offset: int = 0,
+    ) -> Sequence[Exchange]:
+        """Получить проданные обмены, которые еще не начались.
+
+        Args:
+            start_after: Получить обмены, начинающиеся после этого времени
+            start_before: Получить обмены, начинающиеся до этого времени (опционально)
+            limit: Максимальное количество записей
+            offset: Смещение для пагинации
+
+        Returns:
+            Список проданных обменов, которые еще не начались
+        """
+        query = select(Exchange).where(
+            Exchange.status == "sold",
+            Exchange.start_time.is_not(None),
+            Exchange.start_time > start_after,
+        )
+
+        if start_before is not None:
+            query = query.where(Exchange.start_time <= start_before)
+
+        query = query.order_by(Exchange.start_time).limit(limit).offset(offset)
+
+        result = await self.session.execute(query)
+        return result.scalars().all()
 
     async def get_user_exchanges(
         self,
@@ -1224,9 +1256,7 @@ class ExchangeRepo(BaseRepo):
 
             # Исключаем собственные обмены создателя
             if creator_id:
-                base_filters.append(
-                    ExchangeSubscription.subscriber_id != creator_id
-                )
+                base_filters.append(ExchangeSubscription.subscriber_id != creator_id)
 
             all_filters = base_filters + price_filters
 
