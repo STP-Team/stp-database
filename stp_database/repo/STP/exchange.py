@@ -687,6 +687,103 @@ class ExchangeRepo(BaseRepo):
 
         return result_list
 
+    async def get_recent_exchanges(
+        self, created_after: datetime, include_private: bool = False, limit: int = 50
+    ) -> Sequence[Exchange]:
+        """Get exchanges created after specified time.
+
+        Args:
+            created_after: Minimum creation time
+            include_private: Whether to include private exchanges
+            limit: Maximum number of exchanges to return
+
+        Returns:
+            List of exchanges created after the specified time
+        """
+        query = (
+            select(Exchange)
+            .where(and_(Exchange.created_at >= created_after))
+            .order_by(Exchange.created_at.desc())
+            .limit(limit)
+        )
+
+        # Добавляем фильтр для приватности если нужно
+        if not include_private:
+            query = query.where(Exchange.is_private is False)
+
+        result = await self.session.execute(query)
+        return result.scalars().all()
+
+    async def get_exchanges_by_payment_date(
+        self,
+        payment_date: date,
+        status: str = "sold",
+        is_paid: bool = False,
+        limit: int = 100,
+    ) -> Sequence[Exchange]:
+        """Get exchanges by payment date.
+
+        Args:
+            payment_date: Date when payment is due
+            status: Exchange status (default "sold")
+            is_paid: Payment status (default False)
+            limit: Maximum number of exchanges to return
+
+        Returns:
+            List of exchanges matching the payment date criteria
+        """
+        query = (
+            select(Exchange)
+            .where(
+                and_(
+                    Exchange.payment_date == payment_date,
+                    Exchange.status == status,
+                    Exchange.is_paid == is_paid,
+                    Exchange.buyer_id.isnot(None),  # Только обмены с покупателем
+                )
+            )
+            .order_by(Exchange.created_at.desc())
+            .limit(limit)
+        )
+
+        result = await self.session.execute(query)
+        return result.scalars().all()
+
+    async def get_immediate_unpaid_exchanges(
+        self,
+        status: str = "sold",
+        is_paid: bool = False,
+        payment_type: str = "immediate",
+        limit: int = 100,
+    ) -> Sequence[Exchange]:
+        """Get immediate unpaid exchanges.
+
+        Args:
+            status: Exchange status (default "sold")
+            is_paid: Payment status (default False)
+            payment_type: Payment type (default "immediate")
+            limit: Maximum number of exchanges to return
+
+        Returns:
+            List of immediate unpaid exchanges
+        """
+        query = (
+            select(Exchange)
+            .where(
+                and_(
+                    Exchange.status == status,
+                    Exchange.is_paid == is_paid,
+                    Exchange.payment_type == payment_type,
+                    Exchange.buyer_id.isnot(None),  # Только обмены с покупателем
+                )
+            )
+            .order_by(Exchange.created_at.desc())
+            .limit(limit)
+        )
+
+        result = await self.session.execute(query)
+        return result.scalars().all()
+
     async def get_user_exchanges(
         self,
         user_id: int,
