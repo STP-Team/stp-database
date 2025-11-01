@@ -2,7 +2,7 @@
 
 import logging
 from datetime import date, datetime, time
-from typing import Any, Optional, Sequence
+from typing import Any, List, Optional, Sequence
 
 from sqlalchemy import and_, asc, desc, func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -638,6 +638,54 @@ class ExchangeRepo(BaseRepo):
 
         result = await self.session.execute(query)
         return result.scalars().all()
+
+    async def get_users_with_unpaid_exchanges(
+        self, status: str = "sold", is_paid: bool = False
+    ) -> List[dict]:
+        """Get users with their unpaid exchanges grouped.
+
+        Returns:
+            List of dicts with format:
+            [
+                {
+                    "user_id": 12345,
+                    "exchanges": [Exchange1, Exchange2, ...]
+                },
+                ...
+            ]
+        """
+        from collections import defaultdict
+
+        # Получаем все неоплаченные проданные обмены
+        query = (
+            select(Exchange)
+            .where(
+                and_(
+                    Exchange.status == status,
+                    Exchange.is_paid == is_paid,
+                    Exchange.buyer_id.isnot(None),  # Только обмены с покупателем
+                )
+            )
+            .order_by(Exchange.created_at.desc())
+        )
+
+        result = await self.session.execute(query)
+        exchanges = result.scalars().all()
+
+        if not exchanges:
+            return []
+
+        # Группируем обмены по buyer_id
+        users_exchanges = defaultdict(list)
+        for exchange in exchanges:
+            users_exchanges[exchange.buyer_id].append(exchange)
+
+        # Формируем результат в нужном формате
+        result_list = []
+        for user_id, user_exchanges in users_exchanges.items():
+            result_list.append({"user_id": user_id, "exchanges": user_exchanges})
+
+        return result_list
 
     async def get_user_exchanges(
         self,
