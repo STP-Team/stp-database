@@ -552,15 +552,40 @@ class ExchangeRepo(BaseRepo):
             if not include_private:
                 filters.append(Exchange.is_private.is_(False))
 
-            if exclude_user_id:
-                filters.append(Exchange.seller_id != exclude_user_id)
-
             if exchange_type:
                 filters.append(Exchange.type == exchange_type)
 
-            query = select(Exchange).join(
-                Employee, Employee.user_id == Exchange.seller_id
-            )
+            # Определяем, какое поле использовать для JOIN и исключения пользователя
+            if exchange_type == "sell":
+                # Для продажи джойнимся по seller_id
+                query = select(Exchange).join(
+                    Employee, Employee.user_id == Exchange.seller_id
+                )
+                if exclude_user_id:
+                    filters.append(Exchange.seller_id != exclude_user_id)
+            elif exchange_type == "buy":
+                # Для покупки джойнимся по buyer_id
+                query = select(Exchange).join(
+                    Employee, Employee.user_id == Exchange.buyer_id
+                )
+                if exclude_user_id:
+                    filters.append(Exchange.buyer_id != exclude_user_id)
+            else:
+                # Если тип не указан, используем LEFT JOIN для обоих случаев
+                query = select(Exchange).outerjoin(
+                    Employee,
+                    or_(
+                        Employee.user_id == Exchange.seller_id,
+                        Employee.user_id == Exchange.buyer_id
+                    )
+                )
+                if exclude_user_id:
+                    filters.append(
+                        and_(
+                            Exchange.seller_id != exclude_user_id,
+                            Exchange.buyer_id != exclude_user_id
+                        )
+                    )
 
             if division:
                 if isinstance(division, list):
@@ -1173,17 +1198,35 @@ class ExchangeRepo(BaseRepo):
                     ),
                 ])
 
-            # Фильтр по продавцу
-            seller_filter = or_(
-                ExchangeSubscription.target_seller_id.is_(None),
-                ExchangeSubscription.target_seller_id == exchange.seller_id,
-            )
+            # Фильтр по продавцу и исключение собственных обменов
+            # Определяем пользователя, создавшего обмен
+            if exchange.type == "sell":
+                # Для продажи - пользователь в seller_id
+                creator_id = exchange.seller_id
+                seller_filter = or_(
+                    ExchangeSubscription.target_seller_id.is_(None),
+                    ExchangeSubscription.target_seller_id == exchange.seller_id,
+                )
+            elif exchange.type == "buy":
+                # Для покупки - пользователь в buyer_id
+                creator_id = exchange.buyer_id
+                # Для заявок на покупку target_seller_id должен быть None или не учитываться
+                seller_filter = ExchangeSubscription.target_seller_id.is_(None)
+            else:
+                # Fallback для неизвестного типа
+                creator_id = exchange.seller_id or exchange.buyer_id
+                seller_filter = or_(
+                    ExchangeSubscription.target_seller_id.is_(None),
+                    ExchangeSubscription.target_seller_id == exchange.seller_id,
+                )
+
             base_filters.append(seller_filter)
 
-            # Исключаем собственные обмены продавца
-            base_filters.append(
-                ExchangeSubscription.subscriber_id != exchange.seller_id
-            )
+            # Исключаем собственные обмены создателя
+            if creator_id:
+                base_filters.append(
+                    ExchangeSubscription.subscriber_id != creator_id
+                )
 
             all_filters = base_filters + price_filters
 
