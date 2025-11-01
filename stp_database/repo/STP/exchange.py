@@ -462,6 +462,8 @@ class ExchangeRepo(BaseRepo):
             "status",
             "in_seller_schedule",
             "in_buyer_schedule",
+            "buyer_id",
+            "seller_id",
         }
 
         # Фильтруем только разрешенные поля
