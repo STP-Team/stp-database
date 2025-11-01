@@ -74,7 +74,7 @@ class Exchange(Base):
     )
 
     # Участники сделки
-    seller_id: Mapped[int] = mapped_column(
+    seller_id: Mapped[int | None] = mapped_column(
         BIGINT,
         ForeignKey("employees.user_id", name="fk_exchanges_seller"),
         nullable=False,
