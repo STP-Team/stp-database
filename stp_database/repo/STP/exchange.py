@@ -23,57 +23,44 @@ class ExchangeRepo(BaseRepo):
 
     async def create_exchange(
         self,
+        owner_id: int,
         start_time: Optional[datetime],
         price: int,
-        exchange_type: str = "sell",
+        owner_intent: str = "sell_shift",
         end_time: Optional[datetime] = None,
         comment: Optional[str] = None,
         is_private: bool = False,
         payment_type: str = "immediate",
         payment_date: Optional[datetime] = None,
-        seller_id: Optional[int] = None,
-        buyer_id: Optional[int] = None,
     ) -> Exchange | None:
         """Создание нового сделки смены.
 
         Args:
+            owner_id: Идентификатор владельца объявления (кто создает сделку)
             start_time: Начало смены
             price: Цена за смену
-            exchange_type: Тип обмена ('sell' или 'buy')
+            owner_intent: Намерение владельца ('sell_shift' или 'buy_shift')
             end_time: Окончание смены (если частичная смена)
             comment: Комментарий к сделке
             is_private: Приватный ли сделка
             payment_type: Тип оплаты ('immediate' или 'on_date')
             payment_date: Дата оплаты (если payment_type == 'on_date')
-            seller_id: Идентификатор продавца (для типа 'sell')
-            buyer_id: Идентификатор покупателя (для типа 'buy')
 
         Returns:
             Созданный объект Exchange или None в случае ошибки
         """
-        # Проверяем, что указан ровно один из seller_id или buyer_id
-        if (seller_id is None and buyer_id is None) or (
-            seller_id is not None and buyer_id is not None
-        ):
-            logger.warning("[Биржа] Должен быть указан либо seller_id, либо buyer_id")
-            return None
-
-        # Определяем пользователя для проверки бана
-        user_id = seller_id if seller_id is not None else buyer_id
-        user_type = "продавца" if seller_id is not None else "покупателя"
-
         # Проверяем, что пользователь не забанен
-        if await self.is_user_exchange_banned(user_id):
-            logger.warning(f"[Биржа] Пользователь {user_id} забанен на бирже")
+        if await self.is_user_exchange_banned(owner_id):
+            logger.warning(f"[Биржа] Пользователь {owner_id} забанен на бирже")
             return None
 
         new_exchange = Exchange(
-            seller_id=seller_id,
-            buyer_id=buyer_id,
+            owner_id=owner_id,
+            counterpart_id=None,  # Изначально нет второй стороны
             start_time=start_time,
             end_time=end_time,
             price=price,
-            type=exchange_type,
+            owner_intent=owner_intent,
             comment=comment,
             is_private=is_private,
             payment_type=payment_type,
@@ -85,7 +72,7 @@ class ExchangeRepo(BaseRepo):
             await self.session.commit()
             await self.session.refresh(new_exchange)
             logger.info(
-                f"[Биржа] Создан новый сделка: {new_exchange.id} от {user_type} {user_id}"
+                f"[Биржа] Создан новый сделка: {new_exchange.id} от владельца {owner_id} ({owner_intent})"
             )
             return new_exchange
         except SQLAlchemyError as e:
@@ -244,21 +231,21 @@ class ExchangeRepo(BaseRepo):
             await self.session.rollback()
             return False
 
-    async def buy_exchange(
-        self, exchange_id: int, buyer_id: int, mark_as_paid: bool = False
+    async def accept_exchange(
+        self, exchange_id: int, counterpart_id: int, mark_as_paid: bool = False
     ) -> Exchange | None:
-        """Покупка сделки.
+        """Принятие сделки второй стороной.
 
         Args:
             exchange_id: Идентификатор сделки
-            buyer_id: Идентификатор покупателя
+            counterpart_id: Идентификатор принимающей стороны
             mark_as_paid: Отметить ли сразу как оплаченный
 
         Returns:
             Обновленный объект Exchange или None в случае ошибки
         """
-        if await self.is_user_exchange_banned(buyer_id):
-            logger.warning(f"[Биржа] Покупатель {buyer_id} забанен на бирже")
+        if await self.is_user_exchange_banned(counterpart_id):
+            logger.warning(f"[Биржа] Пользователь {counterpart_id} забанен на бирже")
             return None
 
         try:
@@ -266,11 +253,11 @@ class ExchangeRepo(BaseRepo):
             if (
                 not exchange
                 or exchange.status != "active"
-                or exchange.buyer_id is not None
+                or exchange.counterpart_id is not None
             ):
                 return None
 
-            exchange.buyer_id = buyer_id
+            exchange.counterpart_id = counterpart_id
             exchange.status = "sold"
             exchange.sold_at = func.current_timestamp()
 
@@ -280,13 +267,21 @@ class ExchangeRepo(BaseRepo):
             await self.session.commit()
             await self.session.refresh(exchange)
             logger.info(
-                f"[Биржа] Сделка {exchange_id} куплена пользователем {buyer_id}"
+                f"[Биржа] Сделка {exchange_id} принята пользователем {counterpart_id}"
             )
             return exchange
         except SQLAlchemyError as e:
-            logger.error(f"[Биржа] Ошибка покупки сделки {exchange_id}: {e}")
+            logger.error(f"[Биржа] Ошибка принятия сделки {exchange_id}: {e}")
             await self.session.rollback()
             return None
+
+    # Backward compatibility alias
+    async def buy_exchange(
+        self, exchange_id: int, buyer_id: int, mark_as_paid: bool = False
+    ) -> Exchange | None:
+        """Deprecated: Use accept_exchange instead."""
+        logger.warning("[Биржа] buy_exchange deprecated, use accept_exchange")
+        return await self.accept_exchange(exchange_id, buyer_id, mark_as_paid)
 
     async def mark_exchange_paid(self, exchange_id: int) -> bool:
         """Отметка о наличии оплаты.
@@ -476,8 +471,9 @@ class ExchangeRepo(BaseRepo):
             "status",
             "in_seller_schedule",
             "in_buyer_schedule",
-            "buyer_id",
-            "seller_id",
+            "counterpart_id",
+            "owner_id",
+            "owner_intent",
         }
 
         # Фильтруем только разрешенные поля
@@ -531,7 +527,7 @@ class ExchangeRepo(BaseRepo):
         limit: int = 50,
         offset: int = 0,
         division: str | list[str] = None,
-        exchange_type: Optional[str] = None,
+        owner_intent: Optional[str] = None,
     ) -> Sequence[Exchange]:
         """Получение активных обменов.
 
@@ -541,7 +537,7 @@ class ExchangeRepo(BaseRepo):
             limit: Лимит записей
             offset: Смещение
             division: Направление
-            exchange_type: Тип обмена ('sell' или 'buy')
+            owner_intent: Намерение владельца ('sell_shift' или 'buy_shift')
 
         Returns:
             Список активных обменов
@@ -552,40 +548,16 @@ class ExchangeRepo(BaseRepo):
             if not include_private:
                 filters.append(Exchange.is_private.is_(False))
 
-            if exchange_type:
-                filters.append(Exchange.type == exchange_type)
+            if owner_intent:
+                filters.append(Exchange.owner_intent == owner_intent)
 
-            # Определяем, какое поле использовать для JOIN и исключения пользователя
-            if exchange_type == "sell":
-                # Для продажи джойнимся по seller_id
-                query = select(Exchange).join(
-                    Employee, Employee.user_id == Exchange.seller_id
-                )
-                if exclude_user_id:
-                    filters.append(Exchange.seller_id != exclude_user_id)
-            elif exchange_type == "buy":
-                # Для покупки джойнимся по buyer_id
-                query = select(Exchange).join(
-                    Employee, Employee.user_id == Exchange.buyer_id
-                )
-                if exclude_user_id:
-                    filters.append(Exchange.buyer_id != exclude_user_id)
-            else:
-                # Если тип не указан, используем LEFT JOIN для обоих случаев
-                query = select(Exchange).outerjoin(
-                    Employee,
-                    or_(
-                        Employee.user_id == Exchange.seller_id,
-                        Employee.user_id == Exchange.buyer_id,
-                    ),
-                )
-                if exclude_user_id:
-                    filters.append(
-                        and_(
-                            Exchange.seller_id != exclude_user_id,
-                            Exchange.buyer_id != exclude_user_id,
-                        )
-                    )
+            # Джойним по owner_id чтобы получить информацию о владельце объявления
+            query = select(Exchange).join(
+                Employee, Employee.user_id == Exchange.owner_id
+            )
+
+            if exclude_user_id:
+                filters.append(Exchange.owner_id != exclude_user_id)
 
             if division:
                 if isinstance(division, list):
@@ -663,7 +635,7 @@ class ExchangeRepo(BaseRepo):
                 and_(
                     Exchange.status == status,
                     Exchange.is_paid == is_paid,
-                    Exchange.buyer_id.isnot(None),  # Только обмены с покупателем
+                    Exchange.counterpart_id.isnot(None),  # Только принятые обмены
                 )
             )
             .order_by(Exchange.created_at.desc())
@@ -675,10 +647,22 @@ class ExchangeRepo(BaseRepo):
         if not exchanges:
             return []
 
-        # Группируем обмены по buyer_id
+        # Группируем обмены по тому, кто должен оплатить
         users_exchanges = defaultdict(list)
         for exchange in exchanges:
-            users_exchanges[exchange.buyer_id].append(exchange)
+            # Определяем, кто должен платить в зависимости от намерения владельца
+            if exchange.owner_intent == "sell_shift":
+                # Владелец продает смену, платит принимающая сторона
+                payer_id = exchange.counterpart_id
+            elif exchange.owner_intent == "buy_shift":
+                # Владелец хочет купить смену, платит владелец
+                payer_id = exchange.owner_id
+            else:
+                # Fallback на старое поведение для безопасности
+                payer_id = exchange.counterpart_id
+
+            if payer_id:
+                users_exchanges[payer_id].append(exchange)
 
         # Формируем результат в нужном формате
         result_list = []
@@ -739,7 +723,7 @@ class ExchangeRepo(BaseRepo):
                     Exchange.payment_date == payment_date,
                     Exchange.status == status,
                     Exchange.is_paid == is_paid,
-                    Exchange.buyer_id.isnot(None),  # Только обмены с покупателем
+                    Exchange.counterpart_id.isnot(None),  # Только принятые обмены
                 )
             )
             .order_by(Exchange.created_at.desc())
@@ -774,7 +758,7 @@ class ExchangeRepo(BaseRepo):
                     Exchange.status == status,
                     Exchange.is_paid == is_paid,
                     Exchange.payment_type == payment_type,
-                    Exchange.buyer_id.isnot(None),  # Только обмены с покупателем
+                    Exchange.counterpart_id.isnot(None),  # Только принятые обмены
                 )
             )
             .order_by(Exchange.created_at.desc())
@@ -787,7 +771,7 @@ class ExchangeRepo(BaseRepo):
     async def get_user_exchanges(
         self,
         user_id: int,
-        exchange_type: str = "all",  # "sold", "bought", "all"
+        exchange_type: str = "all",
         status: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
@@ -796,7 +780,7 @@ class ExchangeRepo(BaseRepo):
 
         Args:
             user_id: Идентификатор пользователя
-            exchange_type: Тип обменов ("sold", "bought", "all")
+            exchange_type: Тип обменов
             status: Фильтр по статусу
             limit: Лимит записей
             offset: Смещение
@@ -807,13 +791,15 @@ class ExchangeRepo(BaseRepo):
         try:
             filters = []
 
-            if exchange_type == "sold":
-                filters.append(Exchange.seller_id == user_id)
-            elif exchange_type == "bought":
-                filters.append(Exchange.buyer_id == user_id)
+            if exchange_type == "owned":
+                filters.append(Exchange.owner_id == user_id)
+            elif exchange_type == "counterpart":
+                filters.append(Exchange.counterpart_id == user_id)
             else:  # "all"
                 filters.append(
-                    or_(Exchange.seller_id == user_id, Exchange.buyer_id == user_id)
+                    or_(
+                        Exchange.owner_id == user_id, Exchange.counterpart_id == user_id
+                    )
                 )
 
             if status:
@@ -898,7 +884,7 @@ class ExchangeRepo(BaseRepo):
                 func.avg(Exchange.price).label("average_price"),
             ).where(
                 and_(
-                    Exchange.seller_id == user_id,
+                    Exchange.owner_id == user_id,
                     Exchange.status == "sold",
                     Exchange.start_time >= start_date,
                     Exchange.start_time <= end_date,
@@ -948,7 +934,7 @@ class ExchangeRepo(BaseRepo):
                 func.avg(Exchange.price).label("average_price"),
             ).where(
                 and_(
-                    Exchange.buyer_id == user_id,
+                    Exchange.counterpart_id == user_id,
                     Exchange.status == "sold",
                     Exchange.start_time >= start_date,
                     Exchange.start_time <= end_date,
@@ -1357,7 +1343,7 @@ class ExchangeRepo(BaseRepo):
             # Фильтр по типу обмена
             exchange_type_filters = or_(
                 ExchangeSubscription.exchange_type == "both",
-                ExchangeSubscription.exchange_type == exchange.type,
+                ExchangeSubscription.exchange_type == exchange.owner_intent,
             )
             base_filters.append(exchange_type_filters)
 
@@ -1377,24 +1363,22 @@ class ExchangeRepo(BaseRepo):
 
             # Фильтр по продавцу и исключение собственных обменов
             # Определяем пользователя, создавшего обмен
-            if exchange.type == "sell":
-                # Для продажи - пользователь в seller_id
-                creator_id = exchange.seller_id
+            creator_id = exchange.owner_id
+
+            if exchange.owner_intent == "sell_shift":
+                # Владелец продает смену - он и есть продавец
                 seller_filter = or_(
                     ExchangeSubscription.target_seller_id.is_(None),
-                    ExchangeSubscription.target_seller_id == exchange.seller_id,
+                    ExchangeSubscription.target_seller_id == exchange.owner_id,
                 )
-            elif exchange.type == "buy":
-                # Для покупки - пользователь в buyer_id
-                creator_id = exchange.buyer_id
-                # Для заявок на покупку target_seller_id должен быть None или не учитываться
+            elif exchange.owner_intent == "buy_shift":
+                # Владелец хочет купить смену - target_seller_id не применим
                 seller_filter = ExchangeSubscription.target_seller_id.is_(None)
             else:
                 # Fallback для неизвестного типа
-                creator_id = exchange.seller_id or exchange.buyer_id
                 seller_filter = or_(
                     ExchangeSubscription.target_seller_id.is_(None),
-                    ExchangeSubscription.target_seller_id == exchange.seller_id,
+                    ExchangeSubscription.target_seller_id == exchange.owner_id,
                 )
 
             base_filters.append(seller_filter)
@@ -1455,12 +1439,8 @@ class ExchangeRepo(BaseRepo):
                     return False
 
         # Проверка подразделений
-        if (
-            subscription.target_divisions
-            and exchange.seller
-            and exchange.seller.division
-        ):
-            if exchange.seller.division not in subscription.target_divisions:
+        if subscription.target_divisions and exchange.owner and exchange.owner.division:
+            if exchange.owner.division not in subscription.target_divisions:
                 return False
 
         return True

@@ -11,7 +11,6 @@ from sqlalchemy import (
     TIME,
     TIMESTAMP,
     Enum,
-    ForeignKey,
     Index,
     Integer,
     String,
@@ -33,13 +32,13 @@ class Exchange(Base):
 
     Args:
         id: Уникальный идентификатор сделки
-        seller_id: Идентификатор продавца (внешний ключ на employees.user_id)
-        buyer_id: Идентификатор покупателя (внешний ключ на employees.user_id)
+        owner_id: Идентификатор владельца объявления (кто создал сделку)
+        counterpart_id: Идентификатор второй стороны (кто принял сделку)
         start_time: Начало смены
         end_time: Окончание смены (если частичная смена)
         price: Цена за смену или часть смены
         comment: Комментарий к сделке
-        type: Тип обмена (sell, buy)
+        owner_intent: Намерение владельца (sell_shift, buy_shift)
         status: Статус сделки (active, sold, cancelled)
         is_private: Является ли подмена приватной
         is_paid: Отметка о наличии оплаты
@@ -50,18 +49,18 @@ class Exchange(Base):
         sold_at: Время продажи
 
     Relationships:
-        seller: Объект Employee продавца
-        buyer: Объект Employee покупателя
+        owner: Объект Employee владельца объявления
+        counterpart: Объект Employee второй стороны
         subscriptions: Подписки на этот сделка
 
     Indexes:
-        idx_seller_id: (seller_id)
-        idx_buyer_id: (buyer_id)
+        idx_owner_id: (owner_id)
+        idx_counterpart_id: (counterpart_id)
         idx_status: (status)
         idx_start_time: (start_time)
         idx_created_at: (created_at)
         idx_status_start_time: (status, start_time)
-        idx_seller_status: (seller_id, status)
+        idx_owner_status: (owner_id, status)
     """
 
     __tablename__ = "exchanges"
@@ -74,17 +73,15 @@ class Exchange(Base):
     )
 
     # Участники сделки
-    seller_id: Mapped[int | None] = mapped_column(
+    owner_id: Mapped[int] = mapped_column(
         BIGINT,
-        ForeignKey("employees.user_id", name="fk_exchanges_seller"),
         nullable=False,
-        comment="Идентификатор продавца (внешний ключ на employees.user_id)",
+        comment="Идентификатор владельца объявления (кто создал сделку)",
     )
-    buyer_id: Mapped[int | None] = mapped_column(
+    counterpart_id: Mapped[int | None] = mapped_column(
         BIGINT,
-        ForeignKey("employees.user_id", name="fk_exchanges_buyer"),
         nullable=True,
-        comment="Идентификатор покупателя (внешний ключ на employees.user_id)",
+        comment="Идентификатор второй стороны (кто принял сделку)",
     )
 
     # Информация о смене
@@ -124,11 +121,11 @@ class Exchange(Base):
     )
 
     # Тип и статус
-    type: Mapped[str] = mapped_column(
-        Enum("sell", "buy"),
+    owner_intent: Mapped[str] = mapped_column(
+        Enum("sell_shift", "buy_shift"),
         nullable=False,
-        default="sell",
-        comment="Тип обмена: sell - предложение продать смену, buy - запрос на покупку смены",
+        default="sell_shift",
+        comment="Намерение владельца: sell_shift - предлагает свою смену, buy_shift - хочет купить смену",
     )
     status: Mapped[str] = mapped_column(
         Enum("active", "inactive", "sold", "canceled", "expired"),
@@ -183,16 +180,16 @@ class Exchange(Base):
     )
 
     # Отношения
-    seller: Mapped["Employee"] = relationship(
+    owner: Mapped["Employee"] = relationship(
         "Employee",
-        foreign_keys=[seller_id],
-        back_populates="sold_exchanges",
+        primaryjoin="foreign(Exchange.owner_id) == Employee.user_id",
+        back_populates="owned_exchanges",
         lazy="joined",
     )
-    buyer: Mapped["Employee"] = relationship(
+    counterpart: Mapped["Employee"] = relationship(
         "Employee",
-        foreign_keys=[buyer_id],
-        back_populates="bought_exchanges",
+        primaryjoin="foreign(Exchange.counterpart_id) == Employee.user_id",
+        back_populates="counterpart_exchanges",
         lazy="joined",
     )
     # Note: Subscriptions are no longer directly linked to specific exchanges
@@ -200,21 +197,21 @@ class Exchange(Base):
 
     # Индексы и настройки таблицы
     __table_args__ = (
-        Index("idx_seller_id", "seller_id"),
-        Index("idx_buyer_id", "buyer_id"),
+        Index("idx_owner_id", "owner_id"),
+        Index("idx_counterpart_id", "counterpart_id"),
         Index("idx_status", "status"),
         Index("idx_start_time", "start_time"),
         Index("idx_created_at", "created_at"),
         Index("idx_status_start_time", "status", "start_time"),
-        Index("idx_seller_status", "seller_id", "status"),
+        Index("idx_owner_status", "owner_id", "status"),
         {"mysql_collate": "utf8mb4_unicode_ci"},
     )
 
     def __repr__(self):
         """Возвращает строковое представление объекта Exchange."""
         return (
-            f"<Exchange {self.id} type={self.type} seller={self.seller_id} "
-            f"buyer={self.buyer_id} status={self.status} "
+            f"<Exchange {self.id} intent={self.owner_intent} owner={self.owner_id} "
+            f"counterpart={self.counterpart_id} status={self.status} "
             f"start_time={self.start_time} price={self.price}>"
         )
 
@@ -277,14 +274,8 @@ class ExchangeSubscription(Base):
     )
     subscriber_id: Mapped[int] = mapped_column(
         BIGINT,
-        ForeignKey(
-            "employees.user_id",
-            name="fk_subscriptions_subscriber",
-            onupdate="CASCADE",
-            ondelete="CASCADE",
-        ),
         nullable=False,
-        comment="Идентификатор подписчика (внешний ключ на employees.user_id)",
+        comment="Идентификатор подписчика (employees.user_id)",
     )
 
     # Subscription metadata
@@ -294,9 +285,9 @@ class ExchangeSubscription(Base):
         comment="Название подписки (пользователь может дать имя)",
     )
     exchange_type: Mapped[str] = mapped_column(
-        Enum("buy", "sell", "both"),
+        Enum("buy_shift", "sell_shift", "both"),
         nullable=False,
-        default="buy",
+        default="buy_shift",
         comment="Тип обменов для подписки",
     )
     subscription_type: Mapped[str] = mapped_column(
@@ -350,14 +341,8 @@ class ExchangeSubscription(Base):
     # Seller filtering
     target_seller_id: Mapped[int | None] = mapped_column(
         BIGINT,
-        ForeignKey(
-            "employees.user_id",
-            name="fk_subscriptions_target_seller",
-            onupdate="CASCADE",
-            ondelete="SET NULL",
-        ),
         nullable=True,
-        comment="Конкретный продавец (для подписки на конкретного человека)",
+        comment="Конкретный продавец (employees.user_id)",
     )
 
     # Division filtering
@@ -441,17 +426,19 @@ class ExchangeSubscription(Base):
     # Отношения
     subscriber: Mapped["Employee"] = relationship(
         "Employee",
-        foreign_keys=[subscriber_id],
+        primaryjoin="foreign(ExchangeSubscription.subscriber_id) == Employee.user_id",
         back_populates="exchange_subscriptions",
         lazy="joined",
     )
     target_seller: Mapped["Employee"] = relationship(
         "Employee",
-        foreign_keys=[target_seller_id],
+        primaryjoin="foreign(ExchangeSubscription.target_seller_id) == Employee.user_id",
+        back_populates="target_subscriptions",
         lazy="select",
     )
     notifications: Mapped[list["SubscriptionNotification"]] = relationship(
         "SubscriptionNotification",
+        primaryjoin="ExchangeSubscription.id == foreign(SubscriptionNotification.subscription_id)",
         back_populates="subscription",
         lazy="select",
         cascade="all, delete-orphan",
@@ -510,23 +497,11 @@ class SubscriptionNotification(Base):
     )
     subscription_id: Mapped[int] = mapped_column(
         BIGINT,
-        ForeignKey(
-            "exchange_subscriptions.id",
-            name="fk_notifications_subscription",
-            onupdate="CASCADE",
-            ondelete="CASCADE",
-        ),
         nullable=False,
         comment="Идентификатор подписки",
     )
     exchange_id: Mapped[int] = mapped_column(
         BIGINT,
-        ForeignKey(
-            "exchanges.id",
-            name="fk_notifications_exchange",
-            onupdate="CASCADE",
-            ondelete="CASCADE",
-        ),
         nullable=False,
         comment="Идентификатор сделки",
     )
@@ -545,13 +520,13 @@ class SubscriptionNotification(Base):
     # Отношения
     subscription: Mapped["ExchangeSubscription"] = relationship(
         "ExchangeSubscription",
-        foreign_keys=[subscription_id],
+        primaryjoin="foreign(SubscriptionNotification.subscription_id) == ExchangeSubscription.id",
         back_populates="notifications",
         lazy="select",
     )
     exchange: Mapped["Exchange"] = relationship(
         "Exchange",
-        foreign_keys=[exchange_id],
+        primaryjoin="foreign(SubscriptionNotification.exchange_id) == Exchange.id",
         lazy="select",
     )
 

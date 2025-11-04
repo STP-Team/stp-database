@@ -79,27 +79,27 @@ class Employee(Base):
     event_logs: Mapped[list["EventLog"]] = relationship(
         "EventLog", back_populates="employee", lazy="select"
     )
-    sold_exchanges: Mapped[list["Exchange"]] = relationship(
+    owned_exchanges: Mapped[list["Exchange"]] = relationship(
         "Exchange",
-        foreign_keys="Exchange.seller_id",
-        back_populates="seller",
+        primaryjoin="Employee.user_id == foreign(Exchange.owner_id)",
+        back_populates="owner",
         lazy="select",
     )
-    bought_exchanges: Mapped[list["Exchange"]] = relationship(
+    counterpart_exchanges: Mapped[list["Exchange"]] = relationship(
         "Exchange",
-        foreign_keys="Exchange.buyer_id",
-        back_populates="buyer",
+        primaryjoin="Employee.user_id == foreign(Exchange.counterpart_id)",
+        back_populates="counterpart",
         lazy="select",
     )
     exchange_subscriptions: Mapped[list["ExchangeSubscription"]] = relationship(
         "ExchangeSubscription",
-        foreign_keys="ExchangeSubscription.subscriber_id",
+        primaryjoin="Employee.user_id == foreign(ExchangeSubscription.subscriber_id)",
         back_populates="subscriber",
         lazy="select",
     )
     target_subscriptions: Mapped[list["ExchangeSubscription"]] = relationship(
         "ExchangeSubscription",
-        foreign_keys="ExchangeSubscription.target_seller_id",
+        primaryjoin="Employee.user_id == foreign(ExchangeSubscription.target_seller_id)",
         back_populates="target_seller",
         lazy="select",
     )
