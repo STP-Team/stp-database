@@ -139,17 +139,17 @@ class Exchange(Base):
         default=False,
         comment="Является ли подмена приватной (для отправки в личные сообщения)",
     )
-    in_seller_schedule: Mapped[bool] = mapped_column(
+    in_owner_schedule: Mapped[bool] = mapped_column(
         BOOLEAN,
         nullable=False,
         default=False,
-        comment="Показывать ли в графике продающего",
+        comment="Показывать ли в графике владельца сделки",
     )
-    in_buyer_schedule: Mapped[bool] = mapped_column(
+    in_counterpart_schedule: Mapped[bool] = mapped_column(
         BOOLEAN,
         nullable=False,
         default=False,
-        comment="Показывать ли в графике покупающего",
+        comment="Показывать ли в графике второй стороны",
     )
 
     # Дополнительная информация
