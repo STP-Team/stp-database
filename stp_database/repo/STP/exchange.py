@@ -1409,9 +1409,15 @@ class ExchangeRepo(BaseRepo):
                     for division in possible_divisions
                 ]
 
+                # Обрабатываем случай с одним или несколькими условиями
+                if len(division_conditions) == 1:
+                    division_or = division_conditions[0]
+                else:
+                    division_or = or_(*division_conditions)
+
                 division_filter = or_(
                     ExchangeSubscription.target_divisions.is_(None),
-                    or_(*division_conditions),
+                    division_or,
                 )
                 base_filters.append(division_filter)
 
