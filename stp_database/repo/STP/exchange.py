@@ -1008,9 +1008,11 @@ class ExchangeRepo(BaseRepo):
 
             # Устанавливаем target_divisions в зависимости от подразделения подписчика
             if subscriber_division in ["НТП1", "НТП2"]:
-                target_divisions = "НТП"
+                # Для НТП1/НТП2 добавляем и общее направление НТП, и конкретное подразделение
+                target_divisions = ["НТП", subscriber_division]
             else:
-                target_divisions = "НЦК"
+                # Для всех остальных только НЦК
+                target_divisions = ["НЦК"]
 
             subscription = ExchangeSubscription(
                 subscriber_id=subscriber_id,
@@ -1389,16 +1391,27 @@ class ExchangeRepo(BaseRepo):
             owner_division = result_owner.scalar_one_or_none()
 
             if owner_division:
-                # Определяем направление владельца обмена
+                # Создаем список возможных направлений для поиска
+                possible_divisions = []
                 if owner_division in ["НТП1", "НТП2"]:
-                    owner_direction = "НТП"
+                    # Для НТП1/НТП2 ищем подписки с "НТП" или конкретным подразделением
+                    possible_divisions = ["НТП", owner_division]
                 else:
-                    owner_direction = "НЦК"
+                    # Для всех остальных ищем "НЦК"
+                    possible_divisions = ["НЦК"]
 
                 # Фильтруем подписки по target_divisions
+                # Используем JSON_CONTAINS для проверки содержания любого из возможных направлений
+                division_conditions = [
+                    func.JSON_CONTAINS(
+                        ExchangeSubscription.target_divisions, f'"{division}"'
+                    )
+                    for division in possible_divisions
+                ]
+
                 division_filter = or_(
                     ExchangeSubscription.target_divisions.is_(None),
-                    ExchangeSubscription.target_divisions == owner_direction,
+                    or_(*division_conditions),
                 )
                 base_filters.append(division_filter)
 

@@ -336,7 +336,7 @@ class ExchangeSubscription(Base):
     )
 
     # Division filtering
-    target_divisions: Mapped[str | None] = mapped_column(
+    target_divisions: Mapped[list | None] = mapped_column(
         JSON,
         nullable=True,
         comment="Направление для фильтрации",
