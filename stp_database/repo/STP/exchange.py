@@ -772,6 +772,7 @@ class ExchangeRepo(BaseRepo):
         self,
         user_id: int,
         exchange_type: str = "all",
+        intent: str = None,
         status: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
@@ -781,6 +782,7 @@ class ExchangeRepo(BaseRepo):
         Args:
             user_id: Идентификатор пользователя
             exchange_type: Тип обменов
+            intent: Намерение владельца (sell_shift или buy_shift)
             status: Фильтр по статусу
             limit: Лимит записей
             offset: Смещение
@@ -804,6 +806,9 @@ class ExchangeRepo(BaseRepo):
 
             if status:
                 filters.append(Exchange.status == status)
+
+            if intent:
+                filters.append(Exchange.owner_intent == intent)
 
             query = (
                 select(Exchange)
