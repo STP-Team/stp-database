@@ -980,11 +980,6 @@ class ExchangeRepo(BaseRepo):
         end_time: Optional[time] = None,
         days_of_week: Optional[list] = None,
         target_seller_id: Optional[int] = None,
-        target_divisions: Optional[list] = None,
-        notify_immediately: bool = True,
-        notify_daily_digest: bool = False,
-        notify_before_expire: bool = False,
-        digest_time: time = time(9, 0),
     ) -> ExchangeSubscription | None:
         """Создание новой подписки на обмены.
 
@@ -1001,16 +996,22 @@ class ExchangeRepo(BaseRepo):
             end_time: Конечное время дня
             days_of_week: Дни недели [1,2,3,4,5]
             target_seller_id: Конкретный продавец
-            target_divisions: Подразделения
-            notify_immediately: Уведомлять сразу
-            notify_daily_digest: Ежедневная сводка
-            notify_before_expire: Уведомлять перед истечением
-            digest_time: Время отправки сводки
 
         Returns:
             Созданный объект ExchangeSubscription или None
         """
         try:
+            # Определяем направление подписчика для автоматического задания target_divisions
+            query = select(Employee.division).where(Employee.user_id == subscriber_id)
+            result = await self.session.execute(query)
+            subscriber_division = result.scalar_one_or_none()
+
+            # Устанавливаем target_divisions в зависимости от подразделения подписчика
+            if subscriber_division in ["НТП1", "НТП2"]:
+                target_divisions = "НТП"
+            else:
+                target_divisions = "НЦК"
+
             subscription = ExchangeSubscription(
                 subscriber_id=subscriber_id,
                 name=name,
@@ -1025,10 +1026,6 @@ class ExchangeRepo(BaseRepo):
                 days_of_week=days_of_week,
                 target_seller_id=target_seller_id,
                 target_divisions=target_divisions,
-                notify_immediately=notify_immediately,
-                notify_daily_digest=notify_daily_digest,
-                notify_before_expire=notify_before_expire,
-                digest_time=digest_time,
             )
 
             self.session.add(subscription)
@@ -1036,7 +1033,7 @@ class ExchangeRepo(BaseRepo):
             await self.session.refresh(subscription)
 
             logger.info(
-                f"[Биржа] Создана подписка {subscription.id} '{name}' для пользователя {subscriber_id}"
+                f"[Биржа] Создана подписка {subscription.id} '{name}' для пользователя {subscriber_id}, направление: {target_divisions}"
             )
             return subscription
         except SQLAlchemyError as e:
@@ -1236,10 +1233,6 @@ class ExchangeRepo(BaseRepo):
             "days_of_week",
             "target_seller_id",
             "target_divisions",
-            "notify_immediately",
-            "notify_daily_digest",
-            "notify_before_expire",
-            "digest_time",
             "is_active",
         }
 
@@ -1342,7 +1335,6 @@ class ExchangeRepo(BaseRepo):
         try:
             base_filters = [
                 ExchangeSubscription.is_active.is_(True),
-                ExchangeSubscription.notify_immediately.is_(True),
             ]
 
             # Фильтр по типу обмена
@@ -1387,6 +1379,28 @@ class ExchangeRepo(BaseRepo):
                 )
 
             base_filters.append(seller_filter)
+
+            # Фильтр по направлению (target_divisions)
+            # Получаем подразделение владельца обмена для фильтрации
+            query_owner = select(Employee.division).where(
+                Employee.user_id == exchange.owner_id
+            )
+            result_owner = await self.session.execute(query_owner)
+            owner_division = result_owner.scalar_one_or_none()
+
+            if owner_division:
+                # Определяем направление владельца обмена
+                if owner_division in ["НТП1", "НТП2"]:
+                    owner_direction = "НТП"
+                else:
+                    owner_direction = "НЦК"
+
+                # Фильтруем подписки по target_divisions
+                division_filter = or_(
+                    ExchangeSubscription.target_divisions.is_(None),
+                    ExchangeSubscription.target_divisions == owner_direction,
+                )
+                base_filters.append(division_filter)
 
             # Исключаем собственные обмены создателя
             if creator_id:
@@ -1443,11 +1457,6 @@ class ExchangeRepo(BaseRepo):
                 if weekday not in subscription.days_of_week:
                     return False
 
-        # Проверка подразделений
-        if subscription.target_divisions and exchange.owner and exchange.owner.division:
-            if exchange.owner.division not in subscription.target_divisions:
-                return False
-
         return True
 
     async def record_notification(
@@ -1474,13 +1483,6 @@ class ExchangeRepo(BaseRepo):
             )
 
             self.session.add(notification)
-
-            # Обновляем статистику подписки
-            subscription = await self.get_subscription_by_id(subscription_id)
-            if subscription:
-                subscription.notifications_sent += 1
-                subscription.last_notified_at = func.current_timestamp()
-
             await self.session.commit()
             await self.session.refresh(notification)
 
@@ -1492,54 +1494,3 @@ class ExchangeRepo(BaseRepo):
             logger.error(f"[Биржа] Ошибка записи уведомления: {e}")
             await self.session.rollback()
             return None
-
-    async def get_subscriptions_for_digest(
-        self,
-        digest_time: time,
-    ) -> Sequence[ExchangeSubscription]:
-        """Получение подписок для отправки дневной сводки.
-
-        Args:
-            digest_time: Время отправки сводки
-
-        Returns:
-            Список подписок для сводки
-        """
-        try:
-            query = select(ExchangeSubscription).where(
-                and_(
-                    ExchangeSubscription.is_active.is_(True),
-                    ExchangeSubscription.notify_daily_digest.is_(True),
-                    ExchangeSubscription.digest_time == digest_time,
-                )
-            )
-
-            result = await self.session.execute(query)
-            return result.scalars().all()
-        except SQLAlchemyError as e:
-            logger.error(f"[Биржа] Ошибка получения подписок для сводки: {e}")
-            return []
-
-    async def update_digest_timestamp(
-        self,
-        subscription_id: int,
-    ) -> bool:
-        """Обновление времени последней сводки.
-
-        Args:
-            subscription_id: Идентификатор подписки
-
-        Returns:
-            True если успешно обновлено
-        """
-        try:
-            subscription = await self.get_subscription_by_id(subscription_id)
-            if subscription:
-                subscription.last_digest_at = func.current_timestamp()
-                await self.session.commit()
-                return True
-            return False
-        except SQLAlchemyError as e:
-            logger.error(f"[Биржа] Ошибка обновления времени сводки: {e}")
-            await self.session.rollback()
-            return False

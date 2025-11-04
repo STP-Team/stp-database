@@ -235,18 +235,10 @@ class ExchangeSubscription(Base):
         end_time: Конечное время дня
         days_of_week: Дни недели в формате JSON массива
         target_seller_id: Конкретный продавец
-        target_divisions: Подразделения в формате JSON массива
-        notify_immediately: Уведомлять сразу при появлении подходящего обмена
-        notify_daily_digest: Отправлять ежедневную сводку
-        notify_before_expire: Уведомлять перед истечением подходящих обменов
-        digest_time: Время отправки дневной сводки
+        target_divisions: Направление для фильтрации (НЦК или НТП)
         is_active: Активна ли подписка
         created_at: Время создания подписки
         updated_at: Время последнего обновления
-        last_notified_at: Время последнего уведомления
-        last_digest_at: Время последней дневной сводки
-        notifications_sent: Количество отправленных уведомлений
-        matches_found: Количество найденных совпадений
 
     Relationships:
         subscriber: Объект Employee подписчика
@@ -260,8 +252,6 @@ class ExchangeSubscription(Base):
         idx_price_range: (min_price, max_price, is_active)
         idx_date_range: (start_date, end_date, is_active)
         idx_target_seller: (target_seller_id, is_active)
-        idx_notifications: (notify_immediately, is_active)
-        idx_digest_schedule: (notify_daily_digest, digest_time, is_active)
     """
 
     __tablename__ = "exchange_subscriptions"
@@ -346,36 +336,10 @@ class ExchangeSubscription(Base):
     )
 
     # Division filtering
-    target_divisions: Mapped[list | None] = mapped_column(
+    target_divisions: Mapped[str | None] = mapped_column(
         JSON,
         nullable=True,
-        comment='Подразделения ["НЦК", "НТП1"] для фильтрации',
-    )
-
-    # Notification settings
-    notify_immediately: Mapped[bool] = mapped_column(
-        BOOLEAN,
-        nullable=False,
-        default=True,
-        comment="Уведомлять сразу при появлении подходящего обмена",
-    )
-    notify_daily_digest: Mapped[bool] = mapped_column(
-        BOOLEAN,
-        nullable=False,
-        default=False,
-        comment="Отправлять ежедневную сводку",
-    )
-    notify_before_expire: Mapped[bool] = mapped_column(
-        BOOLEAN,
-        nullable=False,
-        default=False,
-        comment="Уведомлять перед истечением подходящих обменов",
-    )
-    digest_time: Mapped[time] = mapped_column(
-        TIME,
-        nullable=False,
-        default=time(9, 0),
-        comment="Время отправки дневной сводки",
+        comment="Направление для фильтрации",
     )
 
     # Status and metadata
@@ -397,30 +361,6 @@ class ExchangeSubscription(Base):
         onupdate=func.current_timestamp(),
         nullable=False,
         comment="Время последнего обновления",
-    )
-    last_notified_at: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP,
-        nullable=True,
-        comment="Время последнего уведомления",
-    )
-    last_digest_at: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP,
-        nullable=True,
-        comment="Время последней дневной сводки",
-    )
-
-    # Statistics
-    notifications_sent: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-        default=0,
-        comment="Количество отправленных уведомлений",
-    )
-    matches_found: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-        default=0,
-        comment="Количество найденных совпадений",
     )
 
     # Отношения
@@ -452,8 +392,6 @@ class ExchangeSubscription(Base):
         Index("idx_price_range", "min_price", "max_price", "is_active"),
         Index("idx_date_range", "start_date", "end_date", "is_active"),
         Index("idx_target_seller", "target_seller_id", "is_active"),
-        Index("idx_notifications", "notify_immediately", "is_active"),
-        Index("idx_digest_schedule", "notify_daily_digest", "digest_time", "is_active"),
         {"mysql_collate": "utf8mb4_unicode_ci"},
     )
 
