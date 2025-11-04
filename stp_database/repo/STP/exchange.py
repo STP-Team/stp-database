@@ -26,7 +26,7 @@ class ExchangeRepo(BaseRepo):
         owner_id: int,
         start_time: Optional[datetime],
         price: int,
-        owner_intent: str = "sell_shift",
+        owner_intent: str = "sell",
         end_time: Optional[datetime] = None,
         comment: Optional[str] = None,
         is_private: bool = False,
@@ -39,7 +39,7 @@ class ExchangeRepo(BaseRepo):
             owner_id: Идентификатор владельца объявления (кто создает сделку)
             start_time: Начало смены
             price: Цена за смену
-            owner_intent: Намерение владельца ('sell_shift' или 'buy_shift')
+            owner_intent: Намерение владельца ('sell' или 'buy')
             end_time: Окончание смены (если частичная смена)
             comment: Комментарий к сделке
             is_private: Приватный ли сделка
@@ -537,7 +537,7 @@ class ExchangeRepo(BaseRepo):
             limit: Лимит записей
             offset: Смещение
             division: Направление
-            owner_intent: Намерение владельца ('sell_shift' или 'buy_shift')
+            owner_intent: Намерение владельца ('sell' или 'buy')
 
         Returns:
             Список активных обменов
@@ -651,10 +651,10 @@ class ExchangeRepo(BaseRepo):
         users_exchanges = defaultdict(list)
         for exchange in exchanges:
             # Определяем, кто должен платить в зависимости от намерения владельца
-            if exchange.owner_intent == "sell_shift":
+            if exchange.owner_intent == "sell":
                 # Владелец продает смену, платит принимающая сторона
                 payer_id = exchange.counterpart_id
-            elif exchange.owner_intent == "buy_shift":
+            elif exchange.owner_intent == "buy":
                 # Владелец хочет купить смену, платит владелец
                 payer_id = exchange.owner_id
             else:
@@ -782,7 +782,7 @@ class ExchangeRepo(BaseRepo):
         Args:
             user_id: Идентификатор пользователя
             exchange_type: Тип обменов
-            intent: Намерение владельца (sell_shift или buy_shift)
+            intent: Намерение владельца (sell или buy)
             status: Фильтр по статусу
             limit: Лимит записей
             offset: Смещение
@@ -1370,13 +1370,13 @@ class ExchangeRepo(BaseRepo):
             # Определяем пользователя, создавшего обмен
             creator_id = exchange.owner_id
 
-            if exchange.owner_intent == "sell_shift":
+            if exchange.owner_intent == "sell":
                 # Владелец продает смену - он и есть продавец
                 seller_filter = or_(
                     ExchangeSubscription.target_seller_id.is_(None),
                     ExchangeSubscription.target_seller_id == exchange.owner_id,
                 )
-            elif exchange.owner_intent == "buy_shift":
+            elif exchange.owner_intent == "buy":
                 # Владелец хочет купить смену - target_seller_id не применим
                 seller_filter = ExchangeSubscription.target_seller_id.is_(None)
             else:

@@ -38,7 +38,7 @@ class Exchange(Base):
         end_time: Окончание смены (если частичная смена)
         price: Цена за смену или часть смены
         comment: Комментарий к сделке
-        owner_intent: Намерение владельца (sell_shift, buy_shift)
+        owner_intent: Намерение владельца (sell, buy)
         status: Статус сделки (active, sold, cancelled)
         is_private: Является ли подмена приватной
         is_paid: Отметка о наличии оплаты
@@ -122,10 +122,10 @@ class Exchange(Base):
 
     # Тип и статус
     owner_intent: Mapped[str] = mapped_column(
-        Enum("sell_shift", "buy_shift"),
+        Enum("sell", "buy"),
         nullable=False,
-        default="sell_shift",
-        comment="Намерение владельца: sell_shift - предлагает свою смену, buy_shift - хочет купить смену",
+        default="sell",
+        comment="Намерение владельца: sell - предлагает свою смену, buy - хочет купить смену",
     )
     status: Mapped[str] = mapped_column(
         Enum("active", "inactive", "sold", "canceled", "expired"),
@@ -285,9 +285,9 @@ class ExchangeSubscription(Base):
         comment="Название подписки (пользователь может дать имя)",
     )
     exchange_type: Mapped[str] = mapped_column(
-        Enum("buy_shift", "sell_shift", "both"),
+        Enum("buy", "sell", "both"),
         nullable=False,
-        default="buy_shift",
+        default="buy",
         comment="Тип обменов для подписки",
     )
     subscription_type: Mapped[str] = mapped_column(
