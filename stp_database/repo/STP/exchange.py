@@ -966,6 +966,141 @@ class ExchangeRepo(BaseRepo):
                 "period_end": end_date,
             }
 
+    async def get_user_total_gain(
+        self,
+        user_id: int,
+        status: str = "sold",
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+    ) -> float:
+        """Подсчет общей прибыли пользователя от обменов.
+
+        Пользователь получает деньги (прибыль) когда:
+        - Он владелец сделки с намерением "buy" (покупает смену - получает деньги за взятие смены)
+        - Он контрагент сделки с намерением владельца "sell" (берет смену у продавца - получает деньги)
+
+        Args:
+            user_id: Идентификатор пользователя
+            status: Статус сделок для подсчета (по умолчанию "sold")
+            start_date: Начальная дата периода (опционально)
+            end_date: Конечная дата периода (опционально)
+
+        Returns:
+            Общая сумма прибыли пользователя
+        """
+        try:
+            # Получаем все завершенные сделки где пользователь получает деньги
+            query = select(Exchange).where(
+                and_(
+                    Exchange.status == status,
+                    or_(
+                        # Пользователь - владелец, покупающий смену (получает деньги за взятие смены)
+                        and_(
+                            Exchange.owner_id == user_id, Exchange.owner_intent == "buy"
+                        ),
+                        # Пользователь - контрагент, берущий смену у продавца (получает деньги)
+                        and_(
+                            Exchange.counterpart_id == user_id,
+                            Exchange.owner_intent == "sell",
+                        ),
+                    ),
+                )
+            )
+
+            # Добавляем фильтры по датам если указаны
+            if start_date:
+                query = query.where(Exchange.start_time >= start_date)
+            if end_date:
+                query = query.where(Exchange.start_time <= end_date)
+
+            result = await self.session.execute(query)
+            exchanges = result.scalars().all()
+
+            total_gain = 0.0
+            for exchange in exchanges:
+                # Используем total_price если доступно (учитывает продолжительность)
+                # иначе используем базовую цену
+                if exchange.total_price is not None:
+                    total_gain += exchange.total_price
+                else:
+                    total_gain += exchange.price
+
+            return round(total_gain, 2)
+
+        except SQLAlchemyError as e:
+            logger.error(
+                f"[Биржа] Ошибка подсчета общей прибыли пользователя {user_id}: {e}"
+            )
+            return 0.0
+
+    async def get_user_total_loss(
+        self,
+        user_id: int,
+        status: str = "sold",
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+    ) -> float:
+        """Подсчет общих затрат пользователя на обмены.
+
+        Пользователь тратит деньги (убыток) когда:
+        - Он владелец сделки с намерением "sell" (продает свою смену - платит кому-то за взятие смены)
+        - Он контрагент сделки с намерением владельца "buy" (дает смену владельцу, который хочет купить - платит ему)
+
+        Args:
+            user_id: Идентификатор пользователя
+            status: Статус сделок для подсчета (по умолчанию "sold")
+            start_date: Начальная дата периода (опционально)
+            end_date: Конечная дата периода (опционально)
+
+        Returns:
+            Общая сумма затрат пользователя
+        """
+        try:
+            # Получаем все завершенные сделки где пользователь тратит деньги
+            query = select(Exchange).where(
+                and_(
+                    Exchange.status == status,
+                    or_(
+                        # Пользователь - владелец, продающий смену (платит за избавление от смены)
+                        and_(
+                            Exchange.owner_id == user_id,
+                            Exchange.owner_intent == "sell",
+                        ),
+                        # Пользователь - контрагент, дающий смену владельцу который хочет купить (платит ему)
+                        and_(
+                            Exchange.counterpart_id == user_id,
+                            Exchange.owner_intent == "buy",
+                        ),
+                    ),
+                )
+            )
+
+            # Добавляем фильтры по датам если указаны
+            if start_date:
+                query = query.where(Exchange.start_time >= start_date)
+            if end_date:
+                query = query.where(Exchange.start_time <= end_date)
+
+            result = await self.session.execute(query)
+            exchanges = result.scalars().all()
+
+            total_loss = 0.0
+            for exchange in exchanges:
+                # Используем total_price если доступно (учитывает продолжительность)
+                # иначе используем базовую цену
+                if exchange.total_price is not None:
+                    total_loss += exchange.total_price
+                else:
+                    total_loss += exchange.price
+
+            return round(total_loss, 2)
+
+        except SQLAlchemyError as e:
+            logger.error(
+                f"[Биржа] Ошибка подсчета общих затрат пользователя {user_id}: {e}"
+            )
+            return 0.0
+
     async def create_subscription(
         self,
         subscriber_id: int,
