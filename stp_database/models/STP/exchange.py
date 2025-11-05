@@ -192,8 +192,6 @@ class Exchange(Base):
         back_populates="counterpart_exchanges",
         lazy="joined",
     )
-    # Note: Subscriptions are no longer directly linked to specific exchanges
-    # They use filtering logic instead
 
     # Индексы и настройки таблицы
     __table_args__ = (
@@ -206,6 +204,24 @@ class Exchange(Base):
         Index("idx_owner_status", "owner_id", "status"),
         {"mysql_collate": "utf8mb4_unicode_ci"},
     )
+
+    @property
+    def working_hours(self) -> float | None:
+        """Количество рабочих часов между start_time и end_time."""
+        if not self.start_time or not self.end_time:
+            return None
+        duration = self.end_time - self.start_time
+        return round(duration.total_seconds() / 3600, 2)
+
+    @property
+    def total_price(self) -> float | None:
+        """Вычисляет полную стоимость смены (по длительности)."""
+        if not self.start_time or not self.end_time:
+            return None
+
+        duration = self.end_time - self.start_time
+        hours = duration.total_seconds() / 3600
+        return round(self.price * hours, 2)
 
     def __repr__(self):
         """Возвращает строковое представление объекта Exchange."""
