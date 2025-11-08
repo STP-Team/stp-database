@@ -1842,3 +1842,59 @@ class ExchangeRepo(BaseRepo):
         )
 
         return purchases_stats.get("average_price", 0.0)
+
+    async def get_user_overall_avg_sell_price(self, user_id: int) -> float:
+        """Получить общую среднюю цену продажи пользователя за все время.
+
+        Args:
+            user_id: ID пользователя
+
+        Returns:
+            Общая средняя цена продажи
+        """
+        try:
+            query = select(func.avg(Exchange.price).label("average_price")).where(
+                and_(
+                    Exchange.owner_id == user_id,
+                    Exchange.status == "sold",
+                    Exchange.owner_intent == "sell",
+                )
+            )
+
+            result = await self.session.execute(query)
+            row = result.first()
+
+            return float(row.average_price or 0.0)
+        except SQLAlchemyError as e:
+            logger.error(
+                f"[Биржа] Ошибка получения общей средней цены продажи пользователя {user_id}: {e}"
+            )
+            return 0.0
+
+    async def get_user_overall_avg_buy_price(self, user_id: int) -> float:
+        """Получить общую среднюю цену покупки пользователя за все время.
+
+        Args:
+            user_id: ID пользователя
+
+        Returns:
+            Общая средняя цена покупки
+        """
+        try:
+            query = select(func.avg(Exchange.price).label("average_price")).where(
+                and_(
+                    Exchange.counterpart_id == user_id,
+                    Exchange.status == "sold",
+                    Exchange.owner_intent == "sell",
+                )
+            )
+
+            result = await self.session.execute(query)
+            row = result.first()
+
+            return float(row.average_price or 0.0)
+        except SQLAlchemyError as e:
+            logger.error(
+                f"[Биржа] Ошибка получения общей средней цены покупки пользователя {user_id}: {e}"
+            )
+            return 0.0
