@@ -1960,86 +1960,67 @@ class ExchangeRepo(BaseRepo):
             ]
         """
         try:
-            # Создаем подзапрос для каждого случая
-            # Случай 1: user_id - владелец, продает смену (owner_intent="sell")
-            case1_query = select(
-                Exchange.counterpart_id.label("buyer_id"),
-                func.count(Exchange.id).label("purchases_count"),
-                func.sum(Exchange.total_price).label("total_spent"),
-                func.sum(Exchange.working_hours).label("total_hours_bought"),
-            ).where(
-                and_(
-                    Exchange.owner_id == user_id,
-                    Exchange.owner_intent == "sell",
-                    Exchange.status == "sold",
-                    Exchange.counterpart_id.isnot(None),
-                )
-            )
-
-            # Случай 2: user_id - контрагент, владелец покупает смену (owner_intent="buy")
-            case2_query = select(
-                Exchange.owner_id.label("buyer_id"),
-                func.count(Exchange.id).label("purchases_count"),
-                func.sum(Exchange.total_price).label("total_spent"),
-                func.sum(Exchange.working_hours).label("total_hours_bought"),
-            ).where(
-                and_(
-                    Exchange.counterpart_id == user_id,
-                    Exchange.owner_intent == "buy",
-                    Exchange.status == "sold",
-                )
-            )
+            # Получаем все сделки для обеих случаев без агрегации
+            filters = [
+                Exchange.status == "sold",
+                or_(
+                    # Случай 1: user_id - владелец, продает смену (owner_intent="sell")
+                    and_(
+                        Exchange.owner_id == user_id,
+                        Exchange.owner_intent == "sell",
+                        Exchange.counterpart_id.isnot(None),
+                    ),
+                    # Случай 2: user_id - контрагент, владелец покупает смену (owner_intent="buy")
+                    and_(
+                        Exchange.counterpart_id == user_id,
+                        Exchange.owner_intent == "buy",
+                    ),
+                ),
+            ]
 
             # Добавляем фильтры по датам если указаны
             if start_date:
-                case1_query = case1_query.where(Exchange.start_time >= start_date)
-                case2_query = case2_query.where(Exchange.start_time >= start_date)
+                filters.append(Exchange.start_time >= start_date)
             if end_date:
-                case1_query = case1_query.where(Exchange.start_time <= end_date)
-                case2_query = case2_query.where(Exchange.start_time <= end_date)
+                filters.append(Exchange.start_time <= end_date)
 
-            # Группируем по покупателю
-            case1_query = case1_query.group_by(Exchange.counterpart_id)
-            case2_query = case2_query.group_by(Exchange.owner_id)
-
-            # Выполняем оба запроса
-            result1 = await self.session.execute(case1_query)
-            result2 = await self.session.execute(case2_query)
+            query = select(Exchange).where(and_(*filters))
+            result = await self.session.execute(query)
+            exchanges = result.scalars().all()
 
             buyers_data = {}
 
-            # Обрабатываем результаты первого случая
-            for row in result1:
-                if row.buyer_id:
-                    buyers_data[row.buyer_id] = {
-                        "buyer_id": row.buyer_id,
-                        "total_purchases": row.purchases_count or 0,
-                        "total_amount": float(row.total_spent or 0),
-                        "total_hours": float(row.total_hours_bought or 0),
+            # Обрабатываем каждую сделку и вычисляем total_price через Python property
+            for exchange in exchanges:
+                # Определяем buyer_id в зависимости от типа сделки
+                if exchange.owner_id == user_id and exchange.owner_intent == "sell":
+                    buyer_id = exchange.counterpart_id
+                elif exchange.counterpart_id == user_id and exchange.owner_intent == "buy":
+                    buyer_id = exchange.owner_id
+                else:
+                    continue
+
+                if not buyer_id:
+                    continue
+
+                # Используем property total_price если доступно, иначе базовую цену
+                amount = exchange.total_price if exchange.total_price is not None else exchange.price
+                hours = exchange.working_hours if exchange.working_hours is not None else 0.0
+
+                # Инициализируем или обновляем данные покупателя
+                if buyer_id not in buyers_data:
+                    buyers_data[buyer_id] = {
+                        "buyer_id": buyer_id,
+                        "total_purchases": 0,
+                        "total_amount": 0.0,
+                        "total_hours": 0.0,
                     }
 
-            # Обрабатываем результаты второго случая (суммируем с первым)
-            for row in result2:
-                if row.buyer_id:
-                    if row.buyer_id in buyers_data:
-                        buyers_data[row.buyer_id]["total_purchases"] += (
-                            row.purchases_count or 0
-                        )
-                        buyers_data[row.buyer_id]["total_amount"] += float(
-                            row.total_spent or 0
-                        )
-                        buyers_data[row.buyer_id]["total_hours"] += float(
-                            row.total_hours_bought or 0
-                        )
-                    else:
-                        buyers_data[row.buyer_id] = {
-                            "buyer_id": row.buyer_id,
-                            "total_purchases": row.purchases_count or 0,
-                            "total_amount": float(row.total_spent or 0),
-                            "total_hours": float(row.total_hours_bought or 0),
-                        }
+                buyers_data[buyer_id]["total_purchases"] += 1
+                buyers_data[buyer_id]["total_amount"] += amount
+                buyers_data[buyer_id]["total_hours"] += hours
 
-            # Вычисляем среднюю цену и сортируем
+            # Вычисляем среднюю цену и форматируем результат
             top_buyers = []
             for buyer_data in buyers_data.values():
                 if buyer_data["total_purchases"] > 0:
@@ -2097,86 +2078,67 @@ class ExchangeRepo(BaseRepo):
             ]
         """
         try:
-            # Создаем подзапрос для каждого случая
-            # Случай 1: user_id - контрагент, владелец продает смену (owner_intent="sell")
-            case1_query = select(
-                Exchange.owner_id.label("seller_id"),
-                func.count(Exchange.id).label("sales_count"),
-                func.sum(Exchange.total_price).label("total_amount"),
-                func.sum(Exchange.working_hours).label("total_hours_sold"),
-            ).where(
-                and_(
-                    Exchange.counterpart_id == user_id,
-                    Exchange.owner_intent == "sell",
-                    Exchange.status == "sold",
-                )
-            )
-
-            # Случай 2: user_id - владелец, контрагент дает смену (owner_intent="buy")
-            case2_query = select(
-                Exchange.counterpart_id.label("seller_id"),
-                func.count(Exchange.id).label("sales_count"),
-                func.sum(Exchange.total_price).label("total_amount"),
-                func.sum(Exchange.working_hours).label("total_hours_sold"),
-            ).where(
-                and_(
-                    Exchange.owner_id == user_id,
-                    Exchange.owner_intent == "buy",
-                    Exchange.status == "sold",
-                    Exchange.counterpart_id.isnot(None),
-                )
-            )
+            # Получаем все сделки для обеих случаев без агрегации
+            filters = [
+                Exchange.status == "sold",
+                or_(
+                    # Случай 1: user_id - контрагент, владелец продает смену (owner_intent="sell")
+                    and_(
+                        Exchange.counterpart_id == user_id,
+                        Exchange.owner_intent == "sell",
+                    ),
+                    # Случай 2: user_id - владелец, контрагент дает смену (owner_intent="buy")
+                    and_(
+                        Exchange.owner_id == user_id,
+                        Exchange.owner_intent == "buy",
+                        Exchange.counterpart_id.isnot(None),
+                    ),
+                ),
+            ]
 
             # Добавляем фильтры по датам если указаны
             if start_date:
-                case1_query = case1_query.where(Exchange.start_time >= start_date)
-                case2_query = case2_query.where(Exchange.start_time >= start_date)
+                filters.append(Exchange.start_time >= start_date)
             if end_date:
-                case1_query = case1_query.where(Exchange.start_time <= end_date)
-                case2_query = case2_query.where(Exchange.start_time <= end_date)
+                filters.append(Exchange.start_time <= end_date)
 
-            # Группируем по продавцу
-            case1_query = case1_query.group_by(Exchange.owner_id)
-            case2_query = case2_query.group_by(Exchange.counterpart_id)
-
-            # Выполняем оба запроса
-            result1 = await self.session.execute(case1_query)
-            result2 = await self.session.execute(case2_query)
+            query = select(Exchange).where(and_(*filters))
+            result = await self.session.execute(query)
+            exchanges = result.scalars().all()
 
             sellers_data = {}
 
-            # Обрабатываем результаты первого случая
-            for row in result1:
-                if row.seller_id:
-                    sellers_data[row.seller_id] = {
-                        "seller_id": row.seller_id,
-                        "total_sales_to_user": row.sales_count or 0,
-                        "total_amount": float(row.total_amount or 0),
-                        "total_hours": float(row.total_hours_sold or 0),
+            # Обрабатываем каждую сделку и вычисляем total_price через Python property
+            for exchange in exchanges:
+                # Определяем seller_id в зависимости от типа сделки
+                if exchange.counterpart_id == user_id and exchange.owner_intent == "sell":
+                    seller_id = exchange.owner_id
+                elif exchange.owner_id == user_id and exchange.owner_intent == "buy":
+                    seller_id = exchange.counterpart_id
+                else:
+                    continue
+
+                if not seller_id:
+                    continue
+
+                # Используем property total_price если доступно, иначе базовую цену
+                amount = exchange.total_price if exchange.total_price is not None else exchange.price
+                hours = exchange.working_hours if exchange.working_hours is not None else 0.0
+
+                # Инициализируем или обновляем данные продавца
+                if seller_id not in sellers_data:
+                    sellers_data[seller_id] = {
+                        "seller_id": seller_id,
+                        "total_sales_to_user": 0,
+                        "total_amount": 0.0,
+                        "total_hours": 0.0,
                     }
 
-            # Обрабатываем результаты второго случая (суммируем с первым)
-            for row in result2:
-                if row.seller_id:
-                    if row.seller_id in sellers_data:
-                        sellers_data[row.seller_id]["total_sales_to_user"] += (
-                            row.sales_count or 0
-                        )
-                        sellers_data[row.seller_id]["total_amount"] += float(
-                            row.total_amount or 0
-                        )
-                        sellers_data[row.seller_id]["total_hours"] += float(
-                            row.total_hours_sold or 0
-                        )
-                    else:
-                        sellers_data[row.seller_id] = {
-                            "seller_id": row.seller_id,
-                            "total_sales_to_user": row.sales_count or 0,
-                            "total_amount": float(row.total_amount or 0),
-                            "total_hours": float(row.total_hours_sold or 0),
-                        }
+                sellers_data[seller_id]["total_sales_to_user"] += 1
+                sellers_data[seller_id]["total_amount"] += amount
+                sellers_data[seller_id]["total_hours"] += hours
 
-            # Вычисляем среднюю цену и сортируем
+            # Вычисляем среднюю цену и форматируем результат
             top_sellers = []
             for seller_data in sellers_data.values():
                 if seller_data["total_sales_to_user"] > 0:
