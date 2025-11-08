@@ -1778,3 +1778,67 @@ class ExchangeRepo(BaseRepo):
             logger.error(f"[Биржа] Ошибка записи уведомления: {e}")
             await self.session.rollback()
             return None
+
+    async def get_user_monthly_avg_sell_price(
+        self,
+        user_id: int,
+        year: int,
+        month: int,
+    ) -> float:
+        """Получить среднюю цену продажи за конкретный месяц.
+
+        Args:
+            user_id: ID пользователя
+            year: Год
+            month: Месяц (1-12)
+
+        Returns:
+            Средняя цена продажи за месяц
+        """
+        from datetime import datetime
+
+        # Создаем диапазон дат для месяца
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1)
+        else:
+            end_date = datetime(year, month + 1, 1)
+
+        # Используем существующую функцию
+        sales_stats = await self.get_sales_stats_for_period(
+            user_id=user_id, start_date=start_date, end_date=end_date
+        )
+
+        return sales_stats.get("average_price", 0.0)
+
+    async def get_user_monthly_avg_buy_price(
+        self,
+        user_id: int,
+        year: int,
+        month: int,
+    ) -> float:
+        """Получить среднюю цену покупки за конкретный месяц.
+
+        Args:
+            user_id: ID пользователя
+            year: Год
+            month: Месяц (1-12)
+
+        Returns:
+            Средняя цена покупки за месяц
+        """
+        from datetime import datetime
+
+        # Создаем диапазон дат для месяца
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1)
+        else:
+            end_date = datetime(year, month + 1, 1)
+
+        # Используем существующую функцию
+        purchases_stats = await self.get_purchases_stats_for_period(
+            user_id=user_id, start_date=start_date, end_date=end_date
+        )
+
+        return purchases_stats.get("average_price", 0.0)
