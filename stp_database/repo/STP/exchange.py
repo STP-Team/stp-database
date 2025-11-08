@@ -1926,3 +1926,265 @@ class ExchangeRepo(BaseRepo):
                 f"[Биржа] Ошибка получения общей средней цены покупки пользователя {user_id}: {e}"
             )
             return 0.0
+
+    async def get_user_top_buyers(
+        self,
+        user_id: int,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        limit: int = 10,
+    ) -> List[dict[str, Any]]:
+        """Получить топ покупателей у данного пользователя.
+
+        Покупатели - это те, кто покупает смены у данного пользователя:
+        - Контрагенты в сделках где пользователь - владелец с намерением "sell"
+        - Владельцы в сделках где пользователь - контрагент и владелец имеет намерение "buy"
+
+        Args:
+            user_id: ID пользователя (продавца)
+            start_date: Начальная дата периода (опционально)
+            end_date: Конечная дата периода (опционально)
+            limit: Максимальное количество записей
+
+        Returns:
+            Список словарей с информацией о покупателях:
+            [
+                {
+                    "buyer_id": int,
+                    "total_purchases": int,
+                    "total_amount": float,
+                    "average_price": float,
+                    "total_hours": float
+                },
+                ...
+            ]
+        """
+        try:
+            # Создаем подзапрос для каждого случая
+            # Случай 1: user_id - владелец, продает смену (owner_intent="sell")
+            case1_query = select(
+                Exchange.counterpart_id.label("buyer_id"),
+                func.count(Exchange.id).label("purchases_count"),
+                func.sum(Exchange.price).label("total_spent"),
+                func.sum(Exchange.working_hours).label("total_hours_bought"),
+            ).where(
+                and_(
+                    Exchange.owner_id == user_id,
+                    Exchange.owner_intent == "sell",
+                    Exchange.status == "sold",
+                    Exchange.counterpart_id.isnot(None),
+                )
+            )
+
+            # Случай 2: user_id - контрагент, владелец покупает смену (owner_intent="buy")
+            case2_query = select(
+                Exchange.owner_id.label("buyer_id"),
+                func.count(Exchange.id).label("purchases_count"),
+                func.sum(Exchange.price).label("total_spent"),
+                func.sum(Exchange.working_hours).label("total_hours_bought"),
+            ).where(
+                and_(
+                    Exchange.counterpart_id == user_id,
+                    Exchange.owner_intent == "buy",
+                    Exchange.status == "sold",
+                )
+            )
+
+            # Добавляем фильтры по датам если указаны
+            if start_date:
+                case1_query = case1_query.where(Exchange.start_time >= start_date)
+                case2_query = case2_query.where(Exchange.start_time >= start_date)
+            if end_date:
+                case1_query = case1_query.where(Exchange.start_time <= end_date)
+                case2_query = case2_query.where(Exchange.start_time <= end_date)
+
+            # Группируем по покупателю
+            case1_query = case1_query.group_by(Exchange.counterpart_id)
+            case2_query = case2_query.group_by(Exchange.owner_id)
+
+            # Выполняем оба запроса
+            result1 = await self.session.execute(case1_query)
+            result2 = await self.session.execute(case2_query)
+
+            buyers_data = {}
+
+            # Обрабатываем результаты первого случая
+            for row in result1:
+                if row.buyer_id:
+                    buyers_data[row.buyer_id] = {
+                        "buyer_id": row.buyer_id,
+                        "total_purchases": row.purchases_count or 0,
+                        "total_amount": float(row.total_spent or 0),
+                        "total_hours": float(row.total_hours_bought or 0),
+                    }
+
+            # Обрабатываем результаты второго случая (суммируем с первым)
+            for row in result2:
+                if row.buyer_id:
+                    if row.buyer_id in buyers_data:
+                        buyers_data[row.buyer_id]["total_purchases"] += row.purchases_count or 0
+                        buyers_data[row.buyer_id]["total_amount"] += float(row.total_spent or 0)
+                        buyers_data[row.buyer_id]["total_hours"] += float(row.total_hours_bought or 0)
+                    else:
+                        buyers_data[row.buyer_id] = {
+                            "buyer_id": row.buyer_id,
+                            "total_purchases": row.purchases_count or 0,
+                            "total_amount": float(row.total_spent or 0),
+                            "total_hours": float(row.total_hours_bought or 0),
+                        }
+
+            # Вычисляем среднюю цену и сортируем
+            top_buyers = []
+            for buyer_data in buyers_data.values():
+                if buyer_data["total_purchases"] > 0:
+                    buyer_data["average_price"] = round(
+                        buyer_data["total_amount"] / buyer_data["total_purchases"], 2
+                    )
+                else:
+                    buyer_data["average_price"] = 0.0
+
+                buyer_data["total_amount"] = round(buyer_data["total_amount"], 2)
+                buyer_data["total_hours"] = round(buyer_data["total_hours"], 2)
+                top_buyers.append(buyer_data)
+
+            # Сортируем по общей сумме покупок (убывание)
+            top_buyers.sort(key=lambda x: x["total_amount"], reverse=True)
+
+            return top_buyers[:limit]
+
+        except SQLAlchemyError as e:
+            logger.error(
+                f"[Биржа] Ошибка получения топ покупателей пользователя {user_id}: {e}"
+            )
+            return []
+
+    async def get_user_top_sellers(
+        self,
+        user_id: int,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        limit: int = 10,
+    ) -> List[dict[str, Any]]:
+        """Получить топ продавцов для данного пользователя.
+
+        Продавцы - это те, у кого покупает данный пользователь:
+        - Владельцы в сделках где пользователь - контрагент и владелец имеет намерение "sell"
+        - Контрагенты в сделках где пользователь - владелец с намерением "buy"
+
+        Args:
+            user_id: ID пользователя (покупателя)
+            start_date: Начальная дата периода (опционально)
+            end_date: Конечная дата периода (опционально)
+            limit: Максимальное количество записей
+
+        Returns:
+            Список словарей с информацией о продавцах:
+            [
+                {
+                    "seller_id": int,
+                    "total_sales_to_user": int,
+                    "total_amount": float,
+                    "average_price": float,
+                    "total_hours": float
+                },
+                ...
+            ]
+        """
+        try:
+            # Создаем подзапрос для каждого случая
+            # Случай 1: user_id - контрагент, владелец продает смену (owner_intent="sell")
+            case1_query = select(
+                Exchange.owner_id.label("seller_id"),
+                func.count(Exchange.id).label("sales_count"),
+                func.sum(Exchange.price).label("total_amount"),
+                func.sum(Exchange.working_hours).label("total_hours_sold"),
+            ).where(
+                and_(
+                    Exchange.counterpart_id == user_id,
+                    Exchange.owner_intent == "sell",
+                    Exchange.status == "sold",
+                )
+            )
+
+            # Случай 2: user_id - владелец, контрагент дает смену (owner_intent="buy")
+            case2_query = select(
+                Exchange.counterpart_id.label("seller_id"),
+                func.count(Exchange.id).label("sales_count"),
+                func.sum(Exchange.price).label("total_amount"),
+                func.sum(Exchange.working_hours).label("total_hours_sold"),
+            ).where(
+                and_(
+                    Exchange.owner_id == user_id,
+                    Exchange.owner_intent == "buy",
+                    Exchange.status == "sold",
+                    Exchange.counterpart_id.isnot(None),
+                )
+            )
+
+            # Добавляем фильтры по датам если указаны
+            if start_date:
+                case1_query = case1_query.where(Exchange.start_time >= start_date)
+                case2_query = case2_query.where(Exchange.start_time >= start_date)
+            if end_date:
+                case1_query = case1_query.where(Exchange.start_time <= end_date)
+                case2_query = case2_query.where(Exchange.start_time <= end_date)
+
+            # Группируем по продавцу
+            case1_query = case1_query.group_by(Exchange.owner_id)
+            case2_query = case2_query.group_by(Exchange.counterpart_id)
+
+            # Выполняем оба запроса
+            result1 = await self.session.execute(case1_query)
+            result2 = await self.session.execute(case2_query)
+
+            sellers_data = {}
+
+            # Обрабатываем результаты первого случая
+            for row in result1:
+                if row.seller_id:
+                    sellers_data[row.seller_id] = {
+                        "seller_id": row.seller_id,
+                        "total_sales_to_user": row.sales_count or 0,
+                        "total_amount": float(row.total_amount or 0),
+                        "total_hours": float(row.total_hours_sold or 0),
+                    }
+
+            # Обрабатываем результаты второго случая (суммируем с первым)
+            for row in result2:
+                if row.seller_id:
+                    if row.seller_id in sellers_data:
+                        sellers_data[row.seller_id]["total_sales_to_user"] += row.sales_count or 0
+                        sellers_data[row.seller_id]["total_amount"] += float(row.total_amount or 0)
+                        sellers_data[row.seller_id]["total_hours"] += float(row.total_hours_sold or 0)
+                    else:
+                        sellers_data[row.seller_id] = {
+                            "seller_id": row.seller_id,
+                            "total_sales_to_user": row.sales_count or 0,
+                            "total_amount": float(row.total_amount or 0),
+                            "total_hours": float(row.total_hours_sold or 0),
+                        }
+
+            # Вычисляем среднюю цену и сортируем
+            top_sellers = []
+            for seller_data in sellers_data.values():
+                if seller_data["total_sales_to_user"] > 0:
+                    seller_data["average_price"] = round(
+                        seller_data["total_amount"] / seller_data["total_sales_to_user"], 2
+                    )
+                else:
+                    seller_data["average_price"] = 0.0
+
+                seller_data["total_amount"] = round(seller_data["total_amount"], 2)
+                seller_data["total_hours"] = round(seller_data["total_hours"], 2)
+                top_sellers.append(seller_data)
+
+            # Сортируем по общей сумме сделок (убывание)
+            top_sellers.sort(key=lambda x: x["total_amount"], reverse=True)
+
+            return top_sellers[:limit]
+
+        except SQLAlchemyError as e:
+            logger.error(
+                f"[Биржа] Ошибка получения топ продавцов для пользователя {user_id}: {e}"
+            )
+            return []
