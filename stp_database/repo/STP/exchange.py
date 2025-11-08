@@ -1846,6 +1846,10 @@ class ExchangeRepo(BaseRepo):
     async def get_user_overall_avg_sell_price(self, user_id: int) -> float:
         """Получить общую среднюю цену продажи пользователя за все время.
 
+        Пользователь продает когда:
+        - Он владелец сделки с намерением "sell" (продает свою смену)
+        - Он контрагент сделки с намерением владельца "buy" (дает смену владельцу, который хочет купить)
+
         Args:
             user_id: ID пользователя
 
@@ -1855,9 +1859,19 @@ class ExchangeRepo(BaseRepo):
         try:
             query = select(func.avg(Exchange.price).label("average_price")).where(
                 and_(
-                    Exchange.owner_id == user_id,
                     Exchange.status == "sold",
-                    Exchange.owner_intent == "sell",
+                    or_(
+                        # Пользователь - владелец, продающий свою смену
+                        and_(
+                            Exchange.owner_id == user_id,
+                            Exchange.owner_intent == "sell",
+                        ),
+                        # Пользователь - контрагент, дающий смену владельцу который хочет купить
+                        and_(
+                            Exchange.counterpart_id == user_id,
+                            Exchange.owner_intent == "buy",
+                        ),
+                    ),
                 )
             )
 
@@ -1874,6 +1888,10 @@ class ExchangeRepo(BaseRepo):
     async def get_user_overall_avg_buy_price(self, user_id: int) -> float:
         """Получить общую среднюю цену покупки пользователя за все время.
 
+        Пользователь покупает когда:
+        - Он владелец сделки с намерением "buy" (покупает смену)
+        - Он контрагент сделки с намерением владельца "sell" (берет смену у продавца)
+
         Args:
             user_id: ID пользователя
 
@@ -1883,9 +1901,19 @@ class ExchangeRepo(BaseRepo):
         try:
             query = select(func.avg(Exchange.price).label("average_price")).where(
                 and_(
-                    Exchange.counterpart_id == user_id,
                     Exchange.status == "sold",
-                    Exchange.owner_intent == "sell",
+                    or_(
+                        # Пользователь - владелец, покупающий смену
+                        and_(
+                            Exchange.owner_id == user_id,
+                            Exchange.owner_intent == "buy",
+                        ),
+                        # Пользователь - контрагент, берущий смену у продавца
+                        and_(
+                            Exchange.counterpart_id == user_id,
+                            Exchange.owner_intent == "sell",
+                        ),
+                    ),
                 )
             )
 
