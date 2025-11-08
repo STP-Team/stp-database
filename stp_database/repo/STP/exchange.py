@@ -1101,6 +1101,136 @@ class ExchangeRepo(BaseRepo):
             )
             return 0.0
 
+    async def get_user_total_hours_sold(
+        self,
+        user_id: int,
+        status: str = "sold",
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+    ) -> float:
+        """Подсчет общего количества часов, проданных пользователем.
+
+        Пользователь продает часы когда:
+        - Он владелец сделки с намерением "sell" (продает свою смену)
+        - Он контрагент сделки с намерением владельца "buy" (дает смену владельцу, который хочет купить)
+
+        Args:
+            user_id: Идентификатор пользователя
+            status: Статус сделок для подсчета (по умолчанию "sold")
+            start_date: Начальная дата периода (опционально)
+            end_date: Конечная дата периода (опционально)
+
+        Returns:
+            Общее количество проданных часов
+        """
+        try:
+            # Получаем все завершенные сделки, где пользователь продает часы
+            query = select(Exchange).where(
+                and_(
+                    Exchange.status == status,
+                    or_(
+                        # Пользователь - владелец, продающий свою смену
+                        and_(
+                            Exchange.owner_id == user_id,
+                            Exchange.owner_intent == "sell",
+                        ),
+                        # Пользователь - контрагент, дающий смену владельцу который хочет купить
+                        and_(
+                            Exchange.counterpart_id == user_id,
+                            Exchange.owner_intent == "buy",
+                        ),
+                    ),
+                )
+            )
+
+            # Добавляем фильтры по датам если указаны
+            if start_date:
+                query = query.where(Exchange.start_time >= start_date)
+            if end_date:
+                query = query.where(Exchange.start_time <= end_date)
+
+            result = await self.session.execute(query)
+            exchanges = result.scalars().all()
+
+            total_hours = 0.0
+            for exchange in exchanges:
+                # Используем working_hours если доступно, иначе считаем как 0
+                if exchange.working_hours is not None:
+                    total_hours += exchange.working_hours
+
+            return round(total_hours, 2)
+
+        except SQLAlchemyError as e:
+            logger.error(
+                f"[Биржа] Ошибка подсчета проданных часов пользователя {user_id}: {e}"
+            )
+            return 0.0
+
+    async def get_user_total_hours_bought(
+        self,
+        user_id: int,
+        status: str = "sold",
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+    ) -> float:
+        """Подсчет общего количества часов, купленных пользователем.
+
+        Пользователь покупает часы когда:
+        - Он владелец сделки с намерением "buy" (покупает смену)
+        - Он контрагент сделки с намерением владельца "sell" (берет смену у продавца)
+
+        Args:
+            user_id: Идентификатор пользователя
+            status: Статус сделок для подсчета (по умолчанию "sold")
+            start_date: Начальная дата периода (опционально)
+            end_date: Конечная дата периода (опционально)
+
+        Returns:
+            Общее количество купленных часов
+        """
+        try:
+            # Получаем все завершенные сделки где пользователь покупает часы
+            query = select(Exchange).where(
+                and_(
+                    Exchange.status == status,
+                    or_(
+                        # Пользователь - владелец, покупающий смену
+                        and_(
+                            Exchange.owner_id == user_id,
+                            Exchange.owner_intent == "buy",
+                        ),
+                        # Пользователь - контрагент, берущий смену у продавца
+                        and_(
+                            Exchange.counterpart_id == user_id,
+                            Exchange.owner_intent == "sell",
+                        ),
+                    ),
+                )
+            )
+
+            # Добавляем фильтры по датам если указаны
+            if start_date:
+                query = query.where(Exchange.start_time >= start_date)
+            if end_date:
+                query = query.where(Exchange.start_time <= end_date)
+
+            result = await self.session.execute(query)
+            exchanges = result.scalars().all()
+
+            total_hours = 0.0
+            for exchange in exchanges:
+                # Используем working_hours если доступно, иначе считаем как 0
+                if exchange.working_hours is not None:
+                    total_hours += exchange.working_hours
+
+            return round(total_hours, 2)
+
+        except SQLAlchemyError as e:
+            logger.error(
+                f"[Биржа] Ошибка подсчета купленных часов пользователя {user_id}: {e}"
+            )
+            return 0.0
+
     async def create_subscription(
         self,
         subscriber_id: int,
