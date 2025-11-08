@@ -1965,7 +1965,7 @@ class ExchangeRepo(BaseRepo):
             case1_query = select(
                 Exchange.counterpart_id.label("buyer_id"),
                 func.count(Exchange.id).label("purchases_count"),
-                func.sum(Exchange.price).label("total_spent"),
+                func.sum(Exchange.total_price).label("total_spent"),
                 func.sum(Exchange.working_hours).label("total_hours_bought"),
             ).where(
                 and_(
@@ -1980,7 +1980,7 @@ class ExchangeRepo(BaseRepo):
             case2_query = select(
                 Exchange.owner_id.label("buyer_id"),
                 func.count(Exchange.id).label("purchases_count"),
-                func.sum(Exchange.price).label("total_spent"),
+                func.sum(Exchange.total_price).label("total_spent"),
                 func.sum(Exchange.working_hours).label("total_hours_bought"),
             ).where(
                 and_(
@@ -2022,9 +2022,15 @@ class ExchangeRepo(BaseRepo):
             for row in result2:
                 if row.buyer_id:
                     if row.buyer_id in buyers_data:
-                        buyers_data[row.buyer_id]["total_purchases"] += row.purchases_count or 0
-                        buyers_data[row.buyer_id]["total_amount"] += float(row.total_spent or 0)
-                        buyers_data[row.buyer_id]["total_hours"] += float(row.total_hours_bought or 0)
+                        buyers_data[row.buyer_id]["total_purchases"] += (
+                            row.purchases_count or 0
+                        )
+                        buyers_data[row.buyer_id]["total_amount"] += float(
+                            row.total_spent or 0
+                        )
+                        buyers_data[row.buyer_id]["total_hours"] += float(
+                            row.total_hours_bought or 0
+                        )
                     else:
                         buyers_data[row.buyer_id] = {
                             "buyer_id": row.buyer_id,
@@ -2096,7 +2102,7 @@ class ExchangeRepo(BaseRepo):
             case1_query = select(
                 Exchange.owner_id.label("seller_id"),
                 func.count(Exchange.id).label("sales_count"),
-                func.sum(Exchange.price).label("total_amount"),
+                func.sum(Exchange.total_price).label("total_amount"),
                 func.sum(Exchange.working_hours).label("total_hours_sold"),
             ).where(
                 and_(
@@ -2110,7 +2116,7 @@ class ExchangeRepo(BaseRepo):
             case2_query = select(
                 Exchange.counterpart_id.label("seller_id"),
                 func.count(Exchange.id).label("sales_count"),
-                func.sum(Exchange.price).label("total_amount"),
+                func.sum(Exchange.total_price).label("total_amount"),
                 func.sum(Exchange.working_hours).label("total_hours_sold"),
             ).where(
                 and_(
@@ -2153,9 +2159,15 @@ class ExchangeRepo(BaseRepo):
             for row in result2:
                 if row.seller_id:
                     if row.seller_id in sellers_data:
-                        sellers_data[row.seller_id]["total_sales_to_user"] += row.sales_count or 0
-                        sellers_data[row.seller_id]["total_amount"] += float(row.total_amount or 0)
-                        sellers_data[row.seller_id]["total_hours"] += float(row.total_hours_sold or 0)
+                        sellers_data[row.seller_id]["total_sales_to_user"] += (
+                            row.sales_count or 0
+                        )
+                        sellers_data[row.seller_id]["total_amount"] += float(
+                            row.total_amount or 0
+                        )
+                        sellers_data[row.seller_id]["total_hours"] += float(
+                            row.total_hours_sold or 0
+                        )
                     else:
                         sellers_data[row.seller_id] = {
                             "seller_id": row.seller_id,
@@ -2169,7 +2181,9 @@ class ExchangeRepo(BaseRepo):
             for seller_data in sellers_data.values():
                 if seller_data["total_sales_to_user"] > 0:
                     seller_data["average_price"] = round(
-                        seller_data["total_amount"] / seller_data["total_sales_to_user"], 2
+                        seller_data["total_amount"]
+                        / seller_data["total_sales_to_user"],
+                        2,
                     )
                 else:
                     seller_data["average_price"] = 0.0
