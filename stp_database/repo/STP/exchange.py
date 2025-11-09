@@ -1641,25 +1641,20 @@ class ExchangeRepo(BaseRepo):
             owner_division = result_owner.scalar_one_or_none()
 
             if owner_division:
-                # Получаем подразделения всех подписчиков и фильтруем по логике:
+                # Фильтруем по логике направлений:
                 # - Если подписчик НТП1 или НЦК - показывать только обмены с тем же подразделением
                 # - Если подписчик НТП2 - показывать обмены от НТП1 и НТП2
-                subscriber_employee = (
-                    select(Employee.division)
-                    .where(Employee.user_id == ExchangeSubscription.subscriber_id)
-                    .scalar_subquery()
-                )
 
                 division_filter = or_(
                     # Если подписчик НТП2, показываем обмены от НТП1 и НТП2
                     and_(
-                        subscriber_employee == "НТП2",
+                        Employee.division == "НТП2",
                         or_(owner_division == "НТП1", owner_division == "НТП2"),
                     ),
                     # Для остальных подписчиков показываем только обмены с тем же подразделением
                     and_(
-                        subscriber_employee != "НТП2",
-                        subscriber_employee == owner_division,
+                        Employee.division != "НТП2",
+                        Employee.division == owner_division,
                     ),
                 )
                 base_filters.append(division_filter)
