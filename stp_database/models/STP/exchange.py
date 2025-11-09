@@ -58,6 +58,11 @@ class UnicodeJSON(TypeDecorator):
         """Process value when loading from database."""
         if value is None:
             return None
+
+        # If value is already a Python object (list, dict, etc.), return as-is
+        if not isinstance(value, (str, bytes, bytearray)):
+            return value
+
         return json.loads(value)
 
 
