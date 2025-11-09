@@ -1706,13 +1706,27 @@ class ExchangeRepo(BaseRepo):
             if subscription.end_time and exchange_time > subscription.end_time:
                 return False
 
-            # Проверка дней недели (1=Monday, 7=Sunday)
+            # Проверка дней недели или конкретных дат
             if subscription.days_of_week:
-                weekday = (
-                    exchange.start_time.weekday() + 1
-                )  # Python: 0=Monday, SQL: 1=Monday
-                if weekday not in subscription.days_of_week:
-                    return False
+                # Определяем формат данных в days_of_week
+                if (
+                    isinstance(subscription.days_of_week, list)
+                    and subscription.days_of_week
+                    and isinstance(subscription.days_of_week[0], str)
+                    and len(subscription.days_of_week[0]) == 10
+                    and "-" in subscription.days_of_week[0]
+                ):
+                    # Новый формат: конкретные даты в формате YYYY-MM-DD
+                    exchange_date_str = exchange_date.strftime("%Y-%m-%d")
+                    if exchange_date_str not in subscription.days_of_week:
+                        return False
+                else:
+                    # Старый формат: дни недели (1=Monday, 7=Sunday)
+                    weekday = (
+                        exchange.start_time.weekday() + 1
+                    )  # Python: 0=Monday, SQL: 1=Monday
+                    if weekday not in subscription.days_of_week:
+                        return False
 
         return True
 
