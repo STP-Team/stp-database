@@ -1266,15 +1266,6 @@ class ExchangeRepo(BaseRepo):
             Созданный объект ExchangeSubscription или None
         """
         try:
-            # Определяем направление подписчика для автоматического задания target_divisions
-            query = select(Employee.division).where(Employee.user_id == subscriber_id)
-            result = await self.session.execute(query)
-            subscriber_division = result.scalar_one_or_none()
-
-            target_divisions = [subscriber_division]
-            if subscriber_division == "НТП2":
-                target_divisions.append("НТП1")
-
             subscription = ExchangeSubscription(
                 subscriber_id=subscriber_id,
                 name=name,
@@ -1288,7 +1279,6 @@ class ExchangeRepo(BaseRepo):
                 end_time=end_time,
                 days_of_week=days_of_week,
                 target_seller_id=target_seller_id,
-                target_divisions=target_divisions,
             )
 
             self.session.add(subscription)
@@ -1296,7 +1286,7 @@ class ExchangeRepo(BaseRepo):
             await self.session.refresh(subscription)
 
             logger.info(
-                f"[Биржа] Создана подписка {subscription.id} '{name}' для пользователя {subscriber_id}, направление: {target_divisions}"
+                f"[Биржа] Создана подписка {subscription.id} '{name}' для пользователя {subscriber_id}"
             )
             return subscription
         except SQLAlchemyError as e:
@@ -1495,7 +1485,6 @@ class ExchangeRepo(BaseRepo):
             "end_time",
             "days_of_week",
             "target_seller_id",
-            "target_divisions",
             "is_active",
         }
 
@@ -1643,7 +1632,7 @@ class ExchangeRepo(BaseRepo):
 
             base_filters.append(seller_filter)
 
-            # Фильтр по направлению (target_divisions)
+            # Фильтр по направлению на основе подразделения подписчика
             # Получаем подразделение владельца обмена для фильтрации
             query_owner = select(Employee.division).where(
                 Employee.user_id == exchange.owner_id
@@ -1652,33 +1641,26 @@ class ExchangeRepo(BaseRepo):
             owner_division = result_owner.scalar_one_or_none()
 
             if owner_division:
-                # Создаем список возможных направлений для поиска
-                possible_divisions = []
-                if owner_division in ["НТП1", "НТП2"]:
-                    # Для НТП1/НТП2 ищем подписки с "НТП" или конкретным подразделением
-                    possible_divisions = ["НТП", owner_division]
-                else:
-                    # Для всех остальных ищем "НЦК"
-                    possible_divisions = ["НЦК"]
-
-                # Фильтруем подписки по target_divisions
-                # Используем JSON_CONTAINS для проверки содержания любого из возможных направлений
-                division_conditions = [
-                    func.JSON_CONTAINS(
-                        ExchangeSubscription.target_divisions, f'"{division}"'
-                    )
-                    for division in possible_divisions
-                ]
-
-                # Обрабатываем случай с одним или несколькими условиями
-                if len(division_conditions) == 1:
-                    division_or = division_conditions[0]
-                else:
-                    division_or = or_(*division_conditions)
+                # Получаем подразделения всех подписчиков и фильтруем по логике:
+                # - Если подписчик НТП1 или НЦК - показывать только обмены с тем же подразделением
+                # - Если подписчик НТП2 - показывать обмены от НТП1 и НТП2
+                subscriber_employee = (
+                    select(Employee.division)
+                    .where(Employee.user_id == ExchangeSubscription.subscriber_id)
+                    .scalar_subquery()
+                )
 
                 division_filter = or_(
-                    ExchangeSubscription.target_divisions.is_(None),
-                    division_or,
+                    # Если подписчик НТП2, показываем обмены от НТП1 и НТП2
+                    and_(
+                        subscriber_employee == "НТП2",
+                        or_(owner_division == "НТП1", owner_division == "НТП2"),
+                    ),
+                    # Для остальных подписчиков показываем только обмены с тем же подразделением
+                    and_(
+                        subscriber_employee != "НТП2",
+                        subscriber_employee == owner_division,
+                    ),
                 )
                 base_filters.append(division_filter)
 

@@ -291,7 +291,6 @@ class ExchangeSubscription(Base):
         end_time: Конечное время дня
         days_of_week: Дни недели в формате JSON массива
         target_seller_id: Конкретный продавец
-        target_divisions: Направление для фильтрации (НЦК или НТП)
         is_active: Активна ли подписка
         created_at: Время создания подписки
         updated_at: Время последнего обновления
@@ -389,13 +388,6 @@ class ExchangeSubscription(Base):
         BIGINT,
         nullable=True,
         comment="Конкретный продавец (employees.user_id)",
-    )
-
-    # Division filtering
-    target_divisions: Mapped[list | None] = mapped_column(
-        UnicodeJSON,
-        nullable=True,
-        comment="Направление для фильтрации",
     )
 
     # Status and metadata
