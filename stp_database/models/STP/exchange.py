@@ -29,6 +29,8 @@ class UnicodeJSON(TypeDecorator):
 
     This type ensures that Cyrillic and other non-ASCII characters are stored
     as readable text in JSON fields instead of Unicode escape sequences.
+
+    Also handles cases where data might be pre-serialized by drivers.
     """
 
     impl = JSON
@@ -38,6 +40,18 @@ class UnicodeJSON(TypeDecorator):
         """Process value before saving to database."""
         if value is None:
             return None
+
+        # If it's already a string (pre-serialized by driver), don't double-encode
+        if isinstance(value, str):
+            try:
+                # Try to parse and re-serialize with proper Unicode handling
+                parsed = json.loads(value)
+                return json.dumps(parsed, ensure_ascii=False, separators=(",", ":"))
+            except json.JSONDecodeError:
+                # If it's not valid JSON, treat as raw string
+                return value
+
+        # Normal case: serialize Python object
         return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
 
     def process_result_value(self, value: Optional[str], dialect) -> Optional[Any]:
