@@ -1271,13 +1271,9 @@ class ExchangeRepo(BaseRepo):
             result = await self.session.execute(query)
             subscriber_division = result.scalar_one_or_none()
 
-            # Устанавливаем target_divisions в зависимости от подразделения подписчика
-            if subscriber_division in ["НТП1", "НТП2"]:
-                # Для НТП1/НТП2 добавляем и общее направление НТП, и конкретное подразделение
-                target_divisions = ["НТП", subscriber_division]
-            else:
-                # Для всех остальных только НЦК
-                target_divisions = ["НЦК"]
+            target_divisions = [subscriber_division]
+            if subscriber_division == "НТП2":
+                target_divisions.append("НТП1")
 
             subscription = ExchangeSubscription(
                 subscriber_id=subscriber_id,
@@ -1995,7 +1991,10 @@ class ExchangeRepo(BaseRepo):
                 # Определяем buyer_id в зависимости от типа сделки
                 if exchange.owner_id == user_id and exchange.owner_intent == "sell":
                     buyer_id = exchange.counterpart_id
-                elif exchange.counterpart_id == user_id and exchange.owner_intent == "buy":
+                elif (
+                    exchange.counterpart_id == user_id
+                    and exchange.owner_intent == "buy"
+                ):
                     buyer_id = exchange.owner_id
                 else:
                     continue
@@ -2004,8 +2003,16 @@ class ExchangeRepo(BaseRepo):
                     continue
 
                 # Используем property total_price если доступно, иначе базовую цену
-                amount = exchange.total_price if exchange.total_price is not None else exchange.price
-                hours = exchange.working_hours if exchange.working_hours is not None else 0.0
+                amount = (
+                    exchange.total_price
+                    if exchange.total_price is not None
+                    else exchange.price
+                )
+                hours = (
+                    exchange.working_hours
+                    if exchange.working_hours is not None
+                    else 0.0
+                )
 
                 # Инициализируем или обновляем данные покупателя
                 if buyer_id not in buyers_data:
@@ -2111,7 +2118,10 @@ class ExchangeRepo(BaseRepo):
             # Обрабатываем каждую сделку и вычисляем total_price через Python property
             for exchange in exchanges:
                 # Определяем seller_id в зависимости от типа сделки
-                if exchange.counterpart_id == user_id and exchange.owner_intent == "sell":
+                if (
+                    exchange.counterpart_id == user_id
+                    and exchange.owner_intent == "sell"
+                ):
                     seller_id = exchange.owner_id
                 elif exchange.owner_id == user_id and exchange.owner_intent == "buy":
                     seller_id = exchange.counterpart_id
@@ -2122,8 +2132,16 @@ class ExchangeRepo(BaseRepo):
                     continue
 
                 # Используем property total_price если доступно, иначе базовую цену
-                amount = exchange.total_price if exchange.total_price is not None else exchange.price
-                hours = exchange.working_hours if exchange.working_hours is not None else 0.0
+                amount = (
+                    exchange.total_price
+                    if exchange.total_price is not None
+                    else exchange.price
+                )
+                hours = (
+                    exchange.working_hours
+                    if exchange.working_hours is not None
+                    else 0.0
+                )
 
                 # Инициализируем или обновляем данные продавца
                 if seller_id not in sellers_data:

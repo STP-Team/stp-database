@@ -1,7 +1,8 @@
 """Модели для системы сделки сменами (биржи смен)."""
 
+import json
 from datetime import date, datetime, time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 from sqlalchemy import (
     BIGINT,
@@ -14,12 +15,37 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
+    TypeDecorator,
     Unicode,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from stp_database.models.base import Base
+
+
+class UnicodeJSON(TypeDecorator):
+    """A JSON type that properly handles Unicode characters without escaping.
+
+    This type ensures that Cyrillic and other non-ASCII characters are stored
+    as readable text in JSON fields instead of Unicode escape sequences.
+    """
+
+    impl = JSON
+    cache_ok = True
+
+    def process_bind_param(self, value: Optional[Any], dialect) -> Optional[str]:
+        """Process value before saving to database."""
+        if value is None:
+            return None
+        return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+
+    def process_result_value(self, value: Optional[str], dialect) -> Optional[Any]:
+        """Process value when loading from database."""
+        if value is None:
+            return None
+        return json.loads(value)
+
 
 if TYPE_CHECKING:
     from stp_database.models.STP.employee import Employee
@@ -339,7 +365,7 @@ class ExchangeSubscription(Base):
 
     # Days of week filtering (JSON array)
     days_of_week: Mapped[list | None] = mapped_column(
-        JSON,
+        UnicodeJSON,
         nullable=True,
         comment="Дни недели [1,2,3,4,5] для пн-пт, null для всех",
     )
@@ -353,7 +379,7 @@ class ExchangeSubscription(Base):
 
     # Division filtering
     target_divisions: Mapped[list | None] = mapped_column(
-        JSON,
+        UnicodeJSON,
         nullable=True,
         comment="Направление для фильтрации",
     )
