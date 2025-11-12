@@ -1,6 +1,6 @@
 """Модели, связанные с сущностями групп."""
 
-from sqlalchemy import JSON, Boolean
+from sqlalchemy import JSON, Boolean, Enum
 from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -12,6 +12,7 @@ class Group(Base):
 
     Args:
         group_id: Идентификатор группы Telegram
+        group_type: Тип группы
         invited_by: Идентификатор Telegram пригласившего
         remove_unemployed: Удалять уволенных сотрудников из группы
         is_casino_allowed: Разрешено ли использование команд казино в группе
@@ -27,6 +28,12 @@ class Group(Base):
 
     group_id: Mapped[int] = mapped_column(
         BIGINT, primary_key=True, comment="Идентификатор группы Telegram"
+    )
+    group_type: Mapped[str] = mapped_column(
+        Enum("group", "channel"),
+        nullable=False,
+        comment="Тип группы: группа или канал",
+        default="group",
     )
     invited_by: Mapped[int] = mapped_column(
         BIGINT, nullable=False, comment="Идентификатор Telegram пригласившего"

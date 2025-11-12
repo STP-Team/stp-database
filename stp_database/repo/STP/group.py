@@ -59,18 +59,23 @@ class GroupRepo(BaseRepo):
                     logger.error(f"[БД] Ошибка получения списка всех групп: {e}")
                 return []
 
-    async def add_group(self, group_id: int, invited_by: int) -> Optional[Group]:
+    async def add_group(
+        self, group_id: int, group_type: str, invited_by: int
+    ) -> Optional[Group]:
         """Добавить группу.
 
         Args:
             group_id: Идентификатор группы Telegram
+            group_type: Тип группы (group или channel)
             invited_by: Идентификатор Telegram пользователя, пригласившего бота
 
         Returns:
             Объект Group или None при ошибке
         """
         try:
-            group = Group(group_id=group_id, invited_by=invited_by)
+            group = Group(
+                group_id=group_id, group_type=group_type, invited_by=invited_by
+            )
             self.session.add(group)
             await self.session.commit()
             return group
