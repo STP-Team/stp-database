@@ -26,6 +26,10 @@ class SpecKPI(Base):
 
         sales_count: Кол-во реальных продаж за период
         sales_potential: Кол-во потенциальных продаж за период
+        sales_conversion: Конверсия продаж
+
+        paid_service_count: Платный сервис реальный
+        paid_service_conversion: Конверсия платного сервиса
 
         kpi_extract_date: Дата, с которой производилась выгрузка показателей
         updated_at: Дата выгрузки показателей в БД
@@ -82,6 +86,26 @@ class SpecKPI(Base):
         nullable=True,
         comment="Кол-во потенциальных продаж за период",
         name="SalesPotential",
+    )
+    sales_conversion: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+        comment="Конверсия продаж",
+        name="SalesConversion",
+    )
+
+    paid_service_count: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        comment="Количество закрытых заявок на платный сервис",
+        name="PaidServiceCount",
+        default=0,
+    )
+    paid_service_conversion: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+        comment="Конверсия платного сервиса",
+        name="PaidServiceConversion",
     )
 
     updated_at: Mapped[datetime | None] = mapped_column(
