@@ -38,6 +38,12 @@ class Group(Base):
     invited_by: Mapped[int] = mapped_column(
         BIGINT, nullable=False, comment="Идентификатор Telegram пригласившего"
     )
+    auto_apply: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        comment="Автоматическое принятие заявок на вступление",
+        default=0,
+    )
     remove_unemployed: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
