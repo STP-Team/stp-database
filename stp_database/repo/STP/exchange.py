@@ -11,7 +11,6 @@ from stp_database.models.STP.employee import Employee
 from stp_database.models.STP.exchange import (
     Exchange,
     ExchangeSubscription,
-    SubscriptionNotification,
 )
 from stp_database.repo.base import BaseRepo
 
@@ -1729,42 +1728,6 @@ class ExchangeRepo(BaseRepo):
                         return False
 
         return True
-
-    async def record_notification(
-        self,
-        subscription_id: int,
-        exchange_id: int,
-        notification_type: str = "immediate",
-    ) -> SubscriptionNotification | None:
-        """Запись уведомления в историю.
-
-        Args:
-            subscription_id: Идентификатор подписки
-            exchange_id: Идентификатор обмена
-            notification_type: Тип уведомления ('immediate', 'digest', 'expiry')
-
-        Returns:
-            Созданный объект SubscriptionNotification или None
-        """
-        try:
-            notification = SubscriptionNotification(
-                subscription_id=subscription_id,
-                exchange_id=exchange_id,
-                notification_type=notification_type,
-            )
-
-            self.session.add(notification)
-            await self.session.commit()
-            await self.session.refresh(notification)
-
-            logger.info(
-                f"[Биржа] Записано уведомление: подписка {subscription_id}, обмен {exchange_id}"
-            )
-            return notification
-        except SQLAlchemyError as e:
-            logger.error(f"[Биржа] Ошибка записи уведомления: {e}")
-            await self.session.rollback()
-            return None
 
     async def get_user_monthly_avg_sell_price(
         self,

@@ -303,7 +303,6 @@ class ExchangeSubscription(Base):
     Relationships:
         subscriber: Объект Employee подписчика
         target_seller: Объект Employee целевого продавца
-        notifications: История уведомлений
 
     Indexes:
         idx_subscriber_active: (subscriber_id, is_active)
@@ -429,13 +428,6 @@ class ExchangeSubscription(Base):
         back_populates="target_subscriptions",
         lazy="select",
     )
-    notifications: Mapped[list["SubscriptionNotification"]] = relationship(
-        "SubscriptionNotification",
-        primaryjoin="ExchangeSubscription.id == foreign(SubscriptionNotification.subscription_id)",
-        back_populates="subscription",
-        lazy="select",
-        cascade="all, delete-orphan",
-    )
 
     # Индексы и настройки таблицы
     __table_args__ = (
@@ -453,85 +445,4 @@ class ExchangeSubscription(Base):
         return (
             f"<ExchangeSubscription {self.id} subscriber={self.subscriber_id} "
             f"name='{self.name}' type={self.subscription_type} active={self.is_active}>"
-        )
-
-
-class SubscriptionNotification(Base):
-    """Модель истории уведомлений по подпискам.
-
-    Хранит информацию о всех отправленных уведомлениях.
-
-    Args:
-        id: Уникальный идентификатор уведомления
-        subscription_id: Идентификатор подписки
-        exchange_id: Идентификатор сделки
-        notification_type: Тип уведомления (immediate, digest, expiry)
-        sent_at: Время отправки уведомления
-
-    Relationships:
-        subscription: Объект ExchangeSubscription
-        exchange: Объект Exchange
-
-    Indexes:
-        idx_subscription_notifications: (subscription_id, sent_at)
-        idx_exchange_notifications: (exchange_id, notification_type)
-        idx_sent_at: (sent_at)
-    """
-
-    __tablename__ = "subscription_notifications"
-
-    id: Mapped[int] = mapped_column(
-        BIGINT,
-        primary_key=True,
-        autoincrement=True,
-        comment="Уникальный идентификатор уведомления",
-    )
-    subscription_id: Mapped[int] = mapped_column(
-        BIGINT,
-        nullable=False,
-        comment="Идентификатор подписки",
-    )
-    exchange_id: Mapped[int] = mapped_column(
-        BIGINT,
-        nullable=False,
-        comment="Идентификатор сделки",
-    )
-    notification_type: Mapped[str] = mapped_column(
-        Enum("immediate", "digest", "expiry"),
-        nullable=False,
-        comment="Тип уведомления",
-    )
-    sent_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP,
-        server_default=func.current_timestamp(),
-        nullable=False,
-        comment="Время отправки уведомления",
-    )
-
-    # Отношения
-    subscription: Mapped["ExchangeSubscription"] = relationship(
-        "ExchangeSubscription",
-        primaryjoin="foreign(SubscriptionNotification.subscription_id) == ExchangeSubscription.id",
-        back_populates="notifications",
-        lazy="select",
-    )
-    exchange: Mapped["Exchange"] = relationship(
-        "Exchange",
-        primaryjoin="foreign(SubscriptionNotification.exchange_id) == Exchange.id",
-        lazy="select",
-    )
-
-    # Индексы и настройки таблицы
-    __table_args__ = (
-        Index("idx_subscription_notifications", "subscription_id", "sent_at"),
-        Index("idx_exchange_notifications", "exchange_id", "notification_type"),
-        Index("idx_sent_at", "sent_at"),
-        {"mysql_collate": "utf8mb4_unicode_ci"},
-    )
-
-    def __repr__(self):
-        """Возвращает строковое представление объекта SubscriptionNotification."""
-        return (
-            f"<SubscriptionNotification {self.id} subscription={self.subscription_id} "
-            f"exchange={self.exchange_id} type={self.notification_type}>"
         )
