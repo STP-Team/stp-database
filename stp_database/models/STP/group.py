@@ -18,6 +18,8 @@ class Group(Base):
         is_casino_allowed: Разрешено ли использование команд казино в группе
         new_user_notify: Уведомлять ли о новых пользователях в группе
         allowed_roles: Список разрешенных ролей для доступа к группе
+        allowed_divisions: Список разрешенных направлений для доступа к группе
+        allowed_positions: Список разрешенных должностей для доступа к группе
         service_messages: Список сервисных сообщений на удаление
 
     Methods:
@@ -72,6 +74,12 @@ class Group(Base):
         JSON,
         nullable=False,
         comment="Список разрешенных направлений для доступа к группе",
+        default=[],
+    )
+    allowed_positions: Mapped[list] = mapped_column(
+        JSON,
+        nullable=False,
+        comment="Список разрешенных должностей для доступа к группе",
         default=[],
     )
     service_messages: Mapped[list] = mapped_column(
