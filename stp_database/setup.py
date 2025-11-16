@@ -1,11 +1,16 @@
 """Создание движков и сессий."""
 
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from stp_database.config import DbConfig
 
 
-def create_engine(db: DbConfig, db_name: str, echo=False):
+def create_engine(db: DbConfig, db_name: str, echo: bool = False) -> AsyncEngine:
     """Создает асинхронный движок SQLAlchemy для подключения к базе данных.
 
     Args:
@@ -38,7 +43,7 @@ def create_engine(db: DbConfig, db_name: str, echo=False):
     return engine
 
 
-def create_session_pool(engine):
+def create_session_pool(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
     """Создает пул асинхронных сессий SQLAlchemy.
 
     Args:
