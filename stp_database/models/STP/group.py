@@ -68,6 +68,12 @@ class Group(Base):
         comment="Список разрешенных ролей для доступа к группе",
         default=[],
     )
+    allowed_divisions: Mapped[list] = mapped_column(
+        JSON,
+        nullable=False,
+        comment="Список разрешенных направлений для доступа к группе",
+        default=[],
+    )
     service_messages: Mapped[list] = mapped_column(
         JSON,
         nullable=False,
