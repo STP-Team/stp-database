@@ -74,7 +74,7 @@ class CandidateRepo(BaseRepo):
 
     async def get_candidate(
         self, user_id: int = None, topic_id: int = None
-    ) -> Optional[Candidate]:
+    ) -> Candidate | None:
         """Получение информации о кандидате по его user_id.
 
         Args:
@@ -93,4 +93,4 @@ class CandidateRepo(BaseRepo):
 
         result = await self.session.execute(select_stmt)
 
-        return result.scalar_one()
+        return result.scalar_one_or_none()
