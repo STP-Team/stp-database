@@ -35,7 +35,10 @@ class Candidate(Base):
         VARCHAR(255), nullable=False, comment="Позиция, на которую подается кандидат"
     )
     status: Mapped[str] = mapped_column(
-        Enum("review", "decline", "accept"), nullable=False, comment="Статус отклика"
+        Enum("review", "decline", "accept"),
+        nullable=False,
+        comment="Статус отклика",
+        default="review",
     )
 
     def __repr__(self):
