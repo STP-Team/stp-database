@@ -72,11 +72,14 @@ class CandidateRepo(BaseRepo):
 
         return candidate
 
-    async def get_candidate(self, user_id: int, topic_id: int) -> Optional[Candidate]:
+    async def get_candidate(
+        self, user_id: int = None, topic_id: int = None
+    ) -> Optional[Candidate]:
         """Получение информации о кандидате по его user_id.
 
         Args:
             user_id: Идентификатор Telegram кандидата
+            topic_id: Идентификатор топика, которому принадлежит кандидат
 
         Returns:
             Объект Candidate
