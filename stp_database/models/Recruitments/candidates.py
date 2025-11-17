@@ -40,6 +40,11 @@ class Candidate(Base):
         comment="Статус отклика",
         default="interview",
     )
+    topic_id: Mapped[int] = mapped_column(
+        BIGINT,
+        nullable=True,
+        comment="Идентификатор Telegram топика, которому принадлежит кандидат",
+    )
 
     def __repr__(self):
         """Возвращает строковое представление объекта Candidate."""

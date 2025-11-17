@@ -71,3 +71,23 @@ class CandidateRepo(BaseRepo):
             await self.session.commit()
 
         return candidate
+
+    async def get_candidate(self, user_id: int, topic_id: int) -> Optional[Candidate]:
+        """Получение информации о кандидате по его user_id.
+
+        Args:
+            user_id: Идентификатор Telegram кандидата
+
+        Returns:
+            Объект Candidate
+        """
+        if user_id:
+            select_stmt = select(Candidate).where(Candidate.user_id == user_id)
+        elif topic_id:
+            select_stmt = select(Candidate).where(Candidate.topic_id == topic_id)
+        else:
+            return None
+
+        result = await self.session.execute(select_stmt)
+
+        return result.scalar_one()
