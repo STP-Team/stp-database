@@ -1,6 +1,6 @@
 """Управление БД СТП."""
 
-__version__ = "1.8"
+__version__ = "2.0"
 
 # Конфигурация и настройка
 from stp_database.config import DbConfig
@@ -35,6 +35,7 @@ from stp_database.models import (
 
 # Базовые классы
 from stp_database.models.base import Base, TableNameMixin, TimestampMixin, int_pk
+from stp_database.models.Recruitments.candidates import Candidate
 from stp_database.repo.base import BaseRepo
 
 # Репозитории KPI
@@ -45,6 +46,7 @@ from stp_database.repo.KPI.requests import KPIRequestsRepo
 from stp_database.repo.KPI.spec_kpi import SpecKPIRepo
 from stp_database.repo.KPI.spec_premium import SpecPremiumRepo
 from stp_database.repo.Questions.requests import QuestionsRequestsRepo
+from stp_database.repo.Recruitments.candidate import CandidateRepo
 
 # Репозитории STP
 from stp_database.repo.STP.achievement import AchievementsRepo
@@ -92,6 +94,8 @@ __all__ = [
     "Event",
     "User",
     "UserEvent",
+    # Модели Recruitments
+    "Candidate",
     # Модели Questioner
     "Question",
     "MessagesPair",
@@ -100,6 +104,7 @@ __all__ = [
     "KPIRequestsRepo",
     "MainRequestsRepo",
     "QuestionsRequestsRepo",
+    "CandidateRepo",
     # Репозитории STP
     "AchievementsRepo",
     "BroadcastRepo",
