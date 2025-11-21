@@ -1,9 +1,10 @@
 """Модели, связанные с сущностями кандидатов."""
 
-from sqlalchemy import BIGINT, Enum, Integer
-from sqlalchemy.dialects.mysql import VARCHAR, LONGTEXT
-from sqlalchemy.orm import Mapped, mapped_column
 from typing import Optional
+
+from sqlalchemy import BIGINT, Enum, Integer
+from sqlalchemy.dialects.mysql import LONGTEXT, VARCHAR
+from sqlalchemy.orm import Mapped, mapped_column
 
 from stp_database.models.base import Base
 
@@ -45,7 +46,9 @@ class Candidate(Base):
         VARCHAR(255), nullable=True, comment="ФИО кандидата"
     )
     position: Mapped[str] = mapped_column(
-        VARCHAR(255), nullable=False, comment="Название позиции, на которую подается кандидат"
+        VARCHAR(255),
+        nullable=False,
+        comment="Название позиции, на которую подается кандидат",
     )
     age: Mapped[Optional[int]] = mapped_column(
         Integer, nullable=True, comment="Возраст кандидата"
@@ -56,20 +59,14 @@ class Candidate(Base):
         comment="Идентификатор Telegram топика, которому принадлежит кандидат",
     )
     status: Mapped[str] = mapped_column(
-        Enum("interview", "review", "decline", "accept"),
+        Enum("interview", "waiting", "review", "decline", "accept"),
         nullable=False,
         comment="Статус кандидата",
         default="interview",
     )
-    city: Mapped[Optional[str]] = mapped_column(
-        VARCHAR(255), nullable=True
-    )
-    username: Mapped[Optional[str]] = mapped_column(
-        VARCHAR(255), nullable=True
-    )
-    phone_number: Mapped[Optional[str]] = mapped_column(
-        VARCHAR(255), nullable=True
-    )
+    city: Mapped[Optional[str]] = mapped_column(VARCHAR(255), nullable=True)
+    username: Mapped[Optional[str]] = mapped_column(VARCHAR(255), nullable=True)
+    phone_number: Mapped[Optional[str]] = mapped_column(VARCHAR(255), nullable=True)
     shift_type: Mapped[Optional[str]] = mapped_column(
         Enum("full", "part"), nullable=True
     )
@@ -85,7 +82,7 @@ class Candidate(Base):
     internet_speed: Mapped[Optional[str]] = mapped_column(
         Enum("<20", "50<>20", "100<>50", ">100"),
         nullable=True,
-        comment="Скорость интернета кандидата"
+        comment="Скорость интернета кандидата",
     )
     typing_speed: Mapped[Optional[str]] = mapped_column(
         VARCHAR(255), nullable=True, comment="Скорость печати кандидата"
