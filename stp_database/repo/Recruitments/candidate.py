@@ -1,7 +1,7 @@
 """Репозиторий функций для работы с кандидатами."""
 
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -94,3 +94,16 @@ class CandidateRepo(BaseRepo):
         result = await self.session.execute(select_stmt)
 
         return result.scalar_one_or_none()
+
+    async def get_candidates_by_status(self, status: str) -> Sequence[Candidate]:
+        """Получение всех кандидатов с определенным статусом.
+
+        Args:
+            status: Статус кандидатов для поиска
+
+        Returns:
+            Список объектов Candidate с указанным статусом
+        """
+        select_stmt = select(Candidate).where(Candidate.status == status)
+        result = await self.session.execute(select_stmt)
+        return result.scalars().all()
