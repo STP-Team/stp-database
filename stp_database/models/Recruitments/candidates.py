@@ -13,7 +13,7 @@ class Candidate(Base):
     """Класс, представляющий сущность кандидата в БД.
 
     Args:
-        user_id: Уникальный идентификатор Telegram кандидата
+        user_id: Идентификатор Telegram кандидата
         fullname: ФИО кандидата
         position: Название позиции, на которую подается кандидат
         age: Возраст кандидата
@@ -64,17 +64,25 @@ class Candidate(Base):
         comment="Статус кандидата",
         default="interview",
     )
-    city: Mapped[Optional[str]] = mapped_column(VARCHAR(255), nullable=True)
-    username: Mapped[Optional[str]] = mapped_column(VARCHAR(255), nullable=True)
-    phone_number: Mapped[Optional[str]] = mapped_column(VARCHAR(255), nullable=True)
+    city: Mapped[Optional[str]] = mapped_column(
+        VARCHAR(255), nullable=True, comment="Город кандидата"
+    )
+    username: Mapped[Optional[str]] = mapped_column(
+        VARCHAR(255), nullable=True, comment="Имя пользователя Telegram кандидата"
+    )
+    phone_number: Mapped[Optional[str]] = mapped_column(
+        VARCHAR(255), nullable=True, comment="Номер телефона кандидата"
+    )
     shift_type: Mapped[Optional[str]] = mapped_column(
-        Enum("full", "part"), nullable=True
+        Enum("full", "part"), nullable=True, comment="Тип смены (полная/частичная)"
     )
     shift_time: Mapped[Optional[str]] = mapped_column(
-        Enum("day", "night", "any"), nullable=True
+        Enum("day", "night", "any"),
+        nullable=True,
+        comment="Время смены (день/ночь/любое)",
     )
     experience: Mapped[Optional[str]] = mapped_column(
-        Enum("chats", "calls", "in-person", "no"), nullable=True
+        Enum("chats", "calls", "in-person", "no"), nullable=True, comment="Опыт работы"
     )
     workplace: Mapped[Optional[str]] = mapped_column(
         LONGTEXT, nullable=True, comment="Рабочее место кандидата"
