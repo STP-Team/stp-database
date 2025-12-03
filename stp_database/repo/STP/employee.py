@@ -6,7 +6,7 @@ from typing import Any, Sequence
 from sqlalchemy import and_, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 
-from stp_database.models import Employee
+from stp_database.models.STP import Employee
 from stp_database.repo.base import BaseRepo
 
 logger = logging.getLogger(__name__)

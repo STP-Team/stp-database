@@ -4,7 +4,7 @@ from typing import List
 
 from sqlalchemy import and_, select
 
-from stp_database.models import Product
+from stp_database.models.STP import Product
 from stp_database.repo.base import BaseRepo
 
 

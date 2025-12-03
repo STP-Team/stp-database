@@ -8,7 +8,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 
-from stp_database.models import Employee, Product
+from stp_database.models.STP import Employee, Product
 from stp_database.models.STP.purchase import Purchase
 from stp_database.repo.base import BaseRepo
 
@@ -90,8 +90,6 @@ class PurchaseRepo(BaseRepo):
         Returns:
             Список покупок с информацией о предметах
         """
-        from stp_database.models import Product
-
         select_stmt = (
             select(Purchase, Product)
             .join(Product, Purchase.product_id == Product.id)
@@ -169,8 +167,6 @@ class PurchaseRepo(BaseRepo):
         Returns:
             Список покупок с детальной информацией
         """
-        from stp_database.models import Employee, Product
-
         select_stmt = (
             select(Purchase, Product, Employee)
             .join(Product, Purchase.product_id == Product.id)
@@ -389,11 +385,6 @@ class PurchaseRepo(BaseRepo):
         Returns:
             Словарь со статистикой покупок группы
         """
-        from sqlalchemy import func
-
-        from stp_database.models import Product
-        from stp_database.models.STP.purchase import Purchase
-
         try:
             # Получаем все покупки сотрудников группы
             query = (
