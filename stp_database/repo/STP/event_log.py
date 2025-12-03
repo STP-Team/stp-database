@@ -1,7 +1,6 @@
 """Репозиторий для работы с логами ивентов."""
 
 import logging
-from typing import Optional
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -19,11 +18,11 @@ class EventLogRepo(BaseRepo):
         user_id: int,
         event_type: str,
         event_category: str,
-        session_id: Optional[str] = None,
-        dialog_state: Optional[str] = None,
-        window_name: Optional[str] = None,
-        action: Optional[str] = None,
-        metadata: Optional[dict] = None,
+        session_id: str | None = None,
+        dialog_state: str | None = None,
+        window_name: str | None = None,
+        action: str | None = None,
+        metadata: dict | None = None,
     ) -> EventLog | None:
         """Создание записи события в базе данных.
 

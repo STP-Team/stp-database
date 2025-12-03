@@ -1,6 +1,6 @@
 """Модели, связанные с сущностями рассылок."""
 
-from typing import List, Optional
+from typing import List
 
 from sqlalchemy import BIGINT, JSON, TIMESTAMP, Enum, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
@@ -46,7 +46,7 @@ class Broadcast(Base):
         comment="Конкретная цель рассылки: подразделение (НЦК, НТП1, НТП2) или выбранная группа",
     )
     text: Mapped[str] = mapped_column(Text, nullable=False, comment="Текст рассылки")
-    recipients: Mapped[Optional[List[int]]] = mapped_column(
+    recipients: Mapped[List[int] | None] = mapped_column(
         JSON, nullable=True, comment="Список user_id для рассылки"
     )
     created_at: Mapped[TIMESTAMP] = mapped_column(

@@ -1,7 +1,5 @@
 """Модели, связанные с сущностями кандидатов."""
 
-from typing import Optional
-
 from sqlalchemy import BIGINT, Enum, Integer
 from sqlalchemy.dialects.mysql import LONGTEXT, VARCHAR
 from sqlalchemy.orm import Mapped, mapped_column
@@ -42,7 +40,7 @@ class Candidate(Base):
         nullable=False,
         comment="Идентификатор Telegram кандидата",
     )
-    fullname: Mapped[Optional[str]] = mapped_column(
+    fullname: Mapped[str | None] = mapped_column(
         VARCHAR(255), nullable=True, comment="ФИО кандидата"
     )
     position: Mapped[str] = mapped_column(
@@ -50,10 +48,10 @@ class Candidate(Base):
         nullable=False,
         comment="Название позиции, на которую подается кандидат",
     )
-    age: Mapped[Optional[int]] = mapped_column(
+    age: Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="Возраст кандидата"
     )
-    topic_id: Mapped[Optional[int]] = mapped_column(
+    topic_id: Mapped[int | None] = mapped_column(
         BIGINT,
         nullable=True,
         comment="Идентификатор Telegram топика, которому принадлежит кандидат",
@@ -64,41 +62,41 @@ class Candidate(Base):
         comment="Статус кандидата",
         default="interview",
     )
-    city: Mapped[Optional[str]] = mapped_column(
+    city: Mapped[str | None] = mapped_column(
         VARCHAR(255), nullable=True, comment="Город кандидата"
     )
-    username: Mapped[Optional[str]] = mapped_column(
+    username: Mapped[str | None] = mapped_column(
         VARCHAR(255), nullable=True, comment="Имя пользователя Telegram кандидата"
     )
-    phone_number: Mapped[Optional[str]] = mapped_column(
+    phone_number: Mapped[str | None] = mapped_column(
         VARCHAR(255), nullable=True, comment="Номер телефона кандидата"
     )
-    shift_type: Mapped[Optional[str]] = mapped_column(
+    shift_type: Mapped[str | None] = mapped_column(
         Enum("full", "part"), nullable=True, comment="Тип смены (полная/частичная)"
     )
-    shift_time: Mapped[Optional[str]] = mapped_column(
+    shift_time: Mapped[str | None] = mapped_column(
         Enum("day", "night", "any"),
         nullable=True,
         comment="Время смены (день/ночь/любое)",
     )
-    experience: Mapped[Optional[str]] = mapped_column(
+    experience: Mapped[str | None] = mapped_column(
         Enum("chats", "calls", "in-person", "no"), nullable=True, comment="Опыт работы"
     )
-    workplace: Mapped[Optional[str]] = mapped_column(
+    workplace: Mapped[str | None] = mapped_column(
         LONGTEXT, nullable=True, comment="Рабочее место кандидата"
     )
-    internet_speed: Mapped[Optional[str]] = mapped_column(
+    internet_speed: Mapped[str | None] = mapped_column(
         Enum("<20", "50<>20", "100<>50", ">100"),
         nullable=True,
         comment="Скорость интернета кандидата",
     )
-    typing_speed: Mapped[Optional[str]] = mapped_column(
+    typing_speed: Mapped[str | None] = mapped_column(
         VARCHAR(255), nullable=True, comment="Скорость печати кандидата"
     )
-    resume_link: Mapped[Optional[str]] = mapped_column(
+    resume_link: Mapped[str | None] = mapped_column(
         VARCHAR(255), nullable=True, comment="Ссылка на резюме кандидата"
     )
-    manager_user_id: Mapped[Optional[int]] = mapped_column(
+    manager_user_id: Mapped[int | None] = mapped_column(
         BIGINT, nullable=True, comment="Менеджер, принявший решение по кандидату"
     )
 

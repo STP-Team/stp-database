@@ -3,7 +3,7 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -201,7 +201,7 @@ class PurchaseRepo(BaseRepo):
         self,
         purchase_id: int = None,
         **kwargs: Any,
-    ) -> Optional[Product]:
+    ) -> Product | None:
         """Обновление информации о покупке.
 
         Args:

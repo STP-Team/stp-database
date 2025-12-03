@@ -2,7 +2,7 @@
 
 import json
 from datetime import date, datetime, time
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
     BIGINT,
@@ -36,7 +36,7 @@ class UnicodeJSON(TypeDecorator):
     impl = JSON
     cache_ok = True
 
-    def process_bind_param(self, value: Optional[Any], dialect) -> Optional[str]:
+    def process_bind_param(self, value: Any | None, dialect) -> str | None:
         """Process value before saving to database."""
         if value is None:
             return None
@@ -54,7 +54,7 @@ class UnicodeJSON(TypeDecorator):
         # Normal case: serialize Python object
         return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
 
-    def process_result_value(self, value: Optional[str], dialect) -> Optional[Any]:
+    def process_result_value(self, value: str | None, dialect) -> Any | None:
         """Process value when loading from database."""
         if value is None:
             return None

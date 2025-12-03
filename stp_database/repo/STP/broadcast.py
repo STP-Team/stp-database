@@ -1,7 +1,7 @@
 """Репозиторий функций для взаимодействия с таблицей рассылок."""
 
 import logging
-from typing import Any, List, Optional, Sequence
+from typing import Any, List, Sequence
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -17,11 +17,11 @@ class BroadcastRepo(BaseRepo):
 
     async def get_broadcasts(
         self,
-        broadcast_id: Optional[int] = None,
-        user_id: Optional[int] = None,
-        broadcast_type: Optional[str] = None,
-        target: Optional[str] = None,
-    ) -> Optional[Broadcast] | Sequence[Broadcast]:
+        broadcast_id: int | None = None,
+        user_id: int | None = None,
+        broadcast_type: str | None = None,
+        target: str | None = None,
+    ) -> Broadcast | None | Sequence[Broadcast]:
         """Поиск рассылки или списка рассылок.
 
         Args:
@@ -71,7 +71,7 @@ class BroadcastRepo(BaseRepo):
         self,
         broadcast_id: int,
         **kwargs: Any,
-    ) -> Optional[Broadcast]:
+    ) -> Broadcast | None:
         """Обновление рассылки.
 
         Args:
@@ -135,8 +135,8 @@ class BroadcastRepo(BaseRepo):
         broadcast_type: str,
         target: str,
         text: str,
-        recipients: Optional[List[int]] = None,
-    ) -> Optional[Broadcast]:
+        recipients: List[int] | None = None,
+    ) -> Broadcast | None:
         """Создание рассылки.
 
         Args:

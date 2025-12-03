@@ -1,7 +1,7 @@
 """Репозиторий для работы с KPI специалистов."""
 
 import logging
-from typing import Generic, Optional, Sequence, Type, TypeVar
+from typing import Generic, Sequence, Type, TypeVar
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -33,7 +33,7 @@ class SpecKPIRepo(BaseRepo, Generic[T]):
         super().__init__(session)
         self.model = model
 
-    async def get_kpi(self, fullnames: str | list[str]) -> Optional[T] | Sequence[T]:
+    async def get_kpi(self, fullnames: str | list[str]) -> T | None | Sequence[T]:
         """Поиск показателей специалистов в БД по ФИО.
 
         Args:

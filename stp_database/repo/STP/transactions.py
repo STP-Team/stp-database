@@ -2,7 +2,7 @@
 
 import datetime
 import logging
-from typing import Optional, Sequence, TypedDict, Unpack
+from typing import Sequence, TypedDict, Unpack
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -18,12 +18,12 @@ class TransactionParams(TypedDict, total=False):
 
     user_id: int
     type: str
-    source_id: Optional[int]
+    source_id: int | None
     source_type: str
     amount: int
-    comment: Optional[str]
-    created_by: Optional[int]
-    kpi_extracted_at: Optional[datetime]
+    comment: str | None
+    created_by: int | None
+    kpi_extracted_at: datetime.datetime | None
 
 
 class TransactionRepo(BaseRepo):
@@ -35,10 +35,10 @@ class TransactionRepo(BaseRepo):
         transaction_type: str,
         source_type: str,
         amount: int,
-        source_id: Optional[int] = None,
-        comment: Optional[str] = None,
-        created_by: Optional[int] = None,
-        kpi_extracted_at: Optional[datetime] = None,
+        source_id: int | None = None,
+        comment: str | None = None,
+        created_by: int | None = None,
+        kpi_extracted_at: datetime.datetime | None = None,
     ) -> tuple[Transaction, int] | None:
         """Добавление новой транзакции в БД.
 
@@ -83,7 +83,7 @@ class TransactionRepo(BaseRepo):
             await self.session.rollback()
             return None
 
-    async def get_transaction(self, transaction_id: int) -> Optional[Transaction]:
+    async def get_transaction(self, transaction_id: int) -> Transaction | None:
         """Получение транзакции по ID.
 
         Args:
@@ -147,7 +147,7 @@ class TransactionRepo(BaseRepo):
         self,
         transaction_id: int,
         **kwargs: Unpack[TransactionParams],
-    ) -> Optional[Transaction]:
+    ) -> Transaction | None:
         """Обновление транзакции.
 
         Args:

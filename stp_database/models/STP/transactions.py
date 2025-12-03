@@ -1,7 +1,6 @@
 """Модели, связанные с сущностями транзакций."""
 
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import TIMESTAMP, Enum, Integer, String
 from sqlalchemy.dialects.mysql import BIGINT
@@ -46,7 +45,7 @@ class Transaction(Base):
         nullable=False,
         comment="Тип операции: начисление или списание",
     )
-    source_id: Mapped[Optional[int]] = mapped_column(
+    source_id: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Идентификатор достижения или предмета. Для manual или casino — None",
@@ -59,20 +58,20 @@ class Transaction(Base):
     amount: Mapped[int] = mapped_column(
         Integer, nullable=False, comment="Количество баллов"
     )
-    comment: Mapped[Optional[str]] = mapped_column(
+    comment: Mapped[str | None] = mapped_column(
         String(255), nullable=True, comment="Комментарий к транзакции"
     )
-    kpi_extracted_at: Mapped[Optional[datetime]] = mapped_column(
+    kpi_extracted_at: Mapped[datetime | None] = mapped_column(
         TIMESTAMP,
         nullable=True,
         comment="Дата выгрузки показателей. Указывается в случае награды за достижения",
     )
-    created_by: Mapped[Optional[int]] = mapped_column(
+    created_by: Mapped[int | None] = mapped_column(
         BIGINT,
         nullable=True,
         comment="ID администратора, создавшего транзакцию. None если создана автоматически",
     )
-    created_at: Mapped[Optional[datetime]] = mapped_column(
+    created_at: Mapped[datetime | None] = mapped_column(
         TIMESTAMP,
         nullable=True,
         default=func.current_timestamp(),

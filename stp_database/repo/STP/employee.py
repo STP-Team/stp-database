@@ -1,7 +1,7 @@
 """Репозиторий функций для взаимодействия с сотрудниками."""
 
 import logging
-from typing import Any, Optional, Sequence
+from typing import Any, Sequence
 
 from sqlalchemy import and_, or_, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -60,14 +60,14 @@ class EmployeeRepo(BaseRepo):
 
     async def get_users(
         self,
-        main_id: Optional[int | list[int]] = None,
-        user_id: Optional[int | list[int]] = None,
-        username: Optional[str] = None,
-        fullname: Optional[str] = None,
-        email: Optional[str] = None,
-        head: Optional[str] = None,
-        roles: Optional[int | list[int]] = None,
-    ) -> Optional[Employee] | Sequence[Employee]:
+        main_id: int | list[int] | None = None,
+        user_id: int | list[int] | None = None,
+        username: str | None = None,
+        fullname: str | None = None,
+        email: str | None = None,
+        head: str | None = None,
+        roles: int | list[int] | None = None,
+    ) -> Employee | None | Sequence[Employee]:
         """Поиск пользователя или списка пользователей.
 
         Args:
@@ -189,7 +189,7 @@ class EmployeeRepo(BaseRepo):
         self,
         user_id: int = None,
         **kwargs: Any,
-    ) -> Optional[Employee]:
+    ) -> Employee | None:
         """Обновление сотрудника.
 
         Args:

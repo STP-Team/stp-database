@@ -1,7 +1,6 @@
 """Модели, связанные с сущностями файлов."""
 
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import BIGINT, TIMESTAMP, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
@@ -35,10 +34,10 @@ class File(Base):
     file_id: Mapped[str] = mapped_column(
         Text, nullable=False, comment="Идентификатор Telegram загруженного файла"
     )
-    file_name: Mapped[Optional[str]] = mapped_column(
+    file_name: Mapped[str | None] = mapped_column(
         String(255), nullable=True, comment="Название загруженного файла"
     )
-    file_size: Mapped[Optional[int]] = mapped_column(
+    file_size: Mapped[int | None] = mapped_column(
         BIGINT, nullable=True, comment="Размер файла в байтах"
     )
     uploaded_by_user_id: Mapped[int] = mapped_column(

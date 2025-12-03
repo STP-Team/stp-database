@@ -1,6 +1,6 @@
 """Репозиторий функций для взаимодействия с таблицей достижений."""
 
-from typing import Optional, Sequence
+from typing import Sequence
 
 from sqlalchemy import select
 
@@ -15,7 +15,7 @@ class AchievementsRepo(BaseRepo):
         self,
         achievement_id: int | None = None,
         division: str | None = None,
-    ) -> Optional[Achievement] | Sequence[Achievement]:
+    ) -> Achievement | None | Sequence[Achievement]:
         """Получает достижение(я) по идентификатору или список достижений.
 
         Args:

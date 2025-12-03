@@ -2,7 +2,7 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Optional, Sequence
+from typing import Any, Sequence
 
 from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -18,12 +18,12 @@ class FilesRepo(BaseRepo):
 
     async def get_files(
         self,
-        file_id: Optional[str] = None,
-        file_name: Optional[str] = None,
-        file_size: Optional[int] = None,
-        uploaded_by_user_id: Optional[int] = None,
-        uploaded_from: Optional[datetime] = None,
-        uploaded_to: Optional[datetime] = None,
+        file_id: str | None = None,
+        file_name: str | None = None,
+        file_size: int | None = None,
+        uploaded_by_user_id: int | None = None,
+        uploaded_from: datetime | None = None,
+        uploaded_to: datetime | None = None,
     ) -> Sequence[File]:
         """Получение записей файлов по фильтрам.
 
@@ -66,7 +66,7 @@ class FilesRepo(BaseRepo):
 
     async def get_file_by_id(
         self, main_id: int = None, file_id: str = None
-    ) -> Optional[File]:
+    ) -> File | None:
         """Получение файла по его Telegram file_id.
 
         Args:
@@ -88,7 +88,7 @@ class FilesRepo(BaseRepo):
             logger.error(f"[БД] Ошибка получения файла по ID: {e}")
             return None
 
-    async def add_file(self, **kwargs: Any) -> Optional[File]:
+    async def add_file(self, **kwargs: Any) -> File | None:
         """Добавление нового файла.
 
         Args:

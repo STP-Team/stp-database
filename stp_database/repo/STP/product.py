@@ -1,6 +1,6 @@
 """Репозиторий функций для взаимодействия с предметами."""
 
-from typing import List, Optional
+from typing import List
 
 from sqlalchemy import and_, select
 
@@ -30,7 +30,7 @@ class ProductsRepo(BaseRepo):
 
         return list(products)
 
-    async def get_product(self, product_id: int) -> Optional[Product]:
+    async def get_product(self, product_id: int) -> Product | None:
         """Получение информации о предмете по его идентификатору.
 
         Args:

@@ -1,10 +1,12 @@
 """Репозиторий функций для работы с парами сообщений."""
 
-from typing import Optional, Sequence
+from typing import Sequence
 
 from sqlalchemy import and_, select
 
-from stp_database import BaseRepo, DbConfig, MessagesPair
+from stp_database import DbConfig
+from stp_database.models.Questions.messages_pair import MessagesPair
+from stp_database.repo.base import BaseRepo
 
 
 class MessagesPairsRepo(BaseRepo):
@@ -16,7 +18,7 @@ class MessagesPairsRepo(BaseRepo):
         user_message_id: int,
         topic_chat_id: int,
         topic_message_id: int,
-        topic_thread_id: Optional[int],
+        topic_thread_id: int | None,
         question_token: str,
         direction: str,
     ) -> MessagesPair:
@@ -52,7 +54,7 @@ class MessagesPairsRepo(BaseRepo):
 
     async def find_by_user_message(
         self, user_chat_id: int, user_message_id: int
-    ) -> Optional[MessagesPair]:
+    ) -> MessagesPair | None:
         """Находит пару по сообщению специалиста.
 
         Args:
@@ -73,7 +75,7 @@ class MessagesPairsRepo(BaseRepo):
 
     async def find_by_topic_message(
         self, topic_chat_id: int, topic_message_id: int
-    ) -> Optional[MessagesPair]:
+    ) -> MessagesPair | None:
         """Находит пару по сообщению в топике группы.
 
         Args:
@@ -94,7 +96,7 @@ class MessagesPairsRepo(BaseRepo):
 
     async def find_pair_for_edit(
         self, chat_id: int, message_id: int
-    ) -> Optional[MessagesPair]:
+    ) -> MessagesPair | None:
         """Находит пару сообщения для редактирования.
 
         Args:

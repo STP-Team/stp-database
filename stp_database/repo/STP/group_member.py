@@ -1,7 +1,7 @@
 """Репозиторий функций для взаимодействия с участниками групп."""
 
 import logging
-from typing import Optional, Sequence
+from typing import Sequence
 
 from sqlalchemy import delete, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class GroupMemberRepo(BaseRepo):
     """Репозиторий для работы с участниками групп."""
 
-    async def add_member(self, group_id: int, member_id: int) -> Optional[GroupMember]:
+    async def add_member(self, group_id: int, member_id: int) -> GroupMember | None:
         """Добавление участника в группу.
 
         Args:

@@ -1,7 +1,7 @@
 """Репозиторий функций для работы с премией специалистов."""
 
 import logging
-from typing import Optional, Sequence
+from typing import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -18,7 +18,7 @@ class SpecPremiumRepo(BaseRepo):
     async def get_premium(
         self,
         fullnames: str | list[str],
-    ) -> Optional[SpecPremium] | Sequence[SpecPremium]:
+    ) -> SpecPremium | None | Sequence[SpecPremium]:
         """Поиск показателей премии специалистов в БД по ФИО.
 
         Args:

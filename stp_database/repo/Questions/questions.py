@@ -2,11 +2,14 @@
 
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Optional, Sequence
+from typing import Any, Sequence
 
 from sqlalchemy import and_, extract, func, or_, select
 
-from stp_database import BaseRepo, DbConfig, Employee, Question
+from stp_database import DbConfig
+from stp_database.models.Questions.question import Question
+from stp_database.models.STP.employee import Employee
+from stp_database.repo.base import BaseRepo
 
 
 class QuestionsRepo(BaseRepo):
@@ -20,7 +23,7 @@ class QuestionsRepo(BaseRepo):
         question_text: str,
         start_time: datetime,
         clever_link: str,
-        activity_status_enabled: Optional[bool] = None,
+        activity_status_enabled: bool | None = None,
     ) -> Question:
         """Добавление нового вопроса.
 
@@ -62,7 +65,7 @@ class QuestionsRepo(BaseRepo):
         group_id: int = None,
         topic_id: int = None,
         **kwargs: Any,
-    ) -> Optional[Question]:
+    ) -> Question | None:
         """Обновление вопроса.
 
         Args:
@@ -98,7 +101,7 @@ class QuestionsRepo(BaseRepo):
 
     async def get_question(
         self, token: str = None, group_id: str | int = None, topic_id: int = None
-    ) -> Optional[Question]:
+    ) -> Question | None:
         """Получение вопроса по токену или идентификатору топика.
 
         Args:

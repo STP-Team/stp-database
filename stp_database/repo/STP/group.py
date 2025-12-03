@@ -1,7 +1,7 @@
 """Репозиторий функций для взаимодействия с группами."""
 
 import logging
-from typing import Any, Optional, Sequence
+from typing import Any, Sequence
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -17,9 +17,9 @@ class GroupRepo(BaseRepo):
 
     async def get_groups(
         self,
-        group_id: Optional[int] = None,
-        invited_by: Optional[int] = None,
-    ) -> Optional[Group] | Sequence[Group]:
+        group_id: int | None = None,
+        invited_by: int | None = None,
+    ) -> Group | None | Sequence[Group | None]:
         """Получить группу или список групп.
 
         Args:
@@ -61,7 +61,7 @@ class GroupRepo(BaseRepo):
 
     async def add_group(
         self, group_id: int, group_type: str, invited_by: int
-    ) -> Optional[Group]:
+    ) -> Group | None:
         """Добавить группу.
 
         Args:
@@ -88,7 +88,7 @@ class GroupRepo(BaseRepo):
         self,
         group_id: int = None,
         **kwargs: Any,
-    ) -> Optional[Group]:
+    ) -> Group | None:
         """Обновление группы.
 
         Args:

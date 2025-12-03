@@ -1,11 +1,12 @@
 """Репозиторий функций для работы с настройками групп Вопросника."""
 
 import json
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, Sequence
 
 from sqlalchemy import func, select
 
-from stp_database import BaseRepo, Settings
+from stp_database.models.Questions.settings import Settings
+from stp_database.repo.base import BaseRepo
 
 
 class SettingsRepo(BaseRepo):
@@ -14,7 +15,7 @@ class SettingsRepo(BaseRepo):
     async def add_settings(
         self,
         group_id: int,
-        values: Optional[Dict[str, Any]] = None,
+        values: Dict[str, Any] | None = None,
     ) -> Settings:
         """Добавление группы в настройки.
 
@@ -39,7 +40,7 @@ class SettingsRepo(BaseRepo):
 
         return settings
 
-    async def get_settings_by_group_id(self, group_id: int) -> Optional[Settings]:
+    async def get_settings_by_group_id(self, group_id: int) -> Settings | None:
         """Получение настроек группы по идентификатору группы.
 
         Args:
@@ -52,7 +53,7 @@ class SettingsRepo(BaseRepo):
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def get_settings_by_id(self, settings_id: int) -> Optional[Settings]:
+    async def get_settings_by_id(self, settings_id: int) -> Settings | None:
         """Получение настроек группы по идентификатору записи.
 
         Args:
@@ -75,7 +76,7 @@ class SettingsRepo(BaseRepo):
 
     async def update_settings(
         self, group_id: int, values: Dict[str, Any]
-    ) -> Optional[Settings]:
+    ) -> Settings | None:
         """Обновление настроек группы.
 
         Args:
@@ -99,7 +100,7 @@ class SettingsRepo(BaseRepo):
 
     async def update_setting(
         self, group_id: int, key: str, value: Any
-    ) -> Optional[Settings]:
+    ) -> Settings | None:
         """Обновление настройки.
 
         Args:
@@ -123,7 +124,7 @@ class SettingsRepo(BaseRepo):
         return settings
 
     async def get_or_create_settings(
-        self, group_id: int, default_values: Optional[Dict[str, Any]] = None
+        self, group_id: int, default_values: Dict[str, Any] | None = None
     ) -> Settings:
         """Получение настроек или создание новых, если не существуют.
 

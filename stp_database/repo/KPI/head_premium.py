@@ -1,7 +1,7 @@
 """Репозиторий функций для работы с премией руководителей."""
 
 import logging
-from typing import Optional, Sequence
+from typing import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -18,7 +18,7 @@ class HeadPremiumRepo(BaseRepo):
     async def get_premium(
         self,
         fullnames: str | list[str],
-    ) -> Optional[HeadPremium] | Sequence[HeadPremium]:
+    ) -> HeadPremium | None | Sequence[HeadPremium]:
         """Поиск показателей премии руководителей в БД по ФИО.
 
         Args:

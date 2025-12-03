@@ -1,7 +1,6 @@
 """Конфигурация для подключения к БД."""
 
 from dataclasses import dataclass
-from typing import Optional
 
 import pytz
 from pytz.tzinfo import DstTzInfo
@@ -27,7 +26,7 @@ class DbConfig:
 
     def construct_sqlalchemy_url(
         self,
-        db_name: Optional[str] = None,
+        db_name: str | None = None,
         driver: str = "aiomysql",
     ) -> URL:
         """Создание SQLAlchemy URL для подключения к базе данных MariaDB.

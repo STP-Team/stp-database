@@ -2,7 +2,7 @@
 
 import logging
 from datetime import date, datetime, time
-from typing import Any, List, Optional, Sequence
+from typing import Any, List, Sequence
 
 from sqlalchemy import and_, asc, desc, func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -23,16 +23,16 @@ class ExchangeRepo(BaseRepo):
     async def create_exchange(
         self,
         owner_id: int,
-        start_time: Optional[datetime],
+        start_time: datetime | None,
         price: int,
         owner_intent: str = "sell",
-        end_time: Optional[datetime] = None,
-        comment: Optional[str] = None,
+        end_time: datetime | None = None,
+        comment: str | None = None,
         is_private: bool = False,
         payment_type: str = "immediate",
-        payment_date: Optional[datetime] = None,
+        payment_date: datetime | None = None,
     ) -> Exchange | None:
-        """Создание нового сделки смены.
+        """Создание сделки.
 
         Args:
             owner_id: Идентификатор владельца объявления (кто создает сделку)
@@ -306,8 +306,8 @@ class ExchangeRepo(BaseRepo):
     async def update_exchange_date(
         self,
         exchange_id: int,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
     ) -> bool:
         """Обновление даты и времени сделки.
 
@@ -370,8 +370,8 @@ class ExchangeRepo(BaseRepo):
     async def update_payment_timing(
         self,
         exchange_id: int,
-        payment_type: Optional[str] = None,
-        payment_date: Optional[datetime] = None,
+        payment_type: str | None = None,
+        payment_date: datetime | None = None,
     ) -> bool:
         """Обновление условий оплаты сделки.
 
@@ -409,7 +409,7 @@ class ExchangeRepo(BaseRepo):
             return False
 
     async def update_exchange_comment(
-        self, exchange_id: int, comment: Optional[str]
+        self, exchange_id: int, comment: str | None
     ) -> bool:
         """Обновление комментария к сделке.
 
@@ -522,11 +522,11 @@ class ExchangeRepo(BaseRepo):
     async def get_active_exchanges(
         self,
         include_private: bool = False,
-        exclude_user_id: Optional[int] = None,
+        exclude_user_id: int | None = None,
         limit: int = 50,
         offset: int = 0,
         division: str | list[str] = None,
-        owner_intent: Optional[str] = None,
+        owner_intent: str | None = None,
     ) -> Sequence[Exchange]:
         """Получение активных обменов.
 
@@ -581,7 +581,7 @@ class ExchangeRepo(BaseRepo):
     async def get_upcoming_sold_exchanges(
         self,
         start_after: datetime,
-        start_before: Optional[datetime] = None,
+        start_before: datetime | None = None,
         limit: int = 500,
         offset: int = 0,
     ) -> Sequence[Exchange]:
@@ -772,7 +772,7 @@ class ExchangeRepo(BaseRepo):
         user_id: int,
         exchange_type: str = "all",
         intent: str = None,
-        status: Optional[str] = None,
+        status: str | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> Sequence[Exchange]:
@@ -829,7 +829,7 @@ class ExchangeRepo(BaseRepo):
         self,
         start_date: datetime,
         end_date: datetime,
-        status: Optional[str] = None,
+        status: str | None = None,
         limit: int = 100,
     ) -> Sequence[Exchange]:
         """Получение обменов за период.
@@ -969,8 +969,8 @@ class ExchangeRepo(BaseRepo):
         self,
         user_id: int,
         status: str = "sold",
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> float:
         """Подсчет общей прибыли пользователя от обменов.
 
@@ -1036,8 +1036,8 @@ class ExchangeRepo(BaseRepo):
         self,
         user_id: int,
         status: str = "sold",
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> float:
         """Подсчет общих затрат пользователя на обмены.
 
@@ -1104,8 +1104,8 @@ class ExchangeRepo(BaseRepo):
         self,
         user_id: int,
         status: str = "sold",
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> float:
         """Подсчет общего количества часов, проданных пользователем.
 
@@ -1169,8 +1169,8 @@ class ExchangeRepo(BaseRepo):
         self,
         user_id: int,
         status: str = "sold",
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> float:
         """Подсчет общего количества часов, купленных пользователем.
 
@@ -1233,17 +1233,17 @@ class ExchangeRepo(BaseRepo):
     async def create_subscription(
         self,
         subscriber_id: int,
-        name: Optional[str] = None,
+        name: str | None = None,
         exchange_type: str = "buy",
         subscription_type: str = "all",
-        min_price: Optional[int] = None,
-        max_price: Optional[int] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        start_time: Optional[time] = None,
-        end_time: Optional[time] = None,
-        days_of_week: Optional[list] = None,
-        target_seller_id: Optional[int] = None,
+        min_price: int | None = None,
+        max_price: int | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        start_time: time | None = None,
+        end_time: time | None = None,
+        days_of_week: list | None = None,
+        target_seller_id: int | None = None,
     ) -> ExchangeSubscription | None:
         """Создание новой подписки на обмены.
 
@@ -1296,7 +1296,7 @@ class ExchangeRepo(BaseRepo):
     async def deactivate_subscription(
         self,
         subscriber_id: int,
-        subscription_id: Optional[int] = None,
+        subscription_id: int | None = None,
     ) -> bool:
         """Деактивация подписки.
 
@@ -1548,7 +1548,7 @@ class ExchangeRepo(BaseRepo):
     async def get_subscription_by_id(
         self,
         subscription_id: int,
-        subscriber_id: Optional[int] = None,
+        subscriber_id: int | None = None,
     ) -> ExchangeSubscription | None:
         """Получение подписки по ID.
 
@@ -1880,8 +1880,8 @@ class ExchangeRepo(BaseRepo):
     async def get_user_top_buyers(
         self,
         user_id: int,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 10,
     ) -> List[dict[str, Any]]:
         """Получить топ покупателей у данного пользователя.
@@ -2009,8 +2009,8 @@ class ExchangeRepo(BaseRepo):
     async def get_user_top_sellers(
         self,
         user_id: int,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 10,
     ) -> List[dict[str, Any]]:
         """Получить топ продавцов для данного пользователя.

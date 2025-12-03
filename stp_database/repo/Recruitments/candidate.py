@@ -1,13 +1,13 @@
 """Репозиторий функций для работы с кандидатами."""
 
 import logging
-from typing import Any, Optional, Sequence
+from typing import Any, Sequence
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
-from stp_database import BaseRepo
 from stp_database.models.Recruitments.candidates import Candidate
+from stp_database.repo.base import BaseRepo
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class CandidateRepo(BaseRepo):
         self,
         user_id: int = None,
         **kwargs: Any,
-    ) -> Optional[Candidate]:
+    ) -> Candidate | None:
         """Обновление кандидата.
 
         Args:
