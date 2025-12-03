@@ -90,6 +90,9 @@ class Candidate(Base):
     resume_link: Mapped[Optional[str]] = mapped_column(
         VARCHAR(255), nullable=True, comment="Ссылка на резюме кандидата"
     )
+    manager_user_id: Mapped[Optional[int]] = mapped_column(
+        BIGINT, nullable=True, comment="Менеджер, принявший решение по кандидату"
+    )
 
     def __repr__(self):
         """Возвращает строковое представление объекта Candidate."""
