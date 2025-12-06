@@ -1,11 +1,15 @@
 """Репозиторий функций для взаимодействия с таблицей достижений."""
 
-from typing import Sequence
+import logging
+from typing import Any, Sequence
 
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 
 from stp_database.models.STP.achievement import Achievement
 from stp_database.repo.base import BaseRepo
+
+logger = logging.getLogger(__name__)
 
 
 class AchievementsRepo(BaseRepo):
@@ -44,3 +48,105 @@ class AchievementsRepo(BaseRepo):
             achievements = result.scalars().all()
 
             return list(achievements)
+
+    async def add_achievement(
+        self,
+        name: str,
+        description: str,
+        division: str,
+        kpi: str,
+        reward: int,
+        position: str,
+        period: str,
+    ) -> Achievement | None:
+        """Добавление нового достижения.
+
+        Args:
+            name: Название достижения
+            description: Описание достижения
+            division: Направление сотрудника (НТП/НЦК) для получения достижения
+            kpi: Показатели KPI для получения достижения
+            reward: Награда за получение достижение в баллах
+            position: Позиция/должность сотрудника для получения достижения
+            period: Частота возможного получения достижения: день, неделя, месяц и ручная
+
+        Returns:
+            Созданный объект Achievement или None в случае ошибки
+        """
+        new_achievement = Achievement(
+            name=name,
+            description=description,
+            division=division,
+            kpi=kpi,
+            reward=reward,
+            position=position,
+            period=period,
+        )
+
+        try:
+            self.session.add(new_achievement)
+            await self.session.commit()
+            await self.session.refresh(new_achievement)
+            logger.info(f"[БД] Создано новое достижение: {name}")
+            return new_achievement
+        except SQLAlchemyError as e:
+            logger.error(f"[БД] Ошибка добавления достижения {name}: {e}")
+            await self.session.rollback()
+            return None
+
+    async def update_achievement(
+        self,
+        achievement_id: int,
+        **kwargs: Any,
+    ) -> Achievement | None:
+        """Обновление достижения.
+
+        Args:
+            achievement_id: Идентификатор достижения
+
+        Returns:
+            Обновленный объект Achievement или None
+        """
+        select_stmt = select(Achievement).where(Achievement.id == achievement_id)
+
+        result = await self.session.execute(select_stmt)
+        achievement: Achievement | None = result.scalar_one_or_none()
+
+        # Если достижение существует - обновляем его
+        if achievement:
+            for key, value in kwargs.items():
+                setattr(achievement, key, value)
+            await self.session.commit()
+
+        return achievement
+
+    async def delete_achievement(
+        self,
+        achievement_id: int,
+    ) -> bool:
+        """Удаление достижения.
+
+        Args:
+            achievement_id: Идентификатор достижения
+
+        Returns:
+            True если успешно, иначе False
+        """
+        try:
+            select_stmt = select(Achievement).where(Achievement.id == achievement_id)
+            result = await self.session.execute(select_stmt)
+            achievement = result.scalar_one_or_none()
+
+            if achievement is None:
+                logger.warning(f"[БД] Достижение с ID {achievement_id} не найдено")
+                return False
+
+            await self.session.delete(achievement)
+            await self.session.commit()
+            logger.info(f"[БД] Достижение с ID {achievement_id} успешно удалено")
+            return True
+
+        except SQLAlchemyError as e:
+            logger.error(f"[БД] Ошибка удаления достижения с ID {achievement_id}: {e}")
+            await self.session.rollback()
+            return False
