@@ -18,21 +18,65 @@ class CandidateRepo(BaseRepo):
     async def add_candidate(
         self,
         user_id: int,
+        fullname: str | None = None,
         position: str | None = None,
+        age: int | None = None,
+        topic_id: str | None = None,
+        status: str | None = None,
+        city: str | None = None,
+        username: str | None = None,
+        phone_number: str | None = None,
+        shift_type: str | None = None,
+        shift_time: str | None = None,
+        experience: str | None = None,
+        workplace: str | None = None,
+        internet_speed: str | None = None,
+        typing_speed: str | None = None,
+        resume_link: str | None = None,
         rejection_reason: str | None = None,
     ) -> Candidate | None:
         """Добавление нового кандидата.
 
         Args:
             user_id: Идентификатор Telegram кандидата
+            fullname: ФИО кандидата
             position: Название позиции, на которую подается кандидат
+            age: Возраст кандидата
+            topic_id: Идентификатор Telegram топика, которому принадлежит кандидат
+            status: Статус кандидата
+            city: Город кандидата
+            username: Имя пользователя Telegram кандидата
+            phone_number: Номер телефона кандидата
+            shift_type: Тип смены (полная/частичная)
+            shift_time: Время смены (день/ночь/любое)
+            experience: Опыт работы
+            workplace: Рабочее место кандидата
+            internet_speed: Скорость интернета кандидата
+            typing_speed: Скорость печати кандидата
+            resume_link: Ссылка на резюме кандидата
             rejection_reason: Причина отказа
 
         Returns:
             Созданный объект Candidate или None в случае ошибки
         """
         new_candidate = Candidate(
-            user_id=user_id, position=position, rejection_reason=rejection_reason
+            user_id=user_id,
+            fullname=fullname,
+            position=position,
+            age=age,
+            topic_id=topic_id,
+            status=status,
+            city=city,
+            username=username,
+            phone_number=phone_number,
+            shift_type=shift_type,
+            shift_time=shift_time,
+            experience=experience,
+            workplace=workplace,
+            internet_speed=internet_speed,
+            typing_speed=typing_speed,
+            resume_link=resume_link,
+            rejection_reason=rejection_reason,
         )
 
         try:
