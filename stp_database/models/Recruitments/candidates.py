@@ -27,6 +27,7 @@ class Candidate(Base):
         internet_speed: Скорость интернета кандидата
         typing_speed: Скорость печати кандидата
         resume_link: Ссылка на резюме кандидата
+        rejection_reason: Причина отказа
 
     Methods:
         __repr__(): Возвращает строковое представление объекта Candidate.
@@ -86,7 +87,7 @@ class Candidate(Base):
         LONGTEXT, nullable=True, comment="Рабочее место кандидата"
     )
     internet_speed: Mapped[str | None] = mapped_column(
-        Enum("<20", "50<>20", "100<>50", ">100"),
+        Enum("<20", "<30", "50<>20", "30<>100", "100<>50", ">100"),
         nullable=True,
         comment="Скорость интернета кандидата",
     )
@@ -98,6 +99,11 @@ class Candidate(Base):
     )
     manager_user_id: Mapped[int | None] = mapped_column(
         BIGINT, nullable=True, comment="Менеджер, принявший решение по кандидату"
+    )
+    rejection_reason: Mapped[str | None] = mapped_column(
+        Enum("found_job", "not_interested", "other"),
+        nullable=True,
+        comment="Причина отказа",
     )
 
     def __repr__(self):
