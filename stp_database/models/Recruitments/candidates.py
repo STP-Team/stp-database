@@ -58,7 +58,7 @@ class Candidate(Base):
         comment="Идентификатор Telegram топика, которому принадлежит кандидат",
     )
     status: Mapped[str] = mapped_column(
-        Enum("interview", "waiting", "review", "decline", "accept"),
+        Enum("interview", "waiting", "review", "decline", "accept", "reject"),
         nullable=False,
         comment="Статус кандидата",
         default="interview",
