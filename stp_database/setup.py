@@ -7,22 +7,35 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from stp_database.config import DbConfig
 
-
-def create_engine(db: DbConfig, db_name: str, echo: bool = False) -> AsyncEngine:
+def create_engine(
+    db_name: str,
+    host: str = "localhost",
+    port: int = 3306,
+    username: str = "root",
+    password: str = "",
+    driver: str = "aiomysql",
+    echo: bool = False
+) -> AsyncEngine:
     """Создает асинхронный движок SQLAlchemy для подключения к базе данных.
 
     Args:
-        db (DbConfig): Конфигурация базы данных.
         db_name (str): Имя базы данных для подключения.
+        host (str, optional): Хост базы данных. По умолчанию "localhost".
+        port (int, optional): Порт базы данных. По умолчанию 3306.
+        username (str, optional): Имя пользователя. По умолчанию "root".
+        password (str, optional): Пароль пользователя. По умолчанию "".
+        driver (str, optional): Драйвер для подключения. По умолчанию "aiomysql".
         echo (bool, optional): Включить логирование SQL-запросов. По умолчанию False.
 
     Returns:
         AsyncEngine: Асинхронный движок SQLAlchemy с настроенным пулом соединений.
     """
+    # Конструируем URL для подключения
+    sqlalchemy_url = f"mysql+{driver}://{username}:{password}@{host}:{port}/{db_name}"
+
     engine = create_async_engine(
-        db.construct_sqlalchemy_url(db_name),
+        sqlalchemy_url,
         query_cache_size=1200,
         pool_size=20,
         max_overflow=200,
