@@ -18,7 +18,7 @@ class CandidateRepo(BaseRepo):
     async def add_candidate(
         self,
         user_id: int,
-        position: str | None,
+        position: str | None = None,
         rejection_reason: str | None = None,
     ) -> Candidate | None:
         """Добавление нового кандидата.
