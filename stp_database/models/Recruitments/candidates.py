@@ -17,6 +17,7 @@ class Candidate(Base):
         age: Возраст кандидата
         topic_id: Идентификатор Telegram топика, которому принадлежит кандидат
         status: Статус кандидата
+        city: Город кандидата
         citizenship: Гражданство кандидата
         username: Имя пользователя Telegram кандидата
         phone_number: Номер телефона кандидата
@@ -62,6 +63,9 @@ class Candidate(Base):
         nullable=False,
         comment="Статус кандидата",
         default="interview",
+    )
+    city: Mapped[str | None] = mapped_column(
+        VARCHAR(255), nullable=True, comment="Город кандидата"
     )
     citizenship: Mapped[str | None] = mapped_column(
         VARCHAR(255), nullable=True, comment="Гражданство кандидата"

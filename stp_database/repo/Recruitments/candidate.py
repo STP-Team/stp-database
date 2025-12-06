@@ -23,6 +23,7 @@ class CandidateRepo(BaseRepo):
         age: int | None = None,
         topic_id: str | None = None,
         status: str | None = None,
+        city: str | None = None,
         citizenship: str | None = None,
         username: str | None = None,
         phone_number: str | None = None,
@@ -44,6 +45,7 @@ class CandidateRepo(BaseRepo):
             age: Возраст кандидата
             topic_id: Идентификатор Telegram топика, которому принадлежит кандидат
             status: Статус кандидата
+            city: Город кандидата
             citizenship: Гражданство кандидата
             username: Имя пользователя Telegram кандидата
             phone_number: Номер телефона кандидата
@@ -66,6 +68,7 @@ class CandidateRepo(BaseRepo):
             age=age,
             topic_id=topic_id,
             status=status,
+            city=city,
             citizenship=citizenship,
             username=username,
             phone_number=phone_number,
