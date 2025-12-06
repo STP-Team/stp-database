@@ -152,3 +152,38 @@ class CandidateRepo(BaseRepo):
         select_stmt = select(Candidate).where(Candidate.status == status)
         result = await self.session.execute(select_stmt)
         return result.scalars().all()
+
+    async def delete_candidate(
+        self,
+        candidate_user_id: int,
+    ) -> bool:
+        """Удаление кандидата.
+
+        Args:
+            candidate_user_id: Идентификатор Telegram кандидата
+
+        Returns:
+            True если успешно, иначе False
+        """
+        try:
+            select_stmt = select(Candidate).where(
+                Candidate.user_id == candidate_user_id
+            )
+            result = await self.session.execute(select_stmt)
+            candidate = result.scalar_one_or_none()
+
+            if candidate is None:
+                logger.warning(f"[БД] Кандидатов с ID {candidate_user_id} не найдено")
+                return False
+
+            await self.session.delete(candidate)
+            await self.session.commit()
+            logger.info(f"[БД] Кандидат с ID {candidate_user_id} успешно удален")
+            return True
+
+        except SQLAlchemyError as e:
+            logger.error(
+                f"[БД] Ошибка удаления кандидата с ID {candidate_user_id}: {e}"
+            )
+            await self.session.rollback()
+            return False
