@@ -46,7 +46,7 @@ class Candidate(Base):
     )
     position: Mapped[str] = mapped_column(
         VARCHAR(255),
-        nullable=False,
+        nullable=True,
         comment="Название позиции, на которую подается кандидат",
     )
     age: Mapped[int | None] = mapped_column(

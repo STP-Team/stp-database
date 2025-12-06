@@ -18,20 +18,21 @@ class CandidateRepo(BaseRepo):
     async def add_candidate(
         self,
         user_id: int,
-        position: str,
+        position: str | None,
+        rejection_reason: str | None = None,
     ) -> Candidate | None:
         """Добавление нового кандидата.
 
         Args:
             user_id: Идентификатор Telegram кандидата
             position: Название позиции, на которую подается кандидат
+            rejection_reason: Причина отказа
 
         Returns:
             Созданный объект Candidate или None в случае ошибки
         """
         new_candidate = Candidate(
-            user_id=user_id,
-            position=position,
+            user_id=user_id, position=position, rejection_reason=rejection_reason
         )
 
         try:
