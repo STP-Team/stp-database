@@ -79,6 +79,132 @@ class ExchangeRepo(BaseRepo):
             await self.session.rollback()
             return None
 
+    async def get_exchanges(
+        self,
+        id: int | None = None,
+        owner_id: int | None = None,
+        counterpart_id: int | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+        price: int | None = None,
+        is_paid: bool | None = None,
+        payment_type: str | None = None,
+        payment_date: datetime | None = None,
+        owner_intent: str | None = None,
+        status: str | None = None,
+        is_private: bool | None = None,
+        in_owner_schedule: bool | None = None,
+        in_counterpart_schedule: bool | None = None,
+        comment: str | None = None,
+        created_at: datetime | None = None,
+        updated_at: datetime | None = None,
+        sold_at: datetime | None = None,
+    ) -> Exchange | None | Sequence[Employee] | list[Any]:
+        """Поиск сделки или списка сделок.
+
+        Args:
+            id: Уникальный идентификатор сделки
+            owner_id: Идентификатор владельца объявления (кто создал сделку)
+            counterpart_id: Идентификатор второй стороны (кто принял сделку)
+            start_time: Начало смены
+            end_time: Окончание смены (если частичная смена)
+            price: Цена за смену или часть смены
+            comment: Комментарий к сделке
+            owner_intent: Намерение владельца (sell, buy)
+            status: Статус сделки (active, sold, cancelled)
+            is_private: Является ли подмена приватной
+            in_owner_schedule: Отображена ли в графике владельца
+            in_counterpart_schedule: Отображена ли в графике второй стороны
+            is_paid: Отметка о наличии оплаты
+            payment_type: Тип оплаты (immediate, on_date)
+            payment_date: Конкретная дата оплаты
+            created_at: Время создания объявления
+            updated_at: Время последнего обновления
+            sold_at: Время продажи
+
+        Returns:
+            Объект Exchange или None (если указан одиночный exchange_id)
+            Последовательность Exchange (если указаны списки или другие параметры)
+        """
+        # Определяем, одиночный запрос или множественный
+        is_single = isinstance(id, int)
+
+        if is_single:
+            # Запрос одной сделки
+            filters = []
+
+            if isinstance(id, int):
+                filters.append(Exchange.id == id)
+
+            query = (
+                select(Exchange).where(*filters).order_by(Exchange.created_at.desc())
+            )
+
+            try:
+                result = await self.session.execute(query)
+                return result.scalar_one_or_none()
+            except SQLAlchemyError as e:
+                logger.error(f"[БД] Ошибка получения сделки: {e}")
+                return None
+        else:
+            # Запрос списка сделок
+            filters = []
+
+            if owner_id:
+                filters.append(Exchange.owner_id == owner_id)
+            if counterpart_id:
+                filters.append(Exchange.counterpart_id == counterpart_id)
+            if start_time:
+                filters.append(Exchange.start_time == start_time)
+            if end_time:
+                filters.append(Exchange.end_time == end_time)
+            if price:
+                filters.append(Exchange.price == price)
+            if is_paid:
+                filters.append(Exchange.is_paid == is_paid)
+            if payment_type:
+                filters.append(Exchange.payment_type == payment_type)
+            if payment_date:
+                filters.append(Exchange.payment_date == payment_date)
+            if owner_intent:
+                filters.append(Exchange.owner_intent == owner_intent)
+            if status:
+                filters.append(Exchange.status == status)
+            if is_private:
+                filters.append(Exchange.is_private == is_private)
+            if in_owner_schedule:
+                filters.append(Exchange.in_owner_schedule == in_owner_schedule)
+            if in_counterpart_schedule:
+                filters.append(
+                    Exchange.in_counterpart_schedule == in_counterpart_schedule
+                )
+            if comment:
+                filters.append(Exchange.comment == comment)
+            if created_at:
+                filters.append(Exchange.created_at == created_at)
+            if updated_at:
+                filters.append(Exchange.updated_at == updated_at)
+            if sold_at:
+                filters.append(Exchange.sold_at == sold_at)
+
+            # Формируем запрос
+            if filters:
+                query = (
+                    select(Exchange)
+                    .where(*filters)
+                    .order_by(Exchange.created_at.desc())
+                )
+            else:
+                # Все сделки
+                query = select(Exchange).order_by(Exchange.created_at.desc())
+
+            try:
+                result = await self.session.execute(query)
+                return result.scalars().all()
+            except SQLAlchemyError as e:
+                logger.error(f"[БД] Ошибка получения списка сделок: {e}")
+                return []
+
     async def activate_exchange(self, exchange_id: int):
         """Активация подмены.
 
