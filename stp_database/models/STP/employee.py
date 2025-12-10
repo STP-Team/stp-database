@@ -59,6 +59,9 @@ class Employee(Base):
     email: Mapped[str] = mapped_column(
         Unicode, nullable=True, comment="Email сотрудника"
     )
+    birthday: Mapped[str] = mapped_column(
+        Unicode, nullable=True, comment="День рождения"
+    )
     role: Mapped[int] = mapped_column(
         BIGINT, nullable=False, comment="Уровень доступа сотрудника в БД"
     )
