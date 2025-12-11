@@ -66,7 +66,6 @@ class SpecPremium(Base):
     fullname: Mapped[str] = mapped_column(
         Unicode(250),
         nullable=False,
-        name="FULLNAME",
         primary_key=True,
         comment="ФИО специалиста",
     )
@@ -92,7 +91,7 @@ class SpecPremium(Base):
     )
 
     csi_response: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Значение показателя отклика", name="CSI_RESPONSE"
+        Float, nullable=True, comment="Значение показателя отклика"
     )
     csi_response_normative: Mapped[float | None] = mapped_column(
         Float,
@@ -132,13 +131,11 @@ class SpecPremium(Base):
         Float,
         nullable=True,
         comment="Процент выполнения норматива ГОК",
-        name="NORM_GOK",
     )
     gok_premium: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Процент премии специалиста за ГОК",
-        name="PERC_GOK",
     )
 
     target: Mapped[float | None] = mapped_column(
