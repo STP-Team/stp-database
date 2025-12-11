@@ -45,10 +45,10 @@ class HeadPremium(Base):
 
     __tablename__ = "HeadPremium"
 
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     fullname: Mapped[str] = mapped_column(
         Unicode(250),
         nullable=False,
-        primary_key=True,
         comment="ФИО руководителя",
     )
 

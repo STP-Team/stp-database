@@ -63,10 +63,10 @@ class SpecPremium(Base):
 
     __tablename__ = "SpecPremium"
 
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     fullname: Mapped[str] = mapped_column(
         Unicode(250),
         nullable=False,
-        primary_key=True,
         comment="ФИО специалиста",
     )
     contacts_count: Mapped[int | None] = mapped_column(
