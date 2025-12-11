@@ -1,7 +1,8 @@
 """Репозиторий функций для работы с премией руководителей."""
 
 import logging
-from typing import Sequence
+from datetime import datetime
+from typing import Any, Sequence
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -49,3 +50,33 @@ class HeadPremiumRepo(BaseRepo):
                 f"[БД] Ошибка получения показателей премиума руководителя(-ей): {e}"
             )
             return None if is_single else []
+
+    async def update_premium(
+        self,
+        extraction_period: datetime,
+        fullname: str,
+        **kwargs: Any,
+    ) -> HeadPremium | None:
+        """Обновление премиума.
+
+        Args:
+            **kwargs: Параметры для обновления
+
+        Returns:
+            Обновленный объект Employee или None
+        """
+        select_stmt = select(HeadPremium).where(
+            HeadPremium.fullname == fullname,
+            HeadPremium.extraction_period == extraction_period,
+        )
+
+        result = await self.session.execute(select_stmt)
+        user: HeadPremium | None = result.scalar_one_or_none()
+
+        # Если строка существует - обновляем ее
+        if user:
+            for key, value in kwargs.items():
+                setattr(user, key, value)
+            await self.session.commit()
+
+        return user
