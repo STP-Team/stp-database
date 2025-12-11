@@ -17,8 +17,7 @@ class HeadPremiumRepo(BaseRepo):
     """Репозиторий с функциями для работы с премией руководителей."""
 
     async def get_premium(
-        self,
-        fullnames: str | list[str],
+        self, fullnames: str | list[str], extraction_period: datetime
     ) -> HeadPremium | None | Sequence[HeadPremium]:
         """Поиск показателей премии руководителей в БД по ФИО.
 
@@ -33,11 +32,17 @@ class HeadPremiumRepo(BaseRepo):
         is_single = isinstance(fullnames, str)
 
         if is_single:
-            query = select(HeadPremium).where(HeadPremium.fullname == fullnames)
+            query = select(HeadPremium).where(
+                HeadPremium.fullname == fullnames,
+                HeadPremium.extraction_period == extraction_period,
+            )
         else:
             if not fullnames:
                 return []
-            query = select(HeadPremium).where(HeadPremium.fullname.in_(fullnames))
+            query = select(HeadPremium).where(
+                HeadPremium.fullname.in_(fullnames),
+                HeadPremium.extraction_period == extraction_period,
+            )
 
         try:
             result = await self.session.execute(query)

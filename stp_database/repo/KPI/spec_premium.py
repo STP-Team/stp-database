@@ -19,6 +19,7 @@ class SpecPremiumRepo(BaseRepo):
     async def get_premium(
         self,
         fullnames: str | list[str],
+        extraction_period: datetime,
     ) -> SpecPremium | None | Sequence[SpecPremium]:
         """Поиск показателей премии специалистов в БД по ФИО.
 
@@ -33,11 +34,17 @@ class SpecPremiumRepo(BaseRepo):
         is_single = isinstance(fullnames, str)
 
         if is_single:
-            query = select(SpecPremium).where(SpecPremium.fullname == fullnames)
+            query = select(SpecPremium).where(
+                SpecPremium.fullname == fullnames,
+                SpecPremium.extraction_period == extraction_period,
+            )
         else:
             if not fullnames:
                 return []
-            query = select(SpecPremium).where(SpecPremium.fullname.in_(fullnames))
+            query = select(SpecPremium).where(
+                SpecPremium.fullname.in_(fullnames),
+                SpecPremium.extraction_period == extraction_period,
+            )
 
         try:
             result = await self.session.execute(query)
