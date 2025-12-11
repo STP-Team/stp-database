@@ -34,19 +34,17 @@ class HeadPremium(Base):
         target_premium: Процент премии руководителя за спец. цель
         pers_target_manual: Тип спец. цели (Старое, не используется)
 
-        sales_count: Кол-во успешно закрытых продаж
-        sales_potential: Кол-во потенциальных продаж
 
-        head_adjust: Ручная правка премии руководителем
+        head_adjust_premium: Ручная правка премии руководителем
         total_premium: Общий процент премии
         updated_at: Дата обновления показателей премии
-        kpi_extract_date: Дата, с которой производилась выгрузка премии
+        extraction_period: Дата, с которой производилась выгрузка премии
 
     Methods:
         __repr__(): Возвращает строковое представление объекта HeadPremium.
     """
 
-    __tablename__ = "RgPremium"
+    __tablename__ = "HeadPremium"
 
     fullname: Mapped[str] = mapped_column(
         Unicode(250),
