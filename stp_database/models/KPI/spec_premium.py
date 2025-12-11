@@ -240,7 +240,7 @@ class SpecPremium(Base):
         comment="Ручная правка премии руководителем",
         name="HEAD_ADJUST",
     )
-    total_premium: Mapped[int | None] = mapped_column(
+    total_premium: Mapped[float | None] = mapped_column(
         Integer, nullable=True, comment="Общий процент премии", name="TOTAL_PREMIUM"
     )
     updated_at: Mapped[datetime | None] = mapped_column(
