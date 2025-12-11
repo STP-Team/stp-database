@@ -71,26 +71,24 @@ class SpecPremium(Base):
         comment="ФИО специалиста",
     )
     contacts_count: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="Кол-во контактов специалиста", name="TC"
+        Integer, nullable=True, comment="Кол-во контактов специалиста"
     )
 
     csi: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Значение показателя оценки", name="CSI"
+        Float, nullable=True, comment="Значение показателя оценки"
     )
     csi_normative: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Норматив показатели оценки", name="CSI_NORMATIVE"
+        Float, nullable=True, comment="Норматив показатели оценки"
     )
     csi_normative_rate: Mapped[float | None] = mapped_column(
         Float,
         nullable=True,
         comment="Процент выполнения норматива оценки",
-        name="NORM_CSI",
     )
     csi_premium: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Процент премии специалиста за оценку",
-        name="PERC_CSI",
     )
 
     csi_response: Mapped[float | None] = mapped_column(
@@ -100,39 +98,35 @@ class SpecPremium(Base):
         Float,
         nullable=True,
         comment="Норматив показатели отклика",
-        name="CSI_RESPONSE_NORMATIVE",
     )
-    csi_response_rate: Mapped[float | None] = mapped_column(
+    csi_response_normative_rate: Mapped[float | None] = mapped_column(
         Float,
         nullable=True,
         comment="Процент выполнения норматива отклика",
-        name="NORM_CSI_RESPONSE",
     )
 
     flr: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Значение показателя FLR", name="FLR"
+        Float, nullable=True, comment="Значение показателя FLR"
     )
     flr_normative: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Норматив показателя FLR", name="FLR_NORMATIVE"
+        Float, nullable=True, comment="Норматив показателя FLR"
     )
     flr_normative_rate: Mapped[float | None] = mapped_column(
         Float,
         nullable=True,
         comment="Процент выполнения норматива FLR",
-        name="NORM_FLR",
     )
     flr_premium: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Процент премии специалиста за FLR",
-        name="PERC_FLR",
     )
 
     gok: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Значение показателя ГОК", name="GOK"
+        Float, nullable=True, comment="Значение показателя ГОК"
     )
     gok_normative: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Норматив показателя ГОК", name="GOK_NORMATIVE"
+        Float, nullable=True, comment="Норматив показателя ГОК"
     )
     gok_normative_rate: Mapped[float | None] = mapped_column(
         Float,
@@ -148,97 +142,83 @@ class SpecPremium(Base):
     )
 
     target: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Значение показателя спец. цели", name="PERS_FACT"
+        Float, nullable=True, comment="Значение показателя спец. цели"
     )
     target_type: Mapped[str | None] = mapped_column(
         Unicode(250),
         nullable=True,
         comment="Тип спец. цели",
-        name="PERS_TARGET_TYPE_NAME",
     )
     target_normative_first: Mapped[float | None] = mapped_column(
         Float,
         nullable=True,
         comment="Норматив показателя первой спец. цели",
-        name="PERS_PLAN_1",
     )
     target_normative_second: Mapped[float | None] = mapped_column(
         Float,
         nullable=True,
         comment="Норматив показателя второй спец. цели",
-        name="PERS_PLAN_2",
     )
     target_normative_rate_first: Mapped[float | None] = mapped_column(
         Float,
         nullable=True,
         comment="Процент выполнения норматива первой спец. цели",
-        name="PERS_RESULT_1",
     )
     target_normative_rate_second: Mapped[float | None] = mapped_column(
         Float,
         nullable=True,
         comment="Процент выполнения норматива первой спец. цели",
-        name="PERS_RESULT_2",
     )
     target_premium: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Процент премии специалиста за спец. цель",
-        name="PERS_PERCENT",
     )
     pers_target_manual: Mapped[float | None] = mapped_column(
         Float,
         nullable=True,
         comment="Тип спец. цели (Старое, не используется)",
-        name="PERS_TARGET_MANUAL",
     )
 
     discipline_premium: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Процент премии за дисциплину",
-        name="PERC_DISCIPLINE",
     )
     tests_premium: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Процент премии за тестирования",
-        name="PERC_TESTING",
     )
     thanks_premium: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Процент премии за благодарности клиентов",
-        name="PERC_THANKS",
     )
     tutors_premium: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Процент премии за посещение обучений",
-        name="PERC_TUTORS",
     )
 
     head_adjust_premium: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Ручная правка премии руководителем",
-        name="HEAD_ADJUST",
     )
     total_premium: Mapped[float | None] = mapped_column(
-        Integer, nullable=True, comment="Общий процент премии", name="TOTAL_PREMIUM"
+        Integer, nullable=True, comment="Общий процент премии"
     )
     updated_at: Mapped[datetime | None] = mapped_column(
         DateTime,
         nullable=True,
         comment="Дата обновления показателей премии",
-        name="UpdateData",
         default=datetime.now,
     )
-    kpi_extract_date: Mapped[datetime | None] = mapped_column(
+    kpi_period: Mapped[datetime | None] = mapped_column(
         DateTime,
         nullable=True,
         comment="Дата, с которой производилась выгрузка премии",
-        name="KpiExtractDate",
     )
 
     def __repr__(self):
