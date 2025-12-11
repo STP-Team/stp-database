@@ -13,7 +13,6 @@ class HeadPremium(Base):
 
     Args:
         fullname: ФИО руководителя
-        contacts_count: Кол-во контактов группы
 
         flr: Значение показателя FLR
         flr_normative: Норматив показателя FLR
@@ -51,9 +50,6 @@ class HeadPremium(Base):
         nullable=False,
         primary_key=True,
         comment="ФИО руководителя",
-    )
-    contacts_count: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="Кол-во контактов группы"
     )
 
     flr: Mapped[float | None] = mapped_column(
