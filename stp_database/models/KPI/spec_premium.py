@@ -74,22 +74,6 @@ class SpecPremium(Base):
         Integer, nullable=True, comment="Кол-во контактов специалиста", name="TC"
     )
 
-    delay: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Средняя задержка (только НТП)", name="DELAY"
-    )
-    appeals_dw_perc: Mapped[float | None] = mapped_column(
-        Float,
-        nullable=True,
-        comment="Процент сорванных контактов",
-        name="APPEALS_DW_PERC",
-    )
-    routing_perc: Mapped[float | None] = mapped_column(
-        Float,
-        nullable=True,
-        comment="Процент переводов контактов",
-        name="ROUTING_PERC",
-    )
-
     csi: Mapped[float | None] = mapped_column(
         Float, nullable=True, comment="Значение показателя оценки", name="CSI"
     )
