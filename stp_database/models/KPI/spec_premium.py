@@ -212,7 +212,7 @@ class SpecPremium(Base):
         comment="Дата обновления показателей премии",
         default=datetime.now,
     )
-    kpi_period: Mapped[datetime | None] = mapped_column(
+    extraction_period: Mapped[datetime | None] = mapped_column(
         DateTime,
         nullable=True,
         comment="Дата, с которой производилась выгрузка премии",

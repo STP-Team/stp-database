@@ -31,7 +31,7 @@ class SpecKPI(Base):
         paid_service_count: Платный сервис реальный
         paid_service_conversion: Конверсия платного сервиса
 
-        kpi_extract_date: Дата, с которой производилась выгрузка показателей
+        extraction_period: Дата, с которой производилась выгрузка показателей
         updated_at: Дата выгрузки показателей в БД
 
     Methods:
@@ -44,88 +44,79 @@ class SpecKPI(Base):
     fullname: Mapped[str] = mapped_column(
         Unicode(250),
         nullable=False,
-        name="FULLNAME",
         comment="ФИО специалиста",
         primary_key=True,
     )
     contacts_count: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="Кол-во контактов специалиста", name="TC"
+        Integer, nullable=True, comment="Кол-во контактов специалиста за период"
     )
 
     aht: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="Значение показателя AHT за период", name="AHT"
+        Integer, nullable=True, comment="Значение показателя AHT за период"
     )
     flr: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Значение показателя FLR за период", name="FLR"
+        Float, nullable=True, comment="Значение показателя FLR за период"
     )
     csi: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Значение показателя оценки за период", name="CSI"
+        Float, nullable=True, comment="Значение показателя оценки за период"
     )
     pok: Mapped[float | None] = mapped_column(
         Float,
         nullable=True,
         comment="Значение показателя отклика за период",
-        name="POK",
     )
     delay: Mapped[float | None] = mapped_column(
         Float,
         nullable=True,
-        comment="Значение показателя задержки за период (только НТП)",
-        name="DELAY",
+        comment="Значение показателя задержки за период",
     )
 
     sales_count: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Кол-во реальных продаж за период",
-        name="SalesCount",
         default=0,
     )
     sales_potential: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Кол-во потенциальных продаж за период",
-        name="SalesPotential",
     )
     sales_conversion: Mapped[float | None] = mapped_column(
         Float,
         nullable=True,
-        comment="Конверсия продаж",
-        name="SalesConversion",
+        comment="Конверсия продаж за период",
     )
 
     paid_service_count: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
-        comment="Количество закрытых заявок на платный сервис",
-        name="PaidServiceCount",
+        comment="Количество закрытых заявок на платный сервис за период",
         default=0,
     )
     paid_service_conversion: Mapped[float | None] = mapped_column(
         Float,
         nullable=True,
-        comment="Конверсия платного сервиса",
-        name="PaidServiceConversion",
+        comment="Конверсия платного сервиса за период",
+    )
+
+    extraction_period: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+        comment="Дата, с которой производилась выгрузка отчета",
     )
 
     updated_at: Mapped[datetime | None] = mapped_column(
         DateTime,
         nullable=True,
         comment="Дата выгрузки показателей в БД",
-        name="UpdateData",
         default=datetime.now,
-    )
-    kpi_extract_date: Mapped[datetime | None] = mapped_column(
-        DateTime,
-        nullable=True,
-        comment="Дата, с которой производилась выгрузка показателей",
-        name="KpiExtractDate",
     )
 
     def __repr__(self) -> str:
         """Возвращает строковое представление объекта SpecKPI."""
-        table = self.__tablename__ or "Unknown"
-        return f"<SpecKPI[{table}] {self.fullname} {self.contacts_count} {self.kpi_extract_date} {self.updated_at}>"
+        table = self.__tablename__
+        return f"<SpecKPI[{table}] {self.fullname} {self.contacts_count} {self.extraction_period} {self.updated_at}>"
 
 
 # Конкретные модели для каждой таблицы
