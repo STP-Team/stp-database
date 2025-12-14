@@ -67,6 +67,12 @@ class SpecKPI(Base):
     aht_chats_dhcp: Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="Кол-во контактов из портала за период"
     )
+    aht_chats_telegram: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, comment="Кол-во контактов из Telegram за период"
+    )
+    aht_chats_viber: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, comment="Кол-во контактов из Viber за период"
+    )
 
     # Колонки, связанные с FLR
     flr: Mapped[float | None] = mapped_column(
