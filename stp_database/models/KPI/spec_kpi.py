@@ -109,31 +109,26 @@ class SpecKPI(Base):
         Integer,
         nullable=True,
         comment="Кол-во реальных продаж за период",
-        default=0,
     )
     sales_videos: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Кол-во реальных продаж видеокамер за период",
-        default=0,
     )
     sales_routers: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Кол-во реальных продаж роутеров за период",
-        default=0,
     )
     sales_tvs: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Кол-во реальных продаж приставок за период",
-        default=0,
     )
     sales_intercoms: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Кол-во реальных продаж домофонов за период",
-        default=0,
     )
     sales_conversion: Mapped[float | None] = mapped_column(
         Float,
@@ -178,19 +173,16 @@ class SpecKPI(Base):
         Integer,
         nullable=True,
         comment="Кол-во заявок на платный сервис за период",
-        default=0,
     )
     services_remote: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Кол-во заявок на удаленный платный сервис за период",
-        default=0,
     )
     services_onsite: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Кол-во заявок на выездной платный сервис за период",
-        default=0,
     )
     services_conversion: Mapped[float | None] = mapped_column(
         Float,
