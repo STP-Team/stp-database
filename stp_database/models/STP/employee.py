@@ -38,6 +38,9 @@ class Employee(Base):
     id: Mapped[int] = mapped_column(
         BIGINT, primary_key=True, comment="Уникальный идентификатор пользователя"
     )
+    employee_id: Mapped[int] = mapped_column(
+        BIGINT, nullable=True, comment="Идентификатор сотрудника в OKC"
+    )
     user_id: Mapped[int] = mapped_column(
         BIGINT, nullable=True, comment="Идентификатор сотрудника в Telegram"
     )
