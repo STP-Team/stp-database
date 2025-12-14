@@ -65,6 +65,9 @@ class Employee(Base):
     birthday: Mapped[str] = mapped_column(
         Unicode, nullable=True, comment="День рождения"
     )
+    employment_date: Mapped[str] = mapped_column(
+        Unicode, nullable=True, comment="Дата трудоустройства"
+    )
     role: Mapped[int] = mapped_column(
         BIGINT, nullable=False, comment="Уровень доступа сотрудника в БД"
     )
