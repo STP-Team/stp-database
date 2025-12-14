@@ -56,16 +56,16 @@ class SpecKPI(Base):
         Integer, nullable=True, comment="Значение показателя AHT за период"
     )
     aht_chats_mobile: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="Кол-во контактов из приложения"
+        Integer, nullable=True, comment="Кол-во контактов из приложения за период"
     )
     aht_chats_web: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="Кол-во контактов из сайта"
+        Integer, nullable=True, comment="Кол-во контактов из сайта за период"
     )
     aht_chats_smartdom: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="Кол-во контактов из МП УДР"
+        Integer, nullable=True, comment="Кол-во контактов из МП УДР за период"
     )
     aht_chats_dhcp: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="Кол-во контактов из портала"
+        Integer, nullable=True, comment="Кол-во контактов из портала за период"
     )
 
     # Колонки, связанные с FLR
@@ -73,13 +73,13 @@ class SpecKPI(Base):
         Float, nullable=True, comment="Значение показателя FLR за период"
     )
     flr_services: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="Кол-во сервисных заявок"
+        Integer, nullable=True, comment="Кол-во сервисных заявок за период"
     )
     flr_services_cross: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="Кол-во сквозных обращений"
+        Integer, nullable=True, comment="Кол-во сквозных обращений за период"
     )
     flr_services_transfer: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="Кол-во переведенных обращений"
+        Integer, nullable=True, comment="Кол-во переведенных обращений за период"
     )
 
     # Колонки, связанные с CSI
@@ -94,7 +94,7 @@ class SpecKPI(Base):
         comment="Значение показателя отклика за период",
     )
     pok_rated_contacts: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment=""
+        Integer, nullable=True, comment="Кол-во оцененных чатов за период"
     )
 
     # Колонки, связанные с Delay
@@ -114,25 +114,25 @@ class SpecKPI(Base):
     sales_videos: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
-        comment="Конверсия реальных продаж видеокамер за период",
+        comment="Кол-во реальных продаж видеокамер за период",
         default=0,
     )
     sales_routers: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
-        comment="Конверсия реальных продаж роутеров за период",
+        comment="Кол-во реальных продаж роутеров за период",
         default=0,
     )
     sales_tvs: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
-        comment="Конверсия реальных продаж приставок за период",
+        comment="Кол-во реальных продаж приставок за период",
         default=0,
     )
     sales_intercoms: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
-        comment="Конверсия реальных продаж домофонов за период",
+        comment="Кол-во реальных продаж домофонов за период",
         default=0,
     )
     sales_conversion: Mapped[float | None] = mapped_column(
@@ -177,19 +177,19 @@ class SpecKPI(Base):
     services: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
-        comment="Количество заявок на платный сервис за период",
+        comment="Кол-во заявок на платный сервис за период",
         default=0,
     )
     services_remote: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
-        comment="Количество заявок на удаленный платный сервис за период",
+        comment="Кол-во заявок на удаленный платный сервис за период",
         default=0,
     )
     services_onsite: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
-        comment="Количество заявок на выездной платный сервис за период",
+        comment="Кол-во заявок на выездной платный сервис за период",
         default=0,
     )
     services_conversion: Mapped[float | None] = mapped_column(
