@@ -35,21 +35,21 @@ class TutorsSchedule(Base):
     trainee_employee_id: Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="Идентификатор стажера OKC"
     )
-    trainee_fullname: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="ФИО стажера"
+    trainee_fullname: Mapped[str | None] = mapped_column(
+        VARCHAR(255), nullable=True, comment="ФИО стажера"
     )
     trainee_type: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="ФИО стажера"
+        Integer, nullable=True, comment="Тип стажера"
     )
 
     training_day: Mapped[datetime | None] = mapped_column(
         TIMESTAMP, nullable=True, comment="День обучения"
     )
     training_start_time: Mapped[datetime | None] = mapped_column(
-        Integer, nullable=True, comment="Время начала обучения"
+        TIMESTAMP, nullable=True, comment="Время начала обучения"
     )
     training_end_time: Mapped[datetime | None] = mapped_column(
-        Integer, nullable=True, comment="Время конца обучения"
+        TIMESTAMP, nullable=True, comment="Время конца обучения"
     )
 
     extraction_period: Mapped[datetime] = mapped_column(
