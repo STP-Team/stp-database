@@ -42,9 +42,6 @@ class TutorsSchedule(Base):
         Integer, nullable=True, comment="Тип стажера"
     )
 
-    training_day: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP, nullable=True, comment="День обучения"
-    )
     training_start_time: Mapped[datetime | None] = mapped_column(
         TIMESTAMP, nullable=True, comment="Время начала обучения"
     )
