@@ -15,7 +15,7 @@ def create_engine(
     username: str = "root",
     password: str = "",
     driver: str = "aiomysql",
-    echo: bool = False
+    echo: bool = False,
 ) -> AsyncEngine:
     """Создает асинхронный движок SQLAlchemy для подключения к базе данных.
 
