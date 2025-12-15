@@ -7,7 +7,7 @@ from typing import Any, Sequence
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
-from stp_database.models.KPI.head_premium import HeadPremium
+from stp_database.models.Stats.head_premium import HeadPremium
 from stp_database.repo.base import BaseRepo
 
 logger = logging.getLogger(__name__)

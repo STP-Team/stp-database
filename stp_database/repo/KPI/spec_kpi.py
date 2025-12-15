@@ -1,4 +1,4 @@
-"""Репозиторий для работы с KPI специалистов."""
+"""Репозиторий для работы с Stats специалистов."""
 
 import logging
 from typing import Generic, Sequence, Type, TypeVar
@@ -6,7 +6,7 @@ from typing import Generic, Sequence, Type, TypeVar
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
-from stp_database.models.KPI.spec_kpi import SpecKPI
+from stp_database.models.Stats.spec_kpi import SpecKPI
 from stp_database.repo.base import BaseRepo
 
 logger = logging.getLogger(__name__)
@@ -15,12 +15,12 @@ T = TypeVar("T", bound=SpecKPI)
 
 
 class SpecKPIRepo(BaseRepo, Generic[T]):
-    """Универсальный репозиторий для работы с KPI специалистов.
+    """Универсальный репозиторий для работы с Stats специалистов.
 
-    Работает с любой таблицей KPI (KpiDay, KpiWeek, KpiMonth) через один интерфейс.
+    Работает с любой таблицей Stats (KpiDay, KpiWeek, KpiMonth) через один интерфейс.
 
     Attributes:
-        model: Класс модели KPI (SpecDayKPI, SpecWeekKPI или SpecMonthKPI)
+        model: Класс модели Stats (SpecDayKPI, SpecWeekKPI или SpecMonthKPI)
     """
 
     def __init__(self, session, model: Type[T]):
@@ -28,7 +28,7 @@ class SpecKPIRepo(BaseRepo, Generic[T]):
 
         Args:
             session: Сессия SQLAlchemy
-            model: Класс модели KPI (SpecDayKPI/SpecWeekKPI/SpecMonthKPI)
+            model: Класс модели Stats (SpecDayKPI/SpecWeekKPI/SpecMonthKPI)
         """
         super().__init__(session)
         self.model = model
@@ -40,7 +40,7 @@ class SpecKPIRepo(BaseRepo, Generic[T]):
             fullnames: ФИО специалиста или список ФИО специалистов в БД
 
         Returns:
-            Показатели KPI специалиста или None (если передана строка)
+            Показатели Stats специалиста или None (если передана строка)
             Последовательность объектов SpecKPI (если передан список)
         """
         # Определяем, одиночный запрос или множественный

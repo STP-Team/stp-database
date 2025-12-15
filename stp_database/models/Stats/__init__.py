@@ -1,4 +1,4 @@
-"""Инициализация моделей KPI."""
+"""Инициализация моделей Stats."""
 
 from .head_premium import HeadPremium
 from .spec_kpi import SpecDayKPI, SpecMonthKPI, SpecWeekKPI

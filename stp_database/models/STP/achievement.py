@@ -15,7 +15,7 @@ class Achievement(Base):
         name: Название достижения
         description: Описание достижения
         division: Направление сотрудника (НТП/НЦК) для получения достижения
-        kpi: Показатели KPI для получения достижения
+        kpi: Показатели Stats для получения достижения
         reward: Награда за получение достижение в баллах
         position: Позиция/должность сотрудника для получения достижения
         period: Частота возможного получения достижения: день, неделя, месяц и ручная
@@ -44,7 +44,7 @@ class Achievement(Base):
         comment="Направление сотрудника (НТП/НЦК) для получения достижения",
     )
     kpi: Mapped[str] = mapped_column(
-        VARCHAR(3), nullable=False, comment="Показатели KPI для получения достижения"
+        VARCHAR(3), nullable=False, comment="Показатели Stats для получения достижения"
     )
     reward: Mapped[int] = mapped_column(
         Integer, nullable=False, comment="Награда за получение достижение в баллах"
