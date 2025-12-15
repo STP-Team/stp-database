@@ -17,6 +17,8 @@ class SL(Base):
 
     __tablename__ = "SL"
 
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
     sl: Mapped[float | None] = mapped_column(
         Float, nullable=True, comment="Значение SL"
     )
