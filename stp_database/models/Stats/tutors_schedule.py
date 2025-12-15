@@ -63,4 +63,4 @@ class TutorsSchedule(Base):
 
     def __repr__(self):
         """Возвращает строковое представление объекта TutorsSchedule."""
-        return f"<TutorsSchedule {self.extraction_period} {self.tutor_fullname} {self.trainee_fullname} {self.training_day}>"
+        return f"<TutorsSchedule {self.extraction_period} {self.tutor_fullname} {self.trainee_fullname}>"
