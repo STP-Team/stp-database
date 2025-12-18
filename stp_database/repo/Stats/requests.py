@@ -5,13 +5,14 @@ from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from stp_database.models.Stats.spec_kpi import SpecDayKPI, SpecMonthKPI, SpecWeekKPI
-from stp_database.repo.KPI.head_premium import HeadPremiumRepo
-from stp_database.repo.KPI.spec_kpi import SpecKPIRepo
-from stp_database.repo.KPI.spec_premium import SpecPremiumRepo
+from stp_database.repo.Stats.head_premium import HeadPremiumRepo
+from stp_database.repo.Stats.spec_kpi import SpecKPIRepo
+from stp_database.repo.Stats.spec_premium import SpecPremiumRepo
+from stp_database.repo.Stats.tutors_schedule import TutorsScheduleRepo
 
 
 @dataclass
-class KPIRequestsRepo:
+class StatsRequestsRepo:
     """Репозиторий для обработки операций с БД. Этот класс содержит все репозитории для моделей базы данных Stats.
 
     Ты можешь добавить дополнительные репозитории в качестве свойств к этому классу, чтобы они были легко доступны.
@@ -43,3 +44,8 @@ class KPIRequestsRepo:
     def spec_month_kpi(self) -> SpecKPIRepo:
         """Инициализация репозитория SpecKPIRepo с сессией для работы с месячными показателями специалистов."""
         return SpecKPIRepo(self.session, SpecMonthKPI)
+
+    @property
+    def tutors_schedule(self) -> TutorsScheduleRepo:
+        """Инициализация репозитория TutorsScheduleRepo с сессией для работы с графиком наставников и стажеров."""
+        return TutorsScheduleRepo(self.session)

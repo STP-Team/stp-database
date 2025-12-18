@@ -23,6 +23,7 @@ class HeadPremiumRepo(BaseRepo):
 
         Args:
             fullnames: ФИО руководителя или список ФИО руководителей в БД
+            extraction_period: Дата выгрузки премиума
 
         Returns:
             HeadPremium или ничего (если передана строка)
@@ -66,9 +67,10 @@ class HeadPremiumRepo(BaseRepo):
 
         Args:
             **kwargs: Параметры для обновления
+            extraction_period:
 
         Returns:
-            Обновленный объект Employee или None
+            Обновленный объект HeadPremium или None
         """
         select_stmt = select(HeadPremium).where(
             HeadPremium.fullname == fullname,
@@ -76,12 +78,12 @@ class HeadPremiumRepo(BaseRepo):
         )
 
         result = await self.session.execute(select_stmt)
-        user: HeadPremium | None = result.scalar_one_or_none()
+        premium: HeadPremium | None = result.scalar_one_or_none()
 
         # Если строка существует - обновляем ее
-        if user:
+        if premium:
             for key, value in kwargs.items():
-                setattr(user, key, value)
+                setattr(premium, key, value)
             await self.session.commit()
 
-        return user
+        return premium

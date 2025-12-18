@@ -1,7 +1,7 @@
 """Репозитории для работы с таблицами системы Stats."""
 
-from .requests import KPIRequestsRepo
+from .requests import StatsRequestsRepo
 
 __all__ = [
-    "KPIRequestsRepo",
+    "StatsRequestsRepo",
 ]
