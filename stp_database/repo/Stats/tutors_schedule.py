@@ -137,7 +137,9 @@ class TutorsScheduleRepo(BaseRepo):
         else:
             query = query.where(
                 TutorsSchedule.extraction_period
-                == (select(func.max(TutorsSchedule.extraction_period)))
+                == (
+                    select(func.max(TutorsSchedule.extraction_period)).scalar_subquery()
+                )
             )
 
         query = query.order_by(
@@ -171,7 +173,9 @@ class TutorsScheduleRepo(BaseRepo):
             # Берем последний период выгрузки
             query = query.where(
                 TutorsSchedule.extraction_period
-                == (select(func.max(TutorsSchedule.extraction_period)))
+                == (
+                    select(func.max(TutorsSchedule.extraction_period)).scalar_subquery()
+                )
             )
 
         query = query.order_by(
@@ -214,7 +218,9 @@ class TutorsScheduleRepo(BaseRepo):
             # Берем последний период выгрузки
             query = query.where(
                 TutorsSchedule.extraction_period
-                == (select(func.max(TutorsSchedule.extraction_period)))
+                == (
+                    select(func.max(TutorsSchedule.extraction_period)).scalar_subquery()
+                )
             )
 
         query = query.order_by(TutorsSchedule.training_start_time)
