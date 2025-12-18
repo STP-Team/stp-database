@@ -21,6 +21,7 @@ class TutorsScheduleRepo(BaseRepo):
         tutor_fullname: str | None = None,
         tutor_employee_id: int | None = None,
         extraction_period: datetime | None = None,
+        division: str | None = None,
     ) -> None | list[Any] | Sequence[TutorsSchedule]:
         """Поиск графика наставника в БД.
 
@@ -28,6 +29,7 @@ class TutorsScheduleRepo(BaseRepo):
             tutor_fullname: ФИО наставника
             tutor_employee_id: Идентификатор ОКС наставника
             extraction_period: Дата выгрузки графика
+            division: Подразделение наставника (НТП1, НТП2, НЦК)
 
         Returns:
             TutorsSchedule или ничего (если передана строка)
@@ -44,6 +46,11 @@ class TutorsScheduleRepo(BaseRepo):
 
         if extraction_period:
             filters.append(TutorsSchedule.extraction_period == extraction_period)
+
+        if division:
+            # Специальная обработка для НЦК -> НТП НЦК
+            division_value = "НТП НЦК" if division == "НЦК" else division
+            filters.append(TutorsSchedule.tutor_division == division_value)
 
         query = (
             select(TutorsSchedule)
@@ -63,6 +70,7 @@ class TutorsScheduleRepo(BaseRepo):
         trainee_fullname: str | None = None,
         trainee_employee_id: int | None = None,
         extraction_period: datetime | None = None,
+        division: str | None = None,
     ) -> None | list[Any] | Sequence[TutorsSchedule]:
         """Поиск графика стажера в БД.
 
@@ -70,6 +78,7 @@ class TutorsScheduleRepo(BaseRepo):
             trainee_fullname: ФИО стажера
             trainee_employee_id: Идентификатор ОКС стажера
             extraction_period: Дата выгрузки графика
+            division: Подразделение наставника (НТП1, НТП2, НЦК)
 
         Returns:
             TutorsSchedule или ничего (если передана строка)
@@ -86,6 +95,11 @@ class TutorsScheduleRepo(BaseRepo):
 
         if extraction_period:
             filters.append(TutorsSchedule.extraction_period == extraction_period)
+
+        if division:
+            # Специальная обработка для НЦК -> НТП НЦК
+            division_value = "НТП НЦК" if division == "НЦК" else division
+            filters.append(TutorsSchedule.tutor_division == division_value)
 
         query = (
             select(TutorsSchedule)
@@ -107,6 +121,7 @@ class TutorsScheduleRepo(BaseRepo):
         tutor_fullname: str | None = None,
         tutor_employee_id: int | None = None,
         extraction_period: datetime | None = None,
+        division: str | None = None,
     ) -> Sequence[TutorsSchedule]:
         """Получить всех стажеров наставника за период.
 
@@ -116,6 +131,7 @@ class TutorsScheduleRepo(BaseRepo):
             start_date: Начальная дата
             end_date: Конечная дата
             extraction_period: Период выгрузки
+            division: Подразделение наставника (НТП1, НТП2, НЦК)
 
         Returns:
             Список записей расписания за указанный период
@@ -142,6 +158,11 @@ class TutorsScheduleRepo(BaseRepo):
                 )
             )
 
+        if division:
+            # Специальная обработка для НЦК -> НТП НЦК
+            division_value = "НТП НЦК" if division == "НЦК" else division
+            query = query.where(TutorsSchedule.tutor_division == division_value)
+
         query = query.order_by(
             TutorsSchedule.training_day, TutorsSchedule.training_start_time
         )
@@ -153,12 +174,14 @@ class TutorsScheduleRepo(BaseRepo):
         self,
         training_date: date,
         extraction_period: datetime | None = None,
+        division: str | None = None,
     ) -> Sequence[TutorsSchedule]:
         """Получить все тренинги на конкретную дату (все наставники и стажеры).
 
         Args:
             training_date: Дата обучения
             extraction_period: Период выгрузки
+            division: Подразделение наставника (НТП1, НТП2, НЦК)
 
         Returns:
             Список всех записей расписания для указанной даты
@@ -178,6 +201,11 @@ class TutorsScheduleRepo(BaseRepo):
                 )
             )
 
+        if division:
+            # Специальная обработка для НЦК -> НТП НЦК
+            division_value = "НТП НЦК" if division == "НЦК" else division
+            query = query.where(TutorsSchedule.tutor_division == division_value)
+
         query = query.order_by(
             TutorsSchedule.tutor_fullname, TutorsSchedule.training_start_time
         )
@@ -190,6 +218,7 @@ class TutorsScheduleRepo(BaseRepo):
         training_date: date,
         tutor_fullname: str | None = None,
         tutor_employee_id: int | None = None,
+        division: str | None = None,
         extraction_period: datetime | None = None,
     ) -> Sequence[TutorsSchedule]:
         """Получить всех стажеров наставника на конкретную дату.
@@ -198,6 +227,7 @@ class TutorsScheduleRepo(BaseRepo):
             tutor_fullname: ФИО наставника
             tutor_employee_id: ID наставника
             training_date: Дата обучения
+            division: Подразделение наставника (НТП1, НТП2, НЦК)
             extraction_period: Период выгрузки
 
         Returns:
@@ -211,6 +241,11 @@ class TutorsScheduleRepo(BaseRepo):
             query = query.where(TutorsSchedule.tutor_fullname == tutor_fullname)
         elif tutor_employee_id:
             query = query.where(TutorsSchedule.tutor_employee_id == tutor_employee_id)
+
+        if division:
+            # Специальная обработка для НЦК -> НТП НЦК
+            division_value = "НТП НЦК" if division == "НЦК" else division
+            query = query.where(TutorsSchedule.tutor_division == division_value)
 
         if extraction_period:
             query = query.where(TutorsSchedule.extraction_period == extraction_period)
