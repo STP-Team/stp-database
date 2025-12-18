@@ -31,6 +31,9 @@ class TutorsSchedule(Base):
     tutor_fullname: Mapped[str | None] = mapped_column(
         VARCHAR(255), nullable=True, comment="ФИО наставника"
     )
+    tutor_division: Mapped[str | None] = mapped_column(
+        VARCHAR(255), nullable=True, comment="Направление наставника"
+    )
 
     trainee_employee_id: Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="Идентификатор стажера OKC"
