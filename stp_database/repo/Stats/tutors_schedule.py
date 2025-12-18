@@ -42,12 +42,12 @@ class TutorsScheduleRepo(BaseRepo):
         if tutor_employee_id:
             filters.append(TutorsSchedule.tutor_employee_id == tutor_employee_id)
 
-        filters.append(TutorsSchedule.extraction_period == extraction_period)
+        if extraction_period:
+            filters.append(TutorsSchedule.extraction_period == extraction_period)
 
         query = (
             select(TutorsSchedule)
             .where(*filters)
-            .where(TutorsSchedule.extraction_period == extraction_period)
             .order_by(TutorsSchedule.training_day.desc())
         )
 
@@ -83,6 +83,9 @@ class TutorsScheduleRepo(BaseRepo):
 
         if trainee_employee_id:
             filters.append(TutorsSchedule.tutor_employee_id == trainee_employee_id)
+
+        if extraction_period:
+            filters.append(TutorsSchedule.extraction_period == extraction_period)
 
         filters.append(TutorsSchedule.extraction_period == extraction_period)
 
