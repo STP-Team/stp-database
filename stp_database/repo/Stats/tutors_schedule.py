@@ -1,10 +1,10 @@
 """Репозиторий функций для работы с графиком наставников."""
 
 import logging
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Sequence
 
-from sqlalchemy import select
+from sqlalchemy import and_, func, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from stp_database.models.Stats.tutors_schedule import TutorsSchedule
@@ -99,3 +99,125 @@ class TutorsScheduleRepo(BaseRepo):
         except SQLAlchemyError as e:
             logger.error(f"[БД] Ошибка получения графика стажера: {e}")
             return None
+
+    async def get_tutor_trainees_by_date_range(
+        self,
+        start_date: date,
+        end_date: date,
+        tutor_fullname: str | None = None,
+        tutor_employee_id: int | None = None,
+        extraction_period: datetime | None = None,
+    ) -> Sequence[TutorsSchedule]:
+        """Получить всех стажеров наставника за период.
+
+        Args:
+            tutor_fullname: ФИО наставника
+            tutor_employee_id: ID наставника
+            start_date: Начальная дата
+            end_date: Конечная дата
+            extraction_period: Период выгрузки
+
+        Returns:
+            Список записей расписания за указанный период
+        """
+        query = select(TutorsSchedule).where(
+            and_(
+                func.date(TutorsSchedule.training_day) >= start_date,
+                func.date(TutorsSchedule.training_day) <= end_date,
+            )
+        )
+
+        if tutor_fullname:
+            query = query.where(TutorsSchedule.tutor_fullname == tutor_fullname)
+        elif tutor_employee_id:
+            query = query.where(TutorsSchedule.tutor_employee_id == tutor_employee_id)
+
+        if extraction_period:
+            query = query.where(TutorsSchedule.extraction_period == extraction_period)
+        else:
+            query = query.where(
+                TutorsSchedule.extraction_period
+                == (select(func.max(TutorsSchedule.extraction_period)))
+            )
+
+        query = query.order_by(
+            TutorsSchedule.training_day, TutorsSchedule.training_start_time
+        )
+
+        result = await self.session.execute(query)
+        return result.scalars().all()
+
+    async def get_all_training_by_date(
+        self,
+        training_date: date,
+        extraction_period: datetime | None = None,
+    ) -> Sequence[TutorsSchedule]:
+        """Получить все тренинги на конкретную дату (все наставники и стажеры).
+
+        Args:
+            training_date: Дата обучения
+            extraction_period: Период выгрузки
+
+        Returns:
+            Список всех записей расписания для указанной даты
+        """
+        query = select(TutorsSchedule).where(
+            func.date(TutorsSchedule.training_day) == training_date
+        )
+
+        if extraction_period:
+            query = query.where(TutorsSchedule.extraction_period == extraction_period)
+        else:
+            # Берем последний период выгрузки
+            query = query.where(
+                TutorsSchedule.extraction_period
+                == (select(func.max(TutorsSchedule.extraction_period)))
+            )
+
+        query = query.order_by(
+            TutorsSchedule.tutor_fullname, TutorsSchedule.training_start_time
+        )
+
+        result = await self.session.execute(query)
+        return result.scalars().all()
+
+    async def get_tutor_trainees_by_date(
+        self,
+        training_date: date,
+        tutor_fullname: str | None = None,
+        tutor_employee_id: int | None = None,
+        extraction_period: datetime | None = None,
+    ) -> Sequence[TutorsSchedule]:
+        """Получить всех стажеров наставника на конкретную дату.
+
+        Args:
+            tutor_fullname: ФИО наставника
+            tutor_employee_id: ID наставника
+            training_date: Дата обучения
+            extraction_period: Период выгрузки
+
+        Returns:
+            Список записей расписания для указанной даты
+        """
+        query = select(TutorsSchedule).where(
+            func.date(TutorsSchedule.training_day) == training_date
+        )
+
+        if tutor_fullname:
+            query = query.where(TutorsSchedule.tutor_fullname == tutor_fullname)
+        elif tutor_employee_id:
+            query = query.where(TutorsSchedule.tutor_employee_id == tutor_employee_id)
+
+        if extraction_period:
+            query = query.where(TutorsSchedule.extraction_period == extraction_period)
+        else:
+            # Берем последний период выгрузки
+            query = query.where(
+                TutorsSchedule.extraction_period
+                == (select(func.max(TutorsSchedule.extraction_period)))
+            )
+
+        query = query.order_by(TutorsSchedule.training_start_time)
+
+        result = await self.session.execute(query)
+        return result.scalars().all()
