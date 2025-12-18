@@ -18,9 +18,9 @@ class TutorsScheduleRepo(BaseRepo):
 
     async def get_tutor_schedule(
         self,
-        tutor_fullname: str | None,
-        tutor_employee_id: int | None,
-        extraction_period: datetime | None,
+        tutor_fullname: str | None = None,
+        tutor_employee_id: int | None = None,
+        extraction_period: datetime | None = None,
     ) -> None | list[Any] | Sequence[TutorsSchedule]:
         """Поиск графика наставника в БД.
 
@@ -60,9 +60,9 @@ class TutorsScheduleRepo(BaseRepo):
 
     async def get_trainee_schedule(
         self,
-        trainee_fullname: str | None,
-        trainee_employee_id: int | None,
-        extraction_period: datetime | None,
+        trainee_fullname: str | None = None,
+        trainee_employee_id: int | None = None,
+        extraction_period: datetime | None = None,
     ) -> None | list[Any] | Sequence[TutorsSchedule]:
         """Поиск графика стажера в БД.
 
