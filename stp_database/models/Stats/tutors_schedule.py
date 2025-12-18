@@ -3,7 +3,7 @@
 from datetime import datetime
 
 from sqlalchemy import Integer
-from sqlalchemy.dialects.mysql import TIMESTAMP, VARCHAR
+from sqlalchemy.dialects.mysql import INTEGER, TIMESTAMP, VARCHAR
 from sqlalchemy.orm import Mapped, mapped_column
 
 from stp_database.models.base import Base
@@ -19,7 +19,7 @@ class TutorsSchedule(Base):
     __tablename__ = "TutorsSchedule"
 
     id: Mapped[int] = mapped_column(
-        Integer,
+        INTEGER(unsigned=True),
         primary_key=True,
         comment="Уникальный идентификатор графика",
         autoincrement=True,
@@ -57,7 +57,7 @@ class TutorsSchedule(Base):
         nullable=False,
         comment="Дата начала выгрузки",
     )
-    created_at: Mapped[datetime | None] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP,
         nullable=False,
         comment="Дата создания",

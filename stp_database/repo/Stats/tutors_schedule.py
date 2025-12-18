@@ -30,8 +30,8 @@ class TutorsScheduleRepo(BaseRepo):
             extraction_period: Дата выгрузки графика
 
         Returns:
-            HeadPremium или ничего (если передана строка)
-            Список объектов HeadPremium (если передан список)
+            TutorsSchedule или ничего (если передана строка)
+            Список объектов TutorsSchedule (если передан список)
         """
         # Определяем, одиночный запрос или множественный
         filters = []
@@ -72,27 +72,24 @@ class TutorsScheduleRepo(BaseRepo):
             extraction_period: Дата выгрузки графика
 
         Returns:
-            HeadPremium или ничего (если передана строка)
-            Список объектов HeadPremium (если передан список)
+            TutorsSchedule или ничего (если передана строка)
+            Список объектов TutorsSchedule (если передан список)
         """
         # Определяем, одиночный запрос или множественный
         filters = []
 
         if trainee_fullname:
-            filters.append(TutorsSchedule.tutor_fullname == trainee_fullname)
+            filters.append(TutorsSchedule.trainee_fullname == trainee_fullname)
 
         if trainee_employee_id:
-            filters.append(TutorsSchedule.tutor_employee_id == trainee_employee_id)
+            filters.append(TutorsSchedule.trainee_employee_id == trainee_employee_id)
 
         if extraction_period:
             filters.append(TutorsSchedule.extraction_period == extraction_period)
 
-        filters.append(TutorsSchedule.extraction_period == extraction_period)
-
         query = (
             select(TutorsSchedule)
             .where(*filters)
-            .where(TutorsSchedule.extraction_period == extraction_period)
             .order_by(TutorsSchedule.training_day.desc())
         )
 
