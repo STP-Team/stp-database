@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BIGINT, BOOLEAN, Unicode
+from sqlalchemy import BIGINT, BOOLEAN, INTEGER, Unicode
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from stp_database.models.base import Base
@@ -71,9 +71,23 @@ class Employee(Base):
     role: Mapped[int] = mapped_column(
         BIGINT, nullable=False, comment="Уровень доступа сотрудника в БД"
     )
+
     is_trainee: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=False, default=True, comment="Является ли сотрудник стажером"
     )
+    is_tutor: Mapped[bool] = mapped_column(
+        BOOLEAN,
+        nullable=False,
+        default=False,
+        comment="Является ли сотрудник наставником",
+    )
+    tutor_type: Mapped[int] = mapped_column(
+        INTEGER, nullable=True, comment="Тип наставника"
+    )
+    tutor_subtype: Mapped[int] = mapped_column(
+        INTEGER, nullable=True, comment="Подтип наставника"
+    )
+
     is_casino_allowed: Mapped[bool] = mapped_column(
         BOOLEAN, nullable=False, comment="Разрешено ли казино сотруднику"
     )
