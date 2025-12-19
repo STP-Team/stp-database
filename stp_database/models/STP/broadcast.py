@@ -49,6 +49,9 @@ class Broadcast(Base):
     recipients: Mapped[List[int] | None] = mapped_column(
         JSON, nullable=True, comment="Список user_id для рассылки"
     )
+    failed_recipients: Mapped[List[int] | None] = mapped_column(
+        JSON, nullable=True, comment="Список user_id, не получивших рассылку"
+    )
     created_at: Mapped[TIMESTAMP] = mapped_column(
         TIMESTAMP,
         nullable=False,

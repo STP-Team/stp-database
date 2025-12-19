@@ -136,6 +136,7 @@ class BroadcastRepo(BaseRepo):
         target: str,
         text: str,
         recipients: List[int] | None = None,
+        failed_recipients: List[int] | None = None,
     ) -> Broadcast | None:
         """Создание рассылки.
 
@@ -145,6 +146,7 @@ class BroadcastRepo(BaseRepo):
             target: Цель рассылки
             text: Текст рассылки
             recipients: Список получателей
+            failed_recipients: Список неудачных получателей
 
         Returns:
             Созданный объект Broadcast или None в случае ошибки
@@ -156,6 +158,7 @@ class BroadcastRepo(BaseRepo):
                 target=target,
                 text=text,
                 recipients=recipients,
+                failed_recipients=failed_recipients,
             )
 
             self.session.add(broadcast)
