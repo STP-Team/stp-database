@@ -691,7 +691,8 @@ class ExchangeRepo(BaseRepo):
                     filters.append(Employee.division == division)
 
             query = (
-                query.where(and_(*filters))
+                query
+                .where(and_(*filters))
                 .order_by(desc(Exchange.created_at))
                 .limit(limit)
                 .offset(offset)

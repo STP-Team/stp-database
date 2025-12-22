@@ -3,9 +3,9 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, List
 
-from sqlalchemy import func, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from stp_database.models.STP import Employee, Product
@@ -64,6 +64,93 @@ class PurchaseRepo(BaseRepo):
         await self.session.refresh(user_purchase)
 
         return user_purchase
+
+    async def get_purchases(
+        self,
+        user_id: int | None = None,
+        manager_role: int | None = None,
+        division: str | list[str] | None = None,
+        status: str | None = None,
+        updated_by_user_id: int | None = None,
+        updated_by_user_id__isnull: bool | None = None,
+        order_by: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> List[Purchase]:
+        """Получение списка покупок с фильтрацией.
+
+        Args:
+            user_id: ID пользователя-покупателя
+            manager_role: Роль менеджера для фильтрации
+            division: Подразделение(я) для фильтрации
+            status: Статус покупки ('pending', 'approved', 'rejected')
+            updated_by_user_id: ID пользователя, который обновил запись
+            updated_by_user_id__isnull: Фильтр по наличию/отсутствию updated_by_user_id
+                - True: только где updated_by_user_id IS NULL
+                - False: только где updated_by_user_id IS NOT NULL
+            order_by: Поле для сортировки (например, "-updated_at", "bought_at")
+            limit: Максимальное количество записей
+            offset: Смещение для пагинации
+
+        Returns:
+            Список объектов UserPurchase
+        """
+        query = select(Purchase)
+
+        # Джойн с Employee для фильтрации по division и manager_role
+        if manager_role is not None or division is not None:
+            query = query.join(Employee, Purchase.user_id == Employee.user_id)
+
+        # Фильтрация по пользователю
+        if user_id is not None:
+            query = query.filter(Purchase.user_id == user_id)
+
+        # Фильтрация по роли менеджера
+        if manager_role is not None:
+            query = query.filter(Employee.role == manager_role)
+
+        # Фильтрация по подразделению
+        if division is not None:
+            if isinstance(division, list):
+                query = query.filter(Employee.division.in_(division))
+            else:
+                query = query.filter(Employee.division == division)
+
+        # Фильтрация по статусу
+        if status is not None:
+            query = query.filter(Purchase.status == status)
+
+        # Фильтрация по updated_by_user_id
+        if updated_by_user_id is not None:
+            query = query.filter(Purchase.updated_by_user_id == updated_by_user_id)
+
+        # Фильтрация по наличию/отсутствию updated_by_user_id
+        if updated_by_user_id__isnull is not None:
+            if updated_by_user_id__isnull:
+                query = query.filter(Purchase.updated_by_user_id.is_(None))
+            else:
+                query = query.filter(Purchase.updated_by_user_id.is_not(None))
+
+        # Сортировка
+        if order_by is not None:
+            if order_by.startswith("-"):
+                # Сортировка по убыванию
+                field_name = order_by[1:]
+                if hasattr(Purchase, field_name):
+                    query = query.order_by(desc(getattr(Purchase, field_name)))
+            else:
+                # Сортировка по возрастанию
+                if hasattr(Purchase, order_by):
+                    query = query.order_by(getattr(Purchase, order_by))
+
+        # Пагинация
+        if offset is not None:
+            query = query.offset(offset)
+        if limit is not None:
+            query = query.limit(limit)
+
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
 
     async def get_user_purchases(self, user_id: int) -> list[Purchase]:
         """Получение полного списка покупок пользователя.
@@ -197,7 +284,7 @@ class PurchaseRepo(BaseRepo):
         self,
         purchase_id: int = None,
         **kwargs: Any,
-    ) -> Product | None:
+    ) -> Purchase | None:
         """Обновление информации о покупке.
 
         Args:
@@ -210,15 +297,15 @@ class PurchaseRepo(BaseRepo):
         select_stmt = select(Purchase).where(Purchase.id == purchase_id)
 
         result = await self.session.execute(select_stmt)
-        product: Product | None = result.scalar_one_or_none()
+        purchase: Purchase | None = result.scalar_one_or_none()
 
-        # Если пользователь существует - обновляем его
-        if product:
+        # Если покупка существует - обновляем её
+        if purchase:
             for key, value in kwargs.items():
-                setattr(product, key, value)
+                setattr(purchase, key, value)
             await self.session.commit()
 
-        return product
+        return purchase
 
     async def use_purchase(self, purchase_id: int) -> bool:
         """Использование покупки пользователем.
