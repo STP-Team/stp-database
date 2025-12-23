@@ -8,6 +8,7 @@ from stp_database.models.Stats.spec_kpi import SpecDayKPI, SpecMonthKPI, SpecWee
 from stp_database.repo.Stats.head_premium import HeadPremiumRepo
 from stp_database.repo.Stats.spec_kpi import SpecKPIRepo
 from stp_database.repo.Stats.spec_premium import SpecPremiumRepo
+from stp_database.repo.Stats.tests import AssignedTestRepo
 from stp_database.repo.Stats.tutors_schedule import TutorsScheduleRepo
 
 
@@ -49,3 +50,8 @@ class StatsRequestsRepo:
     def tutors_schedule(self) -> TutorsScheduleRepo:
         """Инициализация репозитория TutorsScheduleRepo с сессией для работы с графиком наставников и стажеров."""
         return TutorsScheduleRepo(self.session)
+
+    @property
+    def tests(self) -> AssignedTestRepo:
+        """Инициализация репозитория AssignedTestRepo с сессией для работы с тестами."""
+        return AssignedTestRepo(self.session)
