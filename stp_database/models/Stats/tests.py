@@ -20,6 +20,9 @@ class AssignedTest(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
+    test_id: Mapped[int] = mapped_column(
+        Integer, nullable=False, comment="Идентификатор теста"
+    )
     test_name: Mapped[str] = mapped_column(
         VARCHAR(255), nullable=False, comment="Название теста"
     )
