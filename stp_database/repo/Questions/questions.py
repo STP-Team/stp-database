@@ -361,6 +361,134 @@ class QuestionsRepo(BaseRepo):
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
+    async def get_questions(
+        self,
+        token: str = None,
+        group_id: int = None,
+        topic_id: int = None,
+        duty_userid: int = None,
+        employee_userid: int = None,
+        question_text: str = None,
+        start_time_from: datetime = None,
+        start_time_to: datetime = None,
+        end_time_from: datetime = None,
+        end_time_to: datetime = None,
+        clever_link: str = None,
+        quality_duty: bool = None,
+        quality_employee: bool = None,
+        status: str | list[str] = None,
+        allow_return: bool = None,
+        activity_status_enabled: bool = None,
+        limit: int = None,
+        offset: int = None,
+        order_by: str = "start_time",
+        order_direction: str = "desc",
+    ) -> Sequence[Question]:
+        """Получение вопросов с фильтрацией по всем доступным параметрам.
+
+        Args:
+            token: Уникальный токен вопроса
+            group_id: Идентификатор Telegram группы
+            topic_id: Идентификатор Telegram темы в группе
+            duty_userid: Идентификатор Telegram дежурного
+            employee_userid: Идентификатор Telegram сотрудника
+            question_text: Поиск по тексту вопроса (содержит)
+            start_time_from: Начальная дата для фильтрации по времени начала
+            start_time_to: Конечная дата для фильтрации по времени начала
+            end_time_from: Начальная дата для фильтрации по времени окончания
+            end_time_to: Конечная дата для фильтрации по времени окончания
+            clever_link: Поиск по ссылке на Clever (содержит)
+            quality_duty: Оценка качества дежурного
+            quality_employee: Оценка качества сотрудника
+            status: Статус вопроса (строка или список строк)
+            allow_return: Разрешен ли возврат
+            activity_status_enabled: Включен ли статус активности
+            limit: Лимит количества результатов
+            offset: Смещение для пагинации
+            order_by: Поле для сортировки (start_time, end_time, token, status)
+            order_direction: Направление сортировки (asc, desc)
+
+        Returns:
+            Последовательность отфильтрованных вопросов Question
+        """
+        stmt = select(Question)
+        conditions = []
+
+        # Фильтрация по токену
+        if token:
+            conditions.append(Question.token == token)
+
+        # Фильтрация по идентификаторам
+        if group_id is not None:
+            conditions.append(Question.group_id == group_id)
+        if topic_id is not None:
+            conditions.append(Question.topic_id == topic_id)
+        if duty_userid is not None:
+            conditions.append(Question.duty_userid == duty_userid)
+        if employee_userid is not None:
+            conditions.append(Question.employee_userid == employee_userid)
+
+        # Поиск по тексту вопроса
+        if question_text:
+            conditions.append(Question.question_text.ilike(f"%{question_text}%"))
+
+        # Фильтрация по диапазону времени начала
+        if start_time_from:
+            conditions.append(Question.start_time >= start_time_from)
+        if start_time_to:
+            conditions.append(Question.start_time <= start_time_to)
+
+        # Фильтрация по диапазону времени окончания
+        if end_time_from:
+            conditions.append(Question.end_time >= end_time_from)
+        if end_time_to:
+            conditions.append(Question.end_time <= end_time_to)
+
+        # Поиск по ссылке на Clever
+        if clever_link:
+            conditions.append(Question.clever_link.ilike(f"%{clever_link}%"))
+
+        # Фильтрация по качеству
+        if quality_duty is not None:
+            conditions.append(Question.quality_duty == quality_duty)
+        if quality_employee is not None:
+            conditions.append(Question.quality_employee == quality_employee)
+
+        # Фильтрация по статусу
+        if status is not None:
+            if isinstance(status, list):
+                conditions.append(Question.status.in_(status))
+            else:
+                conditions.append(Question.status == status)
+
+        # Фильтрация по булевым полям
+        if allow_return is not None:
+            conditions.append(Question.allow_return == allow_return)
+        if activity_status_enabled is not None:
+            conditions.append(
+                Question.activity_status_enabled == activity_status_enabled
+            )
+
+        # Применение условий
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
+
+        # Сортировка
+        order_column = getattr(Question, order_by, Question.start_time)
+        if order_direction.lower() == "desc":
+            stmt = stmt.order_by(order_column.desc())
+        else:
+            stmt = stmt.order_by(order_column.asc())
+
+        # Лимит и смещение
+        if offset:
+            stmt = stmt.offset(offset)
+        if limit:
+            stmt = stmt.limit(limit)
+
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
     async def delete_question(
         self, token: str = None, questions: Sequence[Question] = None
     ) -> dict:
