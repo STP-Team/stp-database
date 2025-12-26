@@ -46,8 +46,7 @@ def create_engine(
         connect_args={
             "charset": "utf8mb4",
             "connect_timeout": 10,
-            "read_timeout": 20,
-            "write_timeout": 20,
+            "autocommit": False,
         },
     )
     return engine
