@@ -36,22 +36,19 @@ def create_engine(
 
     engine = create_async_engine(
         sqlalchemy_url,
-        query_cache_size=1200,
-        pool_size=50,
-        pool_timeout=60,
-        max_overflow=200,
-        future=True,
         echo=echo,
-        connect_args={
-            "autocommit": False,
-            "charset": "utf8mb4",
-            "use_unicode": True,
-            "sql_mode": "TRADITIONAL",
-            "connect_timeout": 60,
-        },
+        future=True,
+        pool_size=5,
+        max_overflow=10,
+        pool_timeout=15,
         pool_pre_ping=True,
-        pool_recycle=3600,
-        pool_reset_on_return="commit",
+        pool_recycle=1800,
+        connect_args={
+            "charset": "utf8mb4",
+            "connect_timeout": 10,
+            "read_timeout": 20,
+            "write_timeout": 20,
+        },
     )
     return engine
 
