@@ -156,7 +156,7 @@ class QuestionsRepo(BaseRepo):
         return questions
 
     async def get_questions_count_today(
-        self, employee_userid: int = None, duty_userid: int = None
+        self, employee_userid: int | None = None, duty_userid: int | None = None
     ) -> int:
         """Получение кол-ва вопросов специалиста за последний день.
 
@@ -192,7 +192,7 @@ class QuestionsRepo(BaseRepo):
         return result.scalar() or 0
 
     async def get_questions_count_last_month(
-        self, employee_userid: str = None, duty_userid: str = None
+        self, employee_userid: int | None = None, duty_userid: int | None = None
     ) -> int:
         """Получение кол-ва вопросов специалиста за последний месяц.
 
