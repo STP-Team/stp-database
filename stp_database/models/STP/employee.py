@@ -1,8 +1,9 @@
 """Модели, связанные с сущностями сотрудников."""
 
+from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BIGINT, BOOLEAN, INTEGER, Unicode
+from sqlalchemy import BIGINT, BOOLEAN, INTEGER, Date, Unicode
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from stp_database.models.base import Base
@@ -62,11 +63,15 @@ class Employee(Base):
     email: Mapped[str] = mapped_column(
         Unicode, nullable=True, comment="Email сотрудника"
     )
-    birthday: Mapped[str] = mapped_column(
-        Unicode, nullable=True, comment="День рождения"
+    birthday: Mapped[date | None] = mapped_column(
+        Date,
+        nullable=True,
+        comment="День рождения",
     )
-    employment_date: Mapped[str] = mapped_column(
-        Unicode, nullable=True, comment="Дата трудоустройства"
+    employment_date: Mapped[date | None] = mapped_column(
+        Date,
+        nullable=True,
+        comment="Дата трудоустройства",
     )
     role: Mapped[int] = mapped_column(
         BIGINT, nullable=False, comment="Уровень доступа сотрудника в БД"
