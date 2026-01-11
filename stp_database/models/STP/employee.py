@@ -102,6 +102,12 @@ class Employee(Base):
         default=False,
         comment="Забанен ли сотрудник на бирже подмен",
     )
+    on_vacation: Mapped[bool] = mapped_column(
+        BOOLEAN,
+        nullable=False,
+        default=False,
+        comment="Находится ли сотрудник в отпуске",
+    )
     access: Mapped[bool] = mapped_column(
         BOOLEAN,
         nullable=False,
