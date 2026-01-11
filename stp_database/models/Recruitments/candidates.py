@@ -20,7 +20,6 @@ class Candidate(Base):
         city: Город кандидата
         citizenship: Гражданство кандидата
         username: Имя пользователя Telegram кандидата
-        phone_number: Номер телефона кандидата
         shift_type: Тип смены (полная/частичная)
         shift_time: Время смены (день/ночь/любое)
         experience: Опыт работы
@@ -72,9 +71,6 @@ class Candidate(Base):
     )
     username: Mapped[str | None] = mapped_column(
         VARCHAR(255), nullable=True, comment="Имя пользователя Telegram кандидата"
-    )
-    phone_number: Mapped[str | None] = mapped_column(
-        VARCHAR(255), nullable=True, comment="Номер телефона кандидата"
     )
     shift_type: Mapped[str | None] = mapped_column(
         Enum("full", "part"), nullable=True, comment="Тип смены (полная/частичная)"

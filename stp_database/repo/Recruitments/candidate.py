@@ -26,7 +26,6 @@ class CandidateRepo(BaseRepo):
         city: str | None = None,
         citizenship: str | None = None,
         username: str | None = None,
-        phone_number: str | None = None,
         shift_type: str | None = None,
         shift_time: str | None = None,
         experience: str | None = None,
@@ -48,7 +47,6 @@ class CandidateRepo(BaseRepo):
             city: Город кандидата
             citizenship: Гражданство кандидата
             username: Имя пользователя Telegram кандидата
-            phone_number: Номер телефона кандидата
             shift_type: Тип смены (полная/частичная)
             shift_time: Время смены (день/ночь/любое)
             experience: Опыт работы
@@ -71,7 +69,6 @@ class CandidateRepo(BaseRepo):
             city=city,
             citizenship=citizenship,
             username=username,
-            phone_number=phone_number,
             shift_type=shift_type,
             shift_time=shift_time,
             experience=experience,
