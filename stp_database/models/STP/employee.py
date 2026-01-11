@@ -102,6 +102,12 @@ class Employee(Base):
         default=False,
         comment="Забанен ли сотрудник на бирже подмен",
     )
+    access: Mapped[bool] = mapped_column(
+        BOOLEAN,
+        nullable=False,
+        default=True,
+        comment="Есть ли у сотрудника доступ к системам",
+    )
 
     # Отношения
     event_logs: Mapped[list["EventLog"]] = relationship(
