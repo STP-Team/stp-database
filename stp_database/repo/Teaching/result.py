@@ -53,6 +53,23 @@ class ResultsRepo(BaseRepo):
             await self.session.rollback()
             return None
 
+    async def get_result(
+        self,
+        user_id: int,
+    ) -> Result | None:
+        """Получение результата по user_id.
+
+        Args:
+            user_id: Идентификатор пользователя
+
+        Returns:
+            Объект Result или None
+        """
+        select_stmt = select(Result).where(Result.user_id == user_id)
+
+        result = await self.session.execute(select_stmt)
+        return result.scalar_one_or_none()
+
     async def update_result(
         self,
         result_id: int,
