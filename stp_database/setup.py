@@ -1,5 +1,6 @@
 """Создание движков и сессий."""
 
+from sqlalchemy import URL
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -31,8 +32,15 @@ def create_engine(
     Returns:
         AsyncEngine: Асинхронный движок SQLAlchemy с настроенным пулом соединений.
     """
-    # Конструируем URL для подключения
-    sqlalchemy_url = f"mysql+{driver}://{username}:{password}@{host}:{port}/{db_name}"
+    # Конструируем URL для подключения с правильным кодированием спецсимволов
+    sqlalchemy_url = URL.create(
+        f"mysql+{driver}",
+        username=username,
+        password=password,
+        host=host,
+        port=port,
+        database=db_name,
+    )
 
     engine = create_async_engine(
         sqlalchemy_url,
