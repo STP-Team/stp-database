@@ -29,7 +29,11 @@ class Result(Base):
     __tablename__ = "results"
 
     user_id: Mapped[int | None] = mapped_column(
-        BIGINT, nullable=True, comment="Идентификатор пользователя"
+        BIGINT,
+        nullable=True,
+        comment="Идентификатор пользователя",
+        primary_key=True,
+        unique=True,
     )
     first_q: Mapped[str] = mapped_column(
         Text, nullable=False, comment="Ответ на первый вопрос"
