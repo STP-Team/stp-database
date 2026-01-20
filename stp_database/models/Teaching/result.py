@@ -5,14 +5,13 @@ from datetime import datetime
 from sqlalchemy import BIGINT, DateTime, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from stp_database.models.base import Base, int_pk
+from stp_database.models.base import Base
 
 
 class Result(Base):
     """Модель, представляющая результаты прохождения обучения.
 
     Args:
-        id: Уникальный идентификатор результата
         user_id: Идентификатор пользователя
         first_q: Ответ на первый вопрос
         second_q: Ответ на второй вопрос
@@ -28,8 +27,6 @@ class Result(Base):
     """
 
     __tablename__ = "results"
-
-    id: Mapped[int_pk]
 
     user_id: Mapped[int | None] = mapped_column(
         BIGINT, nullable=True, comment="Идентификатор пользователя"
