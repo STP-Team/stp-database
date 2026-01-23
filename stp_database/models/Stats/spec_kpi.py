@@ -18,6 +18,7 @@ class SpecKPI(Base):
         fullname: ФИО специалиста
         contacts_count: Кол-во контактов специалиста
 
+        csat: Значение показателя CSAT за период
         aht: Значение показателя AHT за период
         flr: Значение показателя FLR за период
         csi: Значение показателя оценки за период
@@ -49,6 +50,17 @@ class SpecKPI(Base):
     )
     contacts_count: Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="Кол-во контактов специалиста за период"
+    )
+
+    # Колонки, связанные с CSAT
+    csat: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, comment="Значение показатели CSAT за период"
+    )
+    csat_rated: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, comment="Количество оцененных чатов в Генезис"
+    )
+    csat_high_rated: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, comment="Количество высоко оцененных чатов в Генезис"
     )
 
     # Колонки, связанные с AHT
