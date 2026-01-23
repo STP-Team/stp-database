@@ -53,8 +53,8 @@ class SpecKPI(Base):
     )
 
     # Колонки, связанные с CSAT
-    csat: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="Значение показатели CSAT за период"
+    csat: Mapped[float | None] = mapped_column(
+        Float, nullable=True, comment="Значение показатели CSAT за период"
     )
     csat_rated: Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="Количество оцененных чатов в Генезис"
