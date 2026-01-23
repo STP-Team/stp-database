@@ -64,10 +64,8 @@ class SpecPremium(Base):
     __tablename__ = "SpecPremium"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    fullname: Mapped[str] = mapped_column(
-        Unicode(250),
-        nullable=False,
-        comment="ФИО специалиста",
+    employee_id: Mapped[int] = mapped_column(
+        Integer, nullable=False, comment="Идентификатор сотрудника на OKC"
     )
     contacts_count: Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="Кол-во контактов специалиста"
@@ -220,4 +218,4 @@ class SpecPremium(Base):
 
     def __repr__(self):
         """Возвращает строковое представление объекта SpecPremium."""
-        return f"<SpecPremium {self.fullname} {self.contacts_count} {self.total_premium} {self.updated_at}>"
+        return f"<SpecPremium employee_id={self.employee_id} contacts_count={self.contacts_count} total_premium={self.total_premium} updated_at={self.updated_at}>"

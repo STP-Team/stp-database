@@ -33,25 +33,25 @@ class SpecKPIRepo(BaseRepo, Generic[T]):
         super().__init__(session)
         self.model = model
 
-    async def get_kpi(self, fullnames: str | list[str]) -> T | None | Sequence[T]:
-        """Поиск показателей специалистов в БД по ФИО.
+    async def get_kpi(self, employee_ids: int | list[int]) -> T | None | Sequence[T]:
+        """Поиск показателей специалистов в БД по ID сотрудника.
 
         Args:
-            fullnames: ФИО специалиста или список ФИО специалистов в БД
+            employee_ids: ID сотрудника или список ID сотрудников в БД
 
         Returns:
-            Показатели Stats специалиста или None (если передана строка)
+            Показатели Stats специалиста или None (если передано одно число)
             Последовательность объектов SpecKPI (если передан список)
         """
         # Определяем, одиночный запрос или множественный
-        is_single = isinstance(fullnames, str)
+        is_single = isinstance(employee_ids, int)
 
         if is_single:
-            query = select(self.model).where(self.model.fullname == fullnames)
+            query = select(self.model).where(self.model.employee_id == employee_ids)
         else:
-            if not fullnames:
+            if not employee_ids:
                 return []
-            query = select(self.model).where(self.model.fullname.in_(fullnames))
+            query = select(self.model).where(self.model.employee_id.in_(employee_ids))
 
         try:
             result = await self.session.execute(query)

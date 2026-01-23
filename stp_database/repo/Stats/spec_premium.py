@@ -18,31 +18,32 @@ class SpecPremiumRepo(BaseRepo):
 
     async def get_premium(
         self,
-        fullnames: str | list[str],
+        employee_ids: int | list[int],
         extraction_period: datetime,
     ) -> SpecPremium | None | Sequence[SpecPremium]:
-        """Поиск показателей премии специалистов в БД по ФИО.
+        """Поиск показателей премии специалистов в БД по ID сотрудника.
 
         Args:
-            fullnames: ФИО специалиста или список ФИО специалистов в БД
+            employee_ids: ID сотрудника или список ID сотрудников в БД
+            extraction_period: Дата выгрузки премиума
 
         Returns:
-            SpecPremium или ничего (если передана строка)
+            SpecPremium или ничего (если передано одно число)
             Список объектов SpecPremium (если передан список)
         """
         # Определяем, одиночный запрос или множественный
-        is_single = isinstance(fullnames, str)
+        is_single = isinstance(employee_ids, int)
 
         if is_single:
             query = select(SpecPremium).where(
-                SpecPremium.fullname == fullnames,
+                SpecPremium.employee_id == employee_ids,
                 SpecPremium.extraction_period == extraction_period,
             )
         else:
-            if not fullnames:
+            if not employee_ids:
                 return []
             query = select(SpecPremium).where(
-                SpecPremium.fullname.in_(fullnames),
+                SpecPremium.employee_id.in_(employee_ids),
                 SpecPremium.extraction_period == extraction_period,
             )
 
@@ -61,19 +62,21 @@ class SpecPremiumRepo(BaseRepo):
     async def update_premium(
         self,
         extraction_period: datetime,
-        fullname: str,
+        employee_id: int,
         **kwargs: Any,
     ) -> SpecPremium | None:
         """Обновление премиума.
 
         Args:
+            employee_id: ID сотрудника
+            extraction_period: Дата выгрузки премиума
             **kwargs: Параметры для обновления
 
         Returns:
-            Обновленный объект Employee или None
+            Обновленный объект SpecPremium или None
         """
         select_stmt = select(SpecPremium).where(
-            SpecPremium.fullname == fullname,
+            SpecPremium.employee_id == employee_id,
             SpecPremium.extraction_period == extraction_period,
         )
 

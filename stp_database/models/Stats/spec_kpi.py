@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, Integer, Unicode
+from sqlalchemy import DateTime, Float, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 from stp_database.models.base import Base
@@ -42,11 +42,8 @@ class SpecKPI(Base):
     __tablename__ = None  # Будет установлено динамически
     __abstract__ = True  # Абстрактная модель
 
-    fullname: Mapped[str] = mapped_column(
-        Unicode(250),
-        nullable=False,
-        comment="ФИО специалиста",
-        primary_key=True,
+    employee_id: Mapped[int] = mapped_column(
+        Integer, nullable=False, comment="Идентификатор сотрудника на OKC"
     )
     contacts_count: Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="Кол-во контактов специалиста за период"
@@ -223,7 +220,7 @@ class SpecKPI(Base):
     def __repr__(self) -> str:
         """Возвращает строковое представление объекта SpecKPI."""
         table = self.__tablename__
-        return f"<SpecKPI[{table}] {self.fullname} {self.contacts_count} {self.extraction_period} {self.updated_at}>"
+        return f"<SpecKPI[{table}] employee_id={self.employee_id} contacts_count={self.contacts_count} extraction_period={self.extraction_period} updated_at={self.updated_at}>"
 
 
 # Конкретные модели для каждой таблицы

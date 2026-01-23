@@ -46,10 +46,8 @@ class HeadPremium(Base):
     __tablename__ = "HeadPremium"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    fullname: Mapped[str] = mapped_column(
-        Unicode(250),
-        nullable=False,
-        comment="ФИО руководителя",
+    employee_id: Mapped[int] = mapped_column(
+        Integer, nullable=False, comment="Идентификатор сотрудника на OKC"
     )
 
     flr: Mapped[float | None] = mapped_column(
@@ -168,4 +166,4 @@ class HeadPremium(Base):
 
     def __repr__(self):
         """Возвращает строковое представление объекта HeadPremium."""
-        return f"<HeadPremium {self.fullname} {self.contacts_count} {self.total_premium} {self.updated_at}>"
+        return f"<HeadPremium employee_id={self.employee_id} total_premium={self.total_premium} updated_at={self.updated_at}>"

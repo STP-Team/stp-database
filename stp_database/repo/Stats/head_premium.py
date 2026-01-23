@@ -17,31 +17,31 @@ class HeadPremiumRepo(BaseRepo):
     """Репозиторий с функциями для работы с премией руководителей."""
 
     async def get_premium(
-        self, fullnames: str | list[str], extraction_period: datetime
+        self, employee_ids: int | list[int], extraction_period: datetime
     ) -> HeadPremium | None | Sequence[HeadPremium]:
-        """Поиск показателей премии руководителей в БД по ФИО.
+        """Поиск показателей премии руководителей в БД по ID сотрудника.
 
         Args:
-            fullnames: ФИО руководителя или список ФИО руководителей в БД
+            employee_ids: ID сотрудника или список ID сотрудников в БД
             extraction_period: Дата выгрузки премиума
 
         Returns:
-            HeadPremium или ничего (если передана строка)
+            HeadPremium или ничего (если передано одно число)
             Список объектов HeadPremium (если передан список)
         """
         # Определяем, одиночный запрос или множественный
-        is_single = isinstance(fullnames, str)
+        is_single = isinstance(employee_ids, int)
 
         if is_single:
             query = select(HeadPremium).where(
-                HeadPremium.fullname == fullnames,
+                HeadPremium.employee_id == employee_ids,
                 HeadPremium.extraction_period == extraction_period,
             )
         else:
-            if not fullnames:
+            if not employee_ids:
                 return []
             query = select(HeadPremium).where(
-                HeadPremium.fullname.in_(fullnames),
+                HeadPremium.employee_id.in_(employee_ids),
                 HeadPremium.extraction_period == extraction_period,
             )
 
@@ -60,20 +60,21 @@ class HeadPremiumRepo(BaseRepo):
     async def update_premium(
         self,
         extraction_period: datetime,
-        fullname: str,
+        employee_id: int,
         **kwargs: Any,
     ) -> HeadPremium | None:
         """Обновление премиума.
 
         Args:
+            employee_id: ID сотрудника
+            extraction_period: Дата выгрузки премиума
             **kwargs: Параметры для обновления
-            extraction_period:
 
         Returns:
             Обновленный объект HeadPremium или None
         """
         select_stmt = select(HeadPremium).where(
-            HeadPremium.fullname == fullname,
+            HeadPremium.employee_id == employee_id,
             HeadPremium.extraction_period == extraction_period,
         )
 
