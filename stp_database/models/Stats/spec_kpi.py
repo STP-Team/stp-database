@@ -43,7 +43,10 @@ class SpecKPI(Base):
     __abstract__ = True  # Абстрактная модель
 
     employee_id: Mapped[int] = mapped_column(
-        Integer, nullable=False, comment="Идентификатор сотрудника на OKC"
+        Integer,
+        nullable=False,
+        primary_key=True,
+        comment="Идентификатор сотрудника на OKC",
     )
     contacts_count: Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="Кол-во контактов специалиста за период"
@@ -208,6 +211,7 @@ class SpecKPI(Base):
     extraction_period: Mapped[datetime | None] = mapped_column(
         DateTime,
         nullable=True,
+        primary_key=True,
         comment="Дата, с которой производилась выгрузка отчета",
     )
     updated_at: Mapped[datetime | None] = mapped_column(
