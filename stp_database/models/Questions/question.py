@@ -44,9 +44,6 @@ class Question(Base):
     topic_id: Mapped[int] = mapped_column(
         Integer, nullable=False, comment="Идентификатор Telegram темы в группе"
     )
-    employee_topic_id: Mapped[int] = mapped_column(
-        Integer, nullable=False, comment="Идентификатор Telegram темы сотрудника"
-    )
     duty_userid: Mapped[int] = mapped_column(
         BIGINT, nullable=True, comment="Идентификатор Telegram дежурного"
     )
