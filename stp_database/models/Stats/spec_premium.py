@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, Integer, Unicode
+from sqlalchemy import DateTime, Float, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 from stp_database.models.base import Base
@@ -12,50 +12,30 @@ class SpecPremium(Base):
     """Модель, представляющая сущность премии специалиста за месяц в БД.
 
     Args:
-        fullname: ФИО специалиста
+        employee_id: Идентификатор сотрудника на OKC
         contacts_count: Кол-во контактов специалиста
 
-        delay: Средняя задержка (только НТП)
-        appeals_dw_perc: Процент сорванных контактов
-        routing_perc: Процент переводов контактов
+        aht: Значение показателя AHT
+        aht_normative: Норматив показателя AHT
+        aht_pers_normative: Персональный норматив показателя AHT
+        aht_normative_rate: Процент выполнения норматива AHT
+        aht_premium: Процент премии специалиста за AHT
 
-        csi: Значение показателя оценки
-        csi_normative: Норматив показателя оценки
-        csi_normative_rate: Процент выполнения норматива оценки
-        csi_premium: Процент премии специалиста за оценку
-
-        csi_response: Значение показателя отклика
-        csi_response_normative: Норматив показатели отклика
-        csi_response_rate: Процент выполнения норматива отклика
-
-        flr: Значение показателя FLR
-        flr_normative: Норматив показателя FLR
-        flr_normative_rate: Процент выполнения норматива FLR
-        flr_premium: Процент премии специалиста за FLR
+        csat: Значение показателя CSAT
+        csat_normative: Норматив показателя CSAT
+        csat_pers_normative: Персональный норматив показателя CSAT
+        csat_normative_rate: Процент выполнения норматива CSAT
+        csat_premium: Процент премии специалиста за CSAT
 
         gok: Значение показателя ГОК
         gok_normative: Норматив показателя ГОК
+        gok_pers_normative: Персональный норматив показателя ГОК
         gok_normative_rate: Процент выполнения норматива ГОК
         gok_premium: Процент премии специалиста за ГОК
 
-        target: Значение показателя спец. цели
-        target_type: Тип спец. цели
-        target_normative_first: Норматив показателя первой спец. цели
-        target_normative_second: Норматив показателя второй спец. цели
-        target_normative_rate_first: Процент выполнения норматива первой спец. цели
-        target_normative_rate_second: Процент выполнения норматива второй спец. цели
-        target_premium: Процент премии специалиста за спец. цель
-        pers_target_manual: Тип спец. цели (Старое, не используется)
-
-        discipline_premium: Процент премии за дисциплину
-        tests_premium: Процент премии за тестирования
-        thanks_premium: Процент премии за благодарности клиентов
-        tutors_premium: Процент премии за посещение обучений
-
-        head_adjust_premium: Ручная правка премии руководителем
         total_premium: Общий процент премии
         updated_at: Дата обновления показателей премии
-        kpi_extract_date: Дата, с которой производилась выгрузка премии
+        extraction_period: Дата, с которой производилась выгрузка премии
 
     Methods:
         __repr__(): Возвращает строковое представление объекта SpecPremium.
@@ -73,52 +53,34 @@ class SpecPremium(Base):
         Integer, nullable=True, comment="Кол-во контактов специалиста"
     )
 
-    csi: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Значение показателя оценки"
+    aht: Mapped[float | None] = mapped_column(
+        Float, nullable=True, comment="Значение показателя AHT"
     )
-    csi_normative: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Норматив показатели оценки"
+    aht_normative: Mapped[float | None] = mapped_column(
+        Float, nullable=True, comment="Норматив показателя AHT"
     )
-    csi_normative_rate: Mapped[float | None] = mapped_column(
-        Float,
-        nullable=True,
-        comment="Процент выполнения норматива оценки",
+    aht_pers_normative: Mapped[float | None] = mapped_column(Float, nullable=True)
+    aht_normative_rate: Mapped[float | None] = mapped_column(
+        Float, nullable=True, comment="Процент выполнения норматива AHT"
     )
-    csi_premium: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True,
-        comment="Процент премии специалиста за оценку",
+    aht_premium: Mapped[float | None] = mapped_column(
+        Float, nullable=True, comment="Процент премии специалиста за AHT"
     )
 
-    csi_response: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Значение показателя отклика"
+    csat: Mapped[float | None] = mapped_column(
+        Float, nullable=True, comment="Значение показателя CSAT"
     )
-    csi_response_normative: Mapped[float | None] = mapped_column(
-        Float,
-        nullable=True,
-        comment="Норматив показатели отклика",
+    csat_normative: Mapped[float | None] = mapped_column(
+        Float, nullable=True, comment="Норматив показателя CSAT"
     )
-    csi_response_normative_rate: Mapped[float | None] = mapped_column(
-        Float,
-        nullable=True,
-        comment="Процент выполнения норматива отклика",
+    csat_pers_normative: Mapped[float | None] = mapped_column(
+        Float, nullable=True, comment="Личный норматив показателя CSAT"
     )
-
-    flr: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Значение показателя FLR"
+    csat_normative_rate: Mapped[float | None] = mapped_column(
+        Float, nullable=True, comment="Процент выполнения норматива CSAT"
     )
-    flr_normative: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Норматив показателя FLR"
-    )
-    flr_normative_rate: Mapped[float | None] = mapped_column(
-        Float,
-        nullable=True,
-        comment="Процент выполнения норматива FLR",
-    )
-    flr_premium: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True,
-        comment="Процент премии специалиста за FLR",
+    csat_premium: Mapped[float | None] = mapped_column(
+        Float, nullable=True
     )
 
     gok: Mapped[float | None] = mapped_column(
@@ -127,84 +89,16 @@ class SpecPremium(Base):
     gok_normative: Mapped[float | None] = mapped_column(
         Float, nullable=True, comment="Норматив показателя ГОК"
     )
+    gok_pers_normative: Mapped[float | None] = mapped_column(Float, nullable=True)
     gok_normative_rate: Mapped[float | None] = mapped_column(
-        Float,
-        nullable=True,
-        comment="Процент выполнения норматива ГОК",
+        Float, nullable=True, comment="Процент выполнения норматива ГОК"
     )
-    gok_premium: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True,
-        comment="Процент премии специалиста за ГОК",
+    gok_premium: Mapped[float | None] = mapped_column(
+        Float, nullable=True, comment="Процент премии специалиста за ГОК"
     )
 
-    target: Mapped[float | None] = mapped_column(
-        Float, nullable=True, comment="Значение показателя спец. цели"
-    )
-    target_type: Mapped[str | None] = mapped_column(
-        Unicode(250),
-        nullable=True,
-        comment="Тип спец. цели",
-    )
-    target_normative_first: Mapped[float | None] = mapped_column(
-        Float,
-        nullable=True,
-        comment="Норматив показателя первой спец. цели",
-    )
-    target_normative_second: Mapped[float | None] = mapped_column(
-        Float,
-        nullable=True,
-        comment="Норматив показателя второй спец. цели",
-    )
-    target_normative_rate_first: Mapped[float | None] = mapped_column(
-        Float,
-        nullable=True,
-        comment="Процент выполнения норматива первой спец. цели",
-    )
-    target_normative_rate_second: Mapped[float | None] = mapped_column(
-        Float,
-        nullable=True,
-        comment="Процент выполнения норматива первой спец. цели",
-    )
-    target_premium: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True,
-        comment="Процент премии специалиста за спец. цель",
-    )
-    pers_target_manual: Mapped[float | None] = mapped_column(
-        Float,
-        nullable=True,
-        comment="Тип спец. цели (Старое, не используется)",
-    )
-
-    discipline_premium: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True,
-        comment="Процент премии за дисциплину",
-    )
-    tests_premium: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True,
-        comment="Процент премии за тестирования",
-    )
-    thanks_premium: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True,
-        comment="Процент премии за благодарности клиентов",
-    )
-    tutors_premium: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True,
-        comment="Процент премии за посещение обучений",
-    )
-
-    head_adjust_premium: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True,
-        comment="Ручная правка премии руководителем",
-    )
     total_premium: Mapped[float | None] = mapped_column(
-        Integer, nullable=True, comment="Общий процент премии"
+        Float, nullable=True, comment="Общий процент премии"
     )
     updated_at: Mapped[datetime | None] = mapped_column(
         DateTime,
@@ -212,9 +106,9 @@ class SpecPremium(Base):
         comment="Дата обновления показателей премии",
         default=datetime.now,
     )
-    extraction_period: Mapped[datetime | None] = mapped_column(
+    extraction_period: Mapped[datetime] = mapped_column(
         DateTime,
-        nullable=True,
+        nullable=False,
         primary_key=True,
         comment="Дата, с которой производилась выгрузка премии",
     )
