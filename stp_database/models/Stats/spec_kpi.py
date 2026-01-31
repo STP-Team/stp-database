@@ -208,6 +208,10 @@ class SpecKPI(Base):
         comment="Конверсия платного сервиса за период",
     )
 
+    thanks: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, default=0, comment="Кол-во благодарностей за период"
+    )
+
     extraction_period: Mapped[datetime | None] = mapped_column(
         DateTime,
         nullable=True,
