@@ -208,6 +208,27 @@ class SpecKPI(Base):
         comment="Конверсия платного сервиса за период",
     )
 
+    # Колонки, связанные с вопросником
+    q_answered: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        default=0,
+        comment="Количество отвеченных вопросов",
+    )
+
+    q_asked: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        default=0,
+        comment="Количество заданных вопросов",
+    )
+
+    q_asked_conversion: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+        comment="Конверсия заданных вопросов",
+    )
+
     thanks: Mapped[int | None] = mapped_column(
         Integer, nullable=True, default=0, comment="Кол-во благодарностей за период"
     )

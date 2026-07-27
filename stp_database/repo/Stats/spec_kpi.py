@@ -1,9 +1,10 @@
 """Репозиторий для работы с Stats специалистов."""
 
 import logging
+from datetime import datetime
 from typing import Generic, Sequence, Type, TypeVar
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from stp_database.models.Stats.spec_kpi import SpecKPI
@@ -65,3 +66,83 @@ class SpecKPIRepo(BaseRepo, Generic[T]):
             )
             raise
             #return None if is_single else []
+
+    async def get_selected_kpi(
+            self,
+            employee_ids: list[int],
+            columns: list[str],
+    ) -> tuple[datetime | None, list[dict[str, object]]]:
+        """
+        Получить выбранные показатели последнего доступного месяца.
+
+        Args:
+            employee_ids: employee_id сотрудников из таблицы employees.
+            columns: Разрешённые названия показателей KpiMonth.
+
+        Returns:
+            Дата выгрузки и строки с выбранными показателями.
+        """
+        if not employee_ids:
+            return None, []
+
+        requested_columns = list(dict.fromkeys(columns))
+
+        available_columns = {
+            column.name
+            for column in self.model.__table__.columns
+        }
+
+        invalid_columns = set(requested_columns) - available_columns
+
+        if invalid_columns:
+            raise ValueError(
+                "Неизвестные колонки KPI: "
+                + ", ".join(sorted(invalid_columns))
+            )
+
+        try:
+            # Находим последний общий доступный период среди сотрудников группы.
+            period_query = (
+                select(func.max(self.model.extraction_period))
+                .where(self.model.employee_id.in_(employee_ids))
+            )
+
+            period_result = await self.session.execute(period_query)
+            extraction_period = period_result.scalar_one_or_none()
+
+            if extraction_period is None:
+                return None, []
+
+            selected_columns = [
+                self.model.employee_id,
+                self.model.extraction_period,
+                *[
+                    getattr(self.model, column_name)
+                    for column_name in requested_columns
+                ],
+            ]
+
+            query = (
+                select(*selected_columns)
+                .where(
+                    self.model.employee_id.in_(employee_ids),
+                    self.model.extraction_period == extraction_period,
+                )
+                .order_by(self.model.employee_id)
+            )
+
+            result = await self.session.execute(query)
+
+            rows = [
+                dict(row)
+                for row in result.mappings().all()
+            ]
+
+            return extraction_period, rows
+
+        except SQLAlchemyError as error:
+            logger.error(
+                "[БД] Ошибка получения выбранных KPI "
+                f"из {self.model.__tablename__}: {error}"
+            )
+            raise
