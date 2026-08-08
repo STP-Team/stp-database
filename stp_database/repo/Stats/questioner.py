@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from typing import Any, Sequence
 
-from sqlalchemy import select
+from sqlalchemy import select, tuple_
 from sqlalchemy.exc import SQLAlchemyError
 
 from stp_database.models.Stats.questioner import (
@@ -207,14 +207,14 @@ class QuestionerMonthRepo(BaseRepo):
     """Репозиторий месячной статистики вопросника."""
 
     async def upsert_rows(
-        self,
-        rows: Sequence[dict[str, Any]],
+            self,
+            rows: Sequence[dict[str, Any]],
     ) -> tuple[int, int]:
         """
-        Создать или обновить показатели
-        в QuestionerMonth.
+        Создать или обновить месячные показатели.
 
-        employee_id является PK.
+        Уникальный ключ:
+            employee_id + extraction_period
 
         Returns:
             created_count
@@ -224,9 +224,10 @@ class QuestionerMonthRepo(BaseRepo):
         if not rows:
             return 0, 0
 
-        employee_ids = {
-            int(
-                row["employee_id"]
+        keys = {
+            (
+                int(row["employee_id"]),
+                row["extraction_period"],
             )
             for row in rows
         }
@@ -237,8 +238,11 @@ class QuestionerMonthRepo(BaseRepo):
                     QuestionerMonth
                 )
                 .where(
-                    QuestionerMonth.employee_id.in_(
-                        employee_ids
+                    tuple_(
+                        QuestionerMonth.employee_id,
+                        QuestionerMonth.extraction_period,
+                    ).in_(
+                        keys
                     )
                 )
             )
@@ -248,7 +252,10 @@ class QuestionerMonthRepo(BaseRepo):
             )
 
             existing_rows = {
-                int(row.employee_id): row
+                (
+                    int(row.employee_id),
+                    row.extraction_period,
+                ): row
                 for row
                 in result.scalars().all()
             }
@@ -263,54 +270,71 @@ class QuestionerMonthRepo(BaseRepo):
                     row["employee_id"]
                 )
 
-                existing = (
-                    existing_rows.get(
-                        employee_id
-                    )
+                extraction_period = row[
+                    "extraction_period"
+                ]
+
+                key = (
+                    employee_id,
+                    extraction_period,
+                )
+
+                existing = existing_rows.get(
+                    key
                 )
 
                 if existing is None:
-                    self.session.add(
-                        QuestionerMonth(
-                            employee_id=employee_id,
+                    existing = QuestionerMonth(
+                        employee_id=employee_id,
 
-                            count_questions_asked=int(
-                                row[
-                                    "count_questions_asked"
-                                ]
-                            ),
+                        count_questions_asked=int(
+                            row[
+                                "count_questions_asked"
+                            ]
+                        ),
 
-                            count_questions_answered=int(
-                                row[
-                                    "count_questions_answered"
-                                ]
-                            ),
+                        count_questions_answered=int(
+                            row[
+                                "count_questions_answered"
+                            ]
+                        ),
 
-                            average_duration_asked_question=float(
-                                row[
-                                    "average_duration_asked_question"
-                                ]
-                            ),
+                        average_duration_asked_question=float(
+                            row[
+                                "average_duration_asked_question"
+                            ]
+                        ),
 
-                            average_duration_answered_question=float(
-                                row[
-                                    "average_duration_answered_question"
-                                ]
-                            ),
+                        average_duration_answered_question=float(
+                            row[
+                                "average_duration_answered_question"
+                            ]
+                        ),
 
-                            rate_requester=row.get(
-                                "rate_requester"
-                            ),
+                        rate_requester=row.get(
+                            "rate_requester"
+                        ),
 
-                            rate_responder=row.get(
-                                "rate_responder"
-                            ),
+                        rate_responder=row.get(
+                            "rate_responder"
+                        ),
 
-                            extraction_period=row[
-                                "extraction_period"
-                            ],
-                        )
+                        extraction_period=(
+                            extraction_period
+                        ),
                     )
+
+                    self.session.add(
+                        existing
+                    )
+
+                    # Важно:
+                    # если по ошибке такой же ключ
+                    # встретится второй раз в rows,
+                    # второй INSERT уже не создаём.
+                    existing_rows[
+                        key
+                    ] = existing
 
                     created_count += 1
 
@@ -346,10 +370,6 @@ class QuestionerMonthRepo(BaseRepo):
                     existing.rate_responder = row.get(
                         "rate_responder"
                     )
-
-                    existing.extraction_period = row[
-                        "extraction_period"
-                    ]
 
                     existing.updated_at = now
 
