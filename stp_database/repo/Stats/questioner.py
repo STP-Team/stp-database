@@ -371,3 +371,45 @@ class QuestionerMonthRepo(BaseRepo):
             )
 
             raise
+
+    async def get_month(
+            self, employee_ids: int | list[int], extraction_period: datetime
+    ) -> QuestionerMonth | None | Sequence[QuestionerMonth]:
+        """Поиск показателей премии руководителей в БД по ID сотрудника.
+
+        Args:
+            employee_ids: ID сотрудника или список ID сотрудников в БД
+            extraction_period: Дата выгрузки премиума
+
+        Returns:
+            HeadPremium или ничего (если передано одно число)
+            Список объектов HeadPremium (если передан список)
+        """
+        # Определяем, одиночный запрос или множественный
+        is_single = isinstance(employee_ids, int)
+
+        if is_single:
+            query = select(QuestionerMonth).where(
+                QuestionerMonth.employee_id == employee_ids,
+                QuestionerMonth.extraction_period == extraction_period,
+            )
+        else:
+            if not employee_ids:
+                return []
+            query = select(QuestionerMonth).where(
+                QuestionerMonth.employee_id.in_(employee_ids),
+                QuestionerMonth.extraction_period == extraction_period,
+            )
+
+        try:
+            result = await self.session.execute(query)
+            if is_single:
+                return result.scalar_one_or_none()
+            else:
+                return result.scalars().all()
+        except SQLAlchemyError as e:
+            logger.error(
+                f"[БД] Ошибка получения показателей премиума руководителя(-ей): {e}"
+            )
+            raise
+            # return None if is_single else []
