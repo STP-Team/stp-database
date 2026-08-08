@@ -5,7 +5,10 @@ from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from stp_database.models.Stats.spec_kpi import SpecDayKPI, SpecMonthKPI, SpecWeekKPI
-from stp_database.repo.Stats import QuestionerMonthRepo, QuestionerChatsRepo
+from .questioner import (
+    QuestionerMonthRepo,
+    QuestionerChatsRepo,
+)
 from stp_database.repo.Stats.head_premium import HeadPremiumRepo
 from stp_database.repo.Stats.spec_kpi import SpecKPIRepo
 from stp_database.repo.Stats.spec_premium import SpecPremiumRepo
@@ -27,10 +30,12 @@ class StatsRequestsRepo:
         """Инициализация репозитория HeadPremiumRepo с сессией для работы с премией руководителей."""
         return HeadPremiumRepo(self.session)
 
+    @property
     def questioner_month(self) -> QuestionerMonthRepo:
         """Инициализация репозитория QuestionerMonth с сессией для работы с ежемесячной статистикой вопросника."""
         return QuestionerMonthRepo(self.session)
 
+    @property
     def questioner_chats(self) -> QuestionerChatsRepo:
         """Инициализация репозитория QuestionerChats с сессией для работы с ежедневной статистикой вопросника."""
         return QuestionerChatsRepo(self.session)
