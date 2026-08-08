@@ -305,6 +305,10 @@ class QuestionerMonthRepo(BaseRepo):
                             rate_responder=row.get(
                                 "rate_responder"
                             ),
+
+                            extraction_period=row[
+                                "extraction_period"
+                            ],
                         )
                     )
 
@@ -342,6 +346,10 @@ class QuestionerMonthRepo(BaseRepo):
                     existing.rate_responder = row.get(
                         "rate_responder"
                     )
+
+                    existing.extraction_period = row[
+                        "extraction_period"
+                    ]
 
                     existing.updated_at = now
 

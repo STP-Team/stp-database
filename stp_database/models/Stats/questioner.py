@@ -131,16 +131,22 @@ class QuestionerMonth(Base):
         comment="Средняя продолжительность отвеченного вопроса",
     )
 
-    rate_requester: Mapped[int | None] = mapped_column(
+    rate_requester: Mapped[float | None] = mapped_column(
         Float,
         nullable=True,
         comment="Оценка задающего вопрос",
     )
 
-    rate_responder: Mapped[int | None] = mapped_column(
+    rate_responder: Mapped[float | None] = mapped_column(
         Float,
         nullable=True,
         comment="Оценка отвечающего на вопрос"
+    )
+
+    extraction_period: Mapped[datetime] = mapped_column(
+        TIMESTAMP,
+        nullable=False,
+        comment="Месяц, за который рассчитана статистика",
     )
 
     updated_at: Mapped[datetime] = mapped_column(
