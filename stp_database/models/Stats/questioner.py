@@ -132,13 +132,13 @@ class QuestionerMonth(Base):
     )
 
     rate_requester: Mapped[int | None] = mapped_column(
-        Integer,
+        Float,
         nullable=True,
         comment="Оценка задающего вопрос",
     )
 
     rate_responder: Mapped[int | None] = mapped_column(
-        Integer,
+        Float,
         nullable=True,
         comment="Оценка отвечающего на вопрос"
     )
