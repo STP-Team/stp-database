@@ -145,6 +145,7 @@ class QuestionerMonth(Base):
 
     extraction_period: Mapped[datetime] = mapped_column(
         TIMESTAMP,
+        primary_key=True,
         nullable=False,
         comment="Месяц, за который рассчитана статистика",
     )
