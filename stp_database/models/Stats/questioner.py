@@ -117,11 +117,18 @@ class QuestionerMonth(Base):
         comment="Количество отвеченных вопросов",
     )
 
-    average_duration_question: Mapped[float] = mapped_column(
+    average_duration_asked_question: Mapped[float] = mapped_column(
         Float,
         nullable=False,
         server_default=text("0"),
-        comment="Средняя продолжительность решения вопроса",
+        comment="Средняя продолжительность заданного вопроса",
+    )
+
+    average_duration_answered_question: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        server_default=text("0"),
+        comment="Средняя продолжительность отвеченного вопроса",
     )
 
     rate_requester: Mapped[int | None] = mapped_column(
