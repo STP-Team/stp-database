@@ -180,8 +180,8 @@ class SpecKPI(Base):
         nullable=True,
         comment="Кол-во потенциальных продаж домофонов за период",
     )
-    sales_potential_conversion: Mapped[int | None] = mapped_column(
-        Integer,
+    sales_potential_conversion: Mapped[float | None] = mapped_column(
+        Float,
         nullable=True,
         comment="Конверсия потенциальных продаж за период",
     )
