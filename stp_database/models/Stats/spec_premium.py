@@ -33,6 +33,10 @@ class SpecPremium(Base):
         gok_normative_rate: Процент выполнения норматива ГОК
         gok_premium: Процент премии специалиста за ГОК
 
+        revenue: Фактическая выручка от продажи оборудования
+        revenue_normative: План выручки от продажи оборудования
+        revenue_normative_rate: Процент выполнения плана выручки
+
         total_premium: Общий процент премии
         updated_at: Дата обновления показателей премии
         extraction_period: Дата, с которой производилась выгрузка премии
@@ -93,6 +97,16 @@ class SpecPremium(Base):
     )
     gok_premium: Mapped[float | None] = mapped_column(
         Float, nullable=True, comment="Процент премии специалиста за ГОК"
+    )
+
+    revenue: Mapped[float | None] = mapped_column(
+        Float, nullable=True, comment="Фактическая выручка от продажи оборудования"
+    )
+    revenue_normative: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, comment="План выручки от продажи оборудования"
+    )
+    revenue_normative_rate: Mapped[float | None] = mapped_column(
+        Float, nullable=True, comment="Процент выполнения плана выручки"
     )
 
     total_premium: Mapped[float | None] = mapped_column(
