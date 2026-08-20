@@ -29,6 +29,7 @@ class FormRepo(BaseRepo):
             name=name,
             content=content,
             created_by=created_by,
+            updated_by=created_by,
         )
 
         try:

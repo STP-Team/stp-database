@@ -34,9 +34,9 @@ class Form(Base):
         nullable=True,
     )
 
-    created_by: Mapped[int | None] = mapped_column(
+    created_by: Mapped[int] = mapped_column(
         Integer,
-        nullable=True,
+        nullable=False,
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -45,9 +45,9 @@ class Form(Base):
         server_default=func.now(),
     )
 
-    updated_by: Mapped[int | None] = mapped_column(
+    updated_by: Mapped[int] = mapped_column(
         Integer,
-        nullable=True,
+        nullable=False,
     )
 
     updated_at: Mapped[datetime] = mapped_column(
