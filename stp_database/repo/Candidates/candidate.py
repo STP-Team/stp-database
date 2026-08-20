@@ -37,6 +37,7 @@ class CandidateRepo(BaseRepo):
             form_uuid=form_uuid,
             form_data=form_data or {},
             created_by=created_by,
+            updated_by=created_by,
         )
 
         try:
