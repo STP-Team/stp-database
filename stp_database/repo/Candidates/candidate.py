@@ -140,7 +140,9 @@ class CandidateRepo(BaseRepo):
             if key in allowed_fields:
                 setattr(candidate, key, value)
 
-        candidate.updated_by = updated_by
+        if updated_by is not None:
+            candidate.updated_by = updated_by
+
         candidate.updated_at = datetime.now()
 
         try:
