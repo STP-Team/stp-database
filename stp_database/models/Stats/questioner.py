@@ -1,7 +1,7 @@
 from datetime import datetime
 import uuid
 
-from sqlalchemy import Integer, text, Float, BIGINT, DateTime, Enum, Unicode, func, Text
+from sqlalchemy import Integer, text, Float, BIGINT, DateTime, Enum, Unicode, func, Text, String
 from sqlalchemy.dialects.mysql import TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -54,6 +54,12 @@ class QuestionerChats(Base):
         Text,
         nullable=True,
         comment="Ссылка на БЗ",
+    )
+
+    category: Mapped[str | None] = mapped_column(
+        String(250),
+        nullable=True,
+        comment="Категория вопроса",
     )
 
     created_at: Mapped[datetime] = mapped_column(

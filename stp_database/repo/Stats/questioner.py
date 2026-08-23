@@ -111,6 +111,9 @@ class QuestionerChatsRepo(BaseRepo):
                         kb_link=row.get(
                             "kb_link"
                         ),
+                        category=row.get(
+                            "category"
+                        ),
                         created_at=row[
                             "created_at"
                         ],
