@@ -77,6 +77,16 @@ class Candidate(Base):
         nullable=True,
     )
 
+    assigned_hr_id: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    assigned_rg_id: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
     created_by: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
